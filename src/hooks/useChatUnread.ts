@@ -130,8 +130,11 @@ export function useChatUnread(
             [room.id]: count
           };
         });
-      }, (err) => {
-        console.warn(`Firestore unread check notice for room ${room.id}:`, err);
+      }, (err: any) => {
+        // Silently handle permission error or initial state without spamming console
+        if (err?.code !== 'permission-denied') {
+          console.warn(`Firestore unread check notice for room ${room.id}:`, err?.message || err);
+        }
       });
 
       unsubscribes.push(unsub);

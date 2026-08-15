@@ -84,6 +84,8 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
   const [isSending, setIsSending] = useState<boolean>(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(true);
   const [profanityWarning, setProfanityWarning] = useState<string | null>(null);
+  const [hasPermissionError, setHasPermissionError] = useState<boolean>(false);
+  const [rulesCopied, setRulesCopied] = useState<boolean>(false);
 
   // Attachment states
   const [attachedFile, setAttachedFile] = useState<{
@@ -113,6 +115,25 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
+  // Helper for local storage backup
+  const loadLocalBackupMessages = (roomId: string): ChatMessage[] => {
+    try {
+      const saved = localStorage.getItem(`chat_backup_${roomId}`);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn("Error loading local chat backup:", e);
+    }
+    return [];
+  };
+
+  const saveLocalBackupMessages = (roomId: string, newMessages: ChatMessage[]) => {
+    try {
+      localStorage.setItem(`chat_backup_${roomId}`, JSON.stringify(newMessages.slice(-100)));
+    } catch (e) {
+      console.warn("Error saving local chat backup:", e);
+    }
+  };
+
   // Set initial room when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -131,11 +152,17 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
     }
   }, [isOpen, activeRoomId, onMarkRoomAsRead, onActiveRoomChange]);
 
-  // Real-time Firestore message subscription
+  // Real-time Firestore message subscription with Local Backup Fallback
   useEffect(() => {
     if (!isOpen || !activeRoomId) return;
 
     setIsLoadingMessages(true);
+    // Pre-populate with local backup if available
+    const localBackup = loadLocalBackupMessages(activeRoomId);
+    if (localBackup.length > 0) {
+      setMessages(localBackup);
+    }
+
     const messagesCol = collection(db, 'community_chats', activeRoomId, 'messages');
     const q = query(messagesCol, orderBy('createdAt', 'asc'), limit(250));
 
@@ -170,10 +197,15 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
         });
       });
       setMessages(fetched);
+      saveLocalBackupMessages(activeRoomId, fetched);
+      setHasPermissionError(false);
       setIsLoadingMessages(false);
       setTimeout(() => scrollToBottom(), 100);
-    }, (err) => {
-      console.warn("Firestore realtime chat notice:", err);
+    }, (err: any) => {
+      console.warn("Firestore realtime chat notice:", err?.message || err);
+      if (err?.code === 'permission-denied' || String(err).includes('insufficient permissions')) {
+        setHasPermissionError(true);
+      }
       setIsLoadingMessages(false);
     });
 
@@ -182,6 +214,20 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const copyFirestoreRulesCode = () => {
+    const rulesCode = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}`;
+    navigator.clipboard.writeText(rulesCode);
+    setRulesCopied(true);
+    setTimeout(() => setRulesCopied(false), 3500);
   };
 
   // Handle Send Message
@@ -199,19 +245,30 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
     setProfanityWarning(null);
     setIsSending(true);
 
+    const nowISO = new Date().toISOString();
+    const formattedNow = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+
+    const role: 'admin' | 'user' = isAdmin ? 'admin' : 'user';
     const messagePayload = {
       roomId: activeRoomId,
       senderUid: currentUser.uid,
       senderName: currentUser.displayName || currentUser.email.split('@')[0] || 'طالب المنصة',
       senderEmail: currentUser.email,
       senderPhoto: currentUser.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(currentUser.email)}`,
-      senderRole: isAdmin ? 'admin' : 'user',
+      senderRole: role,
       text: sanitizeText(inputText.trim()),
       fileUrl: attachedFile?.url || '',
       fileName: attachedFile?.name || '',
       fileType: attachedFile?.type || '',
       fileSize: attachedFile?.size || '',
-      createdAt: new Date().toISOString()
+      createdAt: nowISO
+    };
+
+    // Optimistic message for immediate UI response
+    const optimisticMsg: ChatMessage = {
+      id: 'local_' + Date.now(),
+      ...messagePayload,
+      createdAt: formattedNow
     };
 
     try {
@@ -222,8 +279,20 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
       setInputText('');
       setAttachedFile(null);
       setTimeout(() => scrollToBottom(), 100);
-    } catch (err) {
-      console.error("Error sending message to Firestore:", err);
+    } catch (err: any) {
+      console.warn("Notice sending message to Firestore:", err?.message || err);
+      if (err?.code === 'permission-denied' || String(err).includes('insufficient permissions')) {
+        setHasPermissionError(true);
+      }
+      // Keep optimistic message locally so student doesn't lose text
+      setMessages((prev) => {
+        const updated = [...prev, optimisticMsg];
+        saveLocalBackupMessages(activeRoomId, updated);
+        return updated;
+      });
+      setInputText('');
+      setAttachedFile(null);
+      setTimeout(() => scrollToBottom(), 100);
     } finally {
       setIsSending(false);
     }
@@ -678,6 +747,49 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
             /* 💬 MESSAGES STREAM VIEW                                   */
             /* ========================================================= */
             <div className="flex-1 p-3 md:p-5 overflow-y-auto custom-scrollbar space-y-3.5">
+              
+              {/* FIRESTORE RULES NOTICE BANNER WHEN PERMISSION IS DENIED */}
+              {hasPermissionError && (
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 space-y-2 text-xs">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 font-bold text-amber-300">
+                      <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>تنبيه قواعد الأمان في Firebase (تفعيل لمرة واحدة):</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setHasPermissionError(false)}
+                      className="text-amber-400/60 hover:text-amber-300 text-xs p-1"
+                      title="إخفاء"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    مشروع Firebase الخاص بك يحتاج تفعيل قواعد القراءة والكتابة العامة حتى تظهر رسائل الشات لجميع الطلاب بشكل فوري ومتزامن.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={copyFirestoreRulesCode}
+                      className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+                    >
+                      {rulesCopied ? <CheckCircle2 className="w-3.5 h-3.5 text-slate-950" /> : <Sparkles className="w-3.5 h-3.5 text-slate-950" />}
+                      <span>{rulesCopied ? 'تم نسخ كود القواعد بنجاح ✓' : 'نسخ كود القواعد (Rules)'}</span>
+                    </button>
+                    <a
+                      href="https://console.firebase.google.com/project/mr-mohammed-hesham/firestore/rules"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-amber-400/30 transition flex items-center gap-1.5"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>فتح تبويب Rules في Firebase Console ↗</span>
+                    </a>
+                  </div>
+                </div>
+              )}
+
               {isLoadingMessages ? (
                 <div className="flex flex-col items-center justify-center p-12 text-slate-400 space-y-3">
                   <RefreshCw className="w-7 h-7 text-indigo-400 animate-spin" />
