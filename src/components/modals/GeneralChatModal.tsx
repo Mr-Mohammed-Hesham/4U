@@ -6,7 +6,7 @@ import {
   Sparkles, AlertCircle, Search, Filter, RefreshCw, CheckCircle2, ChevronDown, Eye, ShieldAlert,
   Trash2, Pin, PinOff, Smile, Heart, ThumbsUp, Flame, Star, Award, Shield, User, Mail, Calendar, Phone, BookOpen, Clock, Zap
 } from 'lucide-react';
-import { collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, getDocs, doc, deleteDoc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { containsProfanity, sanitizeText } from '../../utils/profanityFilter';
 import { CHAT_ROOMS } from '../../hooks/useChatUnread';
@@ -117,8 +117,6 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
   const [isSending, setIsSending] = useState<boolean>(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(true);
   const [profanityWarning, setProfanityWarning] = useState<string | null>(null);
-  const [hasPermissionError, setHasPermissionError] = useState<boolean>(false);
-  const [rulesCopied, setRulesCopied] = useState<boolean>(false);
 
   // Admin Profile Inspector Modal State (Admin Only)
   const [inspectedUserProfile, setInspectedUserProfile] = useState<UserProfileModalData | null>(null);
@@ -174,6 +172,25 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
     }
   };
 
+  // Helper for local persistent reactions
+  const loadLocalReactions = (roomId: string): Record<string, Record<string, string[]>> => {
+    try {
+      const saved = localStorage.getItem(`chat_reactions_${roomId}`);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn("Error loading local reactions:", e);
+    }
+    return {};
+  };
+
+  const saveLocalReactions = (roomId: string, reactionsMap: Record<string, Record<string, string[]>>) => {
+    try {
+      localStorage.setItem(`chat_reactions_${roomId}`, JSON.stringify(reactionsMap));
+    } catch (e) {
+      console.warn("Error saving local reactions:", e);
+    }
+  };
+
   // Set initial room when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -207,7 +224,9 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
     const q = query(messagesCol, orderBy('createdAt', 'asc'), limit(250));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      const localReactionsMap = loadLocalReactions(activeRoomId);
       const fetched: ChatMessage[] = [];
+
       snapshot.forEach((docSnap) => {
         const data = docSnap.data();
         let formattedDate = 'الآن';
@@ -218,6 +237,24 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
             formattedDate = data.createdAt.toDate().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
           }
         }
+
+        // Merge server reactions with local reactions
+        const serverReactions = (data.reactions && typeof data.reactions === 'object') ? data.reactions : {};
+        const localMsgReactions = localReactionsMap[docSnap.id] || {};
+        const mergedReactions: Record<string, string[]> = { ...serverReactions };
+
+        // Ensure user's local reaction selections are not lost on snapshot re-renders
+        Object.entries(localMsgReactions).forEach(([emoji, rawUsers]) => {
+          const uList = Array.isArray(rawUsers) ? rawUsers : [];
+          if (uList.length > 0) {
+            const existing = Array.isArray(mergedReactions[emoji]) ? [...mergedReactions[emoji]] : [];
+            uList.forEach(u => {
+              if (!existing.includes(u)) existing.push(u);
+            });
+            mergedReactions[emoji] = existing;
+          }
+        });
+
         fetched.push({
           id: docSnap.id,
           roomId: activeRoomId,
@@ -230,7 +267,7 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
           isPinned: !!data.isPinned,
           pinnedAt: data.pinnedAt || '',
           pinnedBy: data.pinnedBy || '',
-          reactions: data.reactions || {},
+          reactions: mergedReactions,
           fileUrl: data.fileUrl || '',
           fileName: data.fileName || '',
           fileType: data.fileType || '',
@@ -242,14 +279,10 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
       });
       setMessages(fetched);
       saveLocalBackupMessages(activeRoomId, fetched);
-      setHasPermissionError(false);
       setIsLoadingMessages(false);
       setTimeout(() => scrollToBottom(), 100);
     }, (err: any) => {
       console.warn("Firestore realtime chat notice:", err?.message || err);
-      if (err?.code === 'permission-denied' || String(err).includes('insufficient permissions')) {
-        setHasPermissionError(true);
-      }
       setIsLoadingMessages(false);
     });
 
@@ -260,44 +293,31 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const copyFirestoreRulesCode = () => {
-    const rulesCode = `rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
-    }
-  }
-}`;
-    navigator.clipboard.writeText(rulesCode);
-    setRulesCopied(true);
-    setTimeout(() => setRulesCopied(false), 3500);
-  };
-
   // Admin Action: Delete message
   const handleDeleteMessage = async (msgId: string) => {
     if (!isAdmin) return;
     if (!window.confirm('هل أنت متأكد من حذف هذه الرسالة نهائياً من الشات؟')) return;
 
+    // Delete locally immediately
+    setMessages(prev => {
+      const updated = prev.filter(m => m.id !== msgId);
+      saveLocalBackupMessages(activeRoomId, updated);
+      return updated;
+    });
+
+    // Remove from local reactions cache
+    const localReactionsMap = loadLocalReactions(activeRoomId);
+    if (localReactionsMap[msgId]) {
+      delete localReactionsMap[msgId];
+      saveLocalReactions(activeRoomId, localReactionsMap);
+    }
+
     try {
       // Delete from Firestore
       const msgRef = doc(db, 'community_chats', activeRoomId, 'messages', msgId);
       await deleteDoc(msgRef);
-
-      // Delete locally
-      setMessages(prev => {
-        const updated = prev.filter(m => m.id !== msgId);
-        saveLocalBackupMessages(activeRoomId, updated);
-        return updated;
-      });
     } catch (err: any) {
-      console.error("Error deleting message:", err);
-      // Delete locally as fallback
-      setMessages(prev => {
-        const updated = prev.filter(m => m.id !== msgId);
-        saveLocalBackupMessages(activeRoomId, updated);
-        return updated;
-      });
+      console.warn("Notice deleting message from Firestore:", err);
     }
   };
 
@@ -308,27 +328,22 @@ service cloud.firestore {
     const newPinStatus = !currentPinStatus;
     const nowStr = new Date().toISOString();
 
+    // Update state locally and backup
+    setMessages(prev => {
+      const updated = prev.map(m => m.id === msgId ? { ...m, isPinned: newPinStatus } : m);
+      saveLocalBackupMessages(activeRoomId, updated);
+      return updated;
+    });
+
     try {
       const msgRef = doc(db, 'community_chats', activeRoomId, 'messages', msgId);
-      await updateDoc(msgRef, {
+      await setDoc(msgRef, {
         isPinned: newPinStatus,
         pinnedAt: newPinStatus ? nowStr : null,
         pinnedBy: newPinStatus ? (currentUser?.displayName || 'المسؤول') : null
-      });
-
-      // Update state locally
-      setMessages(prev => {
-        const updated = prev.map(m => m.id === msgId ? { ...m, isPinned: newPinStatus } : m);
-        saveLocalBackupMessages(activeRoomId, updated);
-        return updated;
-      });
+      }, { merge: true });
     } catch (err: any) {
-      console.warn("Notice updating pin status:", err);
-      setMessages(prev => {
-        const updated = prev.map(m => m.id === msgId ? { ...m, isPinned: newPinStatus } : m);
-        saveLocalBackupMessages(activeRoomId, updated);
-        return updated;
-      });
+      console.warn("Notice updating pin status in Firestore:", err);
     }
   };
 
@@ -340,9 +355,14 @@ service cloud.firestore {
     const targetMsg = messages.find(m => m.id === msgId);
     if (!targetMsg) return;
 
-    const currentReactions = { ...(targetMsg.reactions || {}) };
-    const currentUsersForEmoji = currentReactions[emoji] ? [...currentReactions[emoji]] : [];
+    const currentReactions: Record<string, string[]> = {};
+    if (targetMsg.reactions) {
+      Object.entries(targetMsg.reactions).forEach(([k, v]) => {
+        if (Array.isArray(v)) currentReactions[k] = [...v];
+      });
+    }
 
+    const currentUsersForEmoji = Array.isArray(currentReactions[emoji]) ? [...currentReactions[emoji]] : [];
     const hasReacted = currentUsersForEmoji.includes(userKey);
     let updatedUsersForEmoji: string[];
 
@@ -361,20 +381,26 @@ service cloud.firestore {
     // Close reaction picker
     setReactionPickerMsgId(null);
 
-    // Optimistically update UI
+    // Save in local reactions persistent storage
+    const localReactionsMap = loadLocalReactions(activeRoomId);
+    localReactionsMap[msgId] = currentReactions;
+    saveLocalReactions(activeRoomId, localReactionsMap);
+
+    // Optimistically update UI and backup
     setMessages(prev => {
       const updated = prev.map(m => m.id === msgId ? { ...m, reactions: currentReactions } : m);
       saveLocalBackupMessages(activeRoomId, updated);
       return updated;
     });
 
+    // Write to Firestore with setDoc and merge: true
     try {
       const msgRef = doc(db, 'community_chats', activeRoomId, 'messages', msgId);
-      await updateDoc(msgRef, {
+      await setDoc(msgRef, {
         reactions: currentReactions
-      });
+      }, { merge: true });
     } catch (err: any) {
-      console.warn("Notice toggling reaction in Firestore:", err);
+      console.warn("Notice toggling reaction in Firestore (preserved locally):", err);
     }
   };
 
@@ -473,9 +499,6 @@ service cloud.firestore {
       setTimeout(() => scrollToBottom(), 100);
     } catch (err: any) {
       console.warn("Notice sending message to Firestore:", err?.message || err);
-      if (err?.code === 'permission-denied' || String(err).includes('insufficient permissions')) {
-        setHasPermissionError(true);
-      }
       // Keep optimistic message locally so student doesn't lose text
       setMessages((prev) => {
         const updated = [...prev, optimisticMsg];
@@ -978,48 +1001,6 @@ service cloud.firestore {
             /* ========================================================= */
             <div className="flex-1 p-3 md:p-5 overflow-y-auto custom-scrollbar space-y-4">
               
-              {/* FIRESTORE RULES NOTICE BANNER WHEN PERMISSION IS DENIED */}
-              {hasPermissionError && (
-                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 space-y-2 text-xs">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 font-bold text-amber-300">
-                      <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
-                      <span>تنبيه قواعد الأمان في Firebase (تفعيل لمرة واحدة):</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setHasPermissionError(false)}
-                      className="text-amber-400/60 hover:text-amber-300 text-xs p-1"
-                      title="إخفاء"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-slate-300 leading-relaxed">
-                    مشروع Firebase الخاص بك يحتاج تفعيل قواعد القراءة والكتابة العامة حتى تظهر رسائل الشات لجميع الطلاب بشكل فوري ومتزامن.
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={copyFirestoreRulesCode}
-                      className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition cursor-pointer flex items-center gap-1.5 shadow-sm"
-                    >
-                      {rulesCopied ? <CheckCircle2 className="w-3.5 h-3.5 text-slate-950" /> : <Sparkles className="w-3.5 h-3.5 text-slate-950" />}
-                      <span>{rulesCopied ? 'تم نسخ كود القواعد بنجاح ✓' : 'نسخ كود القواعد (Rules)'}</span>
-                    </button>
-                    <a
-                      href="https://console.firebase.google.com/project/mr-mohammed-hesham/firestore/rules"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-amber-400/30 transition flex items-center gap-1.5"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>فتح تبويب Rules في Firebase Console ↗</span>
-                    </a>
-                  </div>
-                </div>
-              )}
-
               {isLoadingMessages ? (
                 <div className="flex flex-col items-center justify-center p-12 text-slate-400 space-y-3">
                   <RefreshCw className="w-7 h-7 text-indigo-400 animate-spin" />
