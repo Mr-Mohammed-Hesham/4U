@@ -272,13 +272,30 @@ mark {
 
 /* Main Container and Modular Elements */
 .dark #breadcrumbs,
-.dark .bg-white,
+.dark .bg-white:not(#google-signin-btn):not(.google-btn),
 .dark .bg-gray-900,
 .dark .bg-slate-900\/60,
 .dark .bg-gray-900\/40,
 .dark .bg-gray-900\/60,
 .dark [id^="print-certificate-area"] {
   background-color: #15181E !important;
+}
+
+/* Explicit high-contrast Google Sign-In Button */
+#google-signin-btn,
+.google-btn {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+#google-signin-btn span,
+.google-btn span {
+  color: #0f172a !important;
+}
+
+#google-signin-btn:hover,
+.google-btn:hover {
+  background-color: #f1f5f9 !important;
 }
 
 /* Sidebar & Navigation Blocks */
