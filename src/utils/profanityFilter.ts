@@ -5,11 +5,15 @@
 
 // List of common offensive, vulgar, and profanity words (Arabic & English)
 const FORBIDDEN_PATTERNS: (string | RegExp)[] = [
-  // Arabic profanity & insults (common variations & normalized patterns)
-  /كلب/i, /حمار/i, /غبي/i, /حيوان/i, /زفت/i, /حقير/i, /سافل/i, /واطي/i, /قذر/i, /وسخ/i,
-  /تفه/i, /تفلة/i, /يا غبي/i, /يا حمار/i, /يا كلب/i, /يا حيوان/i, /تافه/i, /حقارة/i,
-  /سفالة/i, /صايع/i, /عرص/i, /شرموط/i, /قحبة/i, /منحط/i, /خول/i, /كس/i, /طيز/i, /زب/i,
-  /شتم/i, /سب/i, /يلعن/i, /لعنة/i, /الله يلعن/i, /ابن ال/i, /يا ابن/i, /الزفت/i,
+  // Arabic profanity & insults & inappropriate terms (comprehensive list & normalized patterns)
+  /كلب/i, /كلبة/i, /حمار/i, /حمارة/i, /غبي/i, /غباء/i, /حيوان/i, /حيوانة/i, /زفت/i, /حقير/i, /حقيرة/i, 
+  /سافل/i, /سافلة/i, /واطي/i, /واطية/i, /قذر/i, /قذرة/i, /وسخ/i, /وسخة/i, /تفه/i, /تفلة/i, /تف عليكم/i,
+  /يا غبي/i, /يا حمار/i, /يا كلب/i, /يا حيوان/i, /تافه/i, /تافهة/i, /حقارة/i, /سفالة/i, /صايع/i, /صايعة/i,
+  /عرص/i, /شرموط/i, /شرموطة/i, /قحبة/i, /منحط/i, /منحطة/i, /خول/i, /كس/i, /كسك/i, /كسها/i, /كسهم/i,
+  /طيز/i, /طيزك/i, /زب/i, /زبي/i, /نيك/i, /منيك/i, /تناك/i, /ينيك/i, /متناك/i, /شتم/i, /سب/i, 
+  /يلعن/i, /يلعنك/i, /لعنة/i, /الله يلعن/i, /ابن ال/i, /ابن الكلب/i, /ابن الحرام/i, /ابن الشرموطة/i, 
+  /يا ابن/i, /الزفت/i, /شحات/i, /لوطي/i, /شاذ/i, /اباحي/i, /إباحي/i, /سكس/i, /بورن/i, /porn/i, /nude/i, /xxx/i,
+  /لعنة الله/i, /خرا/i, /خرة/i, /أبو شخة/i, /معفن/i, /معفنة/i, /جربان/i, /ندل/i, /نجس/i, /عاهر/i, /عاهرة/i,
 
   // English profanity & insults
   /\bfuck\w*/i,
@@ -26,6 +30,10 @@ const FORBIDDEN_PATTERNS: (string | RegExp)[] = [
   /\bdumb\b/i,
   /\bfaggot\w*/i,
   /\bnigger\w*/i,
+  /\bporn\w*/i,
+  /\bsex\b/i,
+  /\bboobs\b/i,
+  /\bpussy\b/i
 ];
 
 /**

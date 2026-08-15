@@ -3,12 +3,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   MessageSquare, Send, X, Image as ImageIcon, Paperclip, Mic, MicOff, 
   Square, Play, Pause, Download, Folder, FileText, Music, Crown, Users, 
-  Sparkles, AlertCircle, Search, Filter, RefreshCw, CheckCircle2, ChevronDown, Eye, ShieldAlert
+  Sparkles, AlertCircle, Search, Filter, RefreshCw, CheckCircle2, ChevronDown, Eye, ShieldAlert,
+  Trash2, Pin, PinOff, Smile, Heart, ThumbsUp, Flame, Star, Award, Shield, User, Mail, Calendar, Phone, BookOpen, Clock, Zap
 } from 'lucide-react';
-import { collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, getDocs } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, getDocs, doc, deleteDoc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { containsProfanity, sanitizeText } from '../../utils/profanityFilter';
-
 import { CHAT_ROOMS } from '../../hooks/useChatUnread';
 
 interface ChatRoom {
@@ -28,6 +28,12 @@ export interface ChatMessage {
   senderPhoto?: string;
   senderRole?: 'admin' | 'user';
   text?: string;
+  // Pin feature
+  isPinned?: boolean;
+  pinnedAt?: string;
+  pinnedBy?: string;
+  // Reactions mapping: emoji -> array of user uids/names
+  reactions?: Record<string, string[]>;
   // Attachment fields
   fileUrl?: string;
   fileName?: string;
@@ -37,6 +43,33 @@ export interface ChatMessage {
   audioDuration?: number;
   createdAt: string | any;
 }
+
+interface UserProfileModalData {
+  uid: string;
+  displayName: string;
+  email: string;
+  photoURL?: string;
+  role?: string;
+  phoneNumber?: string;
+  guardianPhone?: string;
+  gradeName?: string;
+  createdAt?: string;
+  lastLoginAt?: string;
+  examsCompletedCount?: number;
+  lessonsCompletedCount?: number;
+  points?: number;
+  averageScore?: number;
+}
+
+const AVAILABLE_REACTIONS = [
+  { emoji: '👍', label: 'إعجاب' },
+  { emoji: '❤️', label: 'حب' },
+  { emoji: '🔥', label: 'حماس' },
+  { emoji: '👏', label: 'تصفيق' },
+  { emoji: '⭐', label: 'نجمة' },
+  { emoji: '💡', label: 'فكرة' },
+  { emoji: '😂', label: 'ضحك' }
+];
 
 interface GeneralChatModalProps {
   isOpen: boolean;
@@ -86,6 +119,13 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
   const [profanityWarning, setProfanityWarning] = useState<string | null>(null);
   const [hasPermissionError, setHasPermissionError] = useState<boolean>(false);
   const [rulesCopied, setRulesCopied] = useState<boolean>(false);
+
+  // Admin Profile Inspector Modal State (Admin Only)
+  const [inspectedUserProfile, setInspectedUserProfile] = useState<UserProfileModalData | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
+
+  // Reaction picker active message id
+  const [reactionPickerMsgId, setReactionPickerMsgId] = useState<string | null>(null);
 
   // Attachment states
   const [attachedFile, setAttachedFile] = useState<{
@@ -187,6 +227,10 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
           senderPhoto: data.senderPhoto || '',
           senderRole: data.senderRole || 'user',
           text: data.text || '',
+          isPinned: !!data.isPinned,
+          pinnedAt: data.pinnedAt || '',
+          pinnedBy: data.pinnedBy || '',
+          reactions: data.reactions || {},
           fileUrl: data.fileUrl || '',
           fileName: data.fileName || '',
           fileType: data.fileType || '',
@@ -230,13 +274,159 @@ service cloud.firestore {
     setTimeout(() => setRulesCopied(false), 3500);
   };
 
+  // Admin Action: Delete message
+  const handleDeleteMessage = async (msgId: string) => {
+    if (!isAdmin) return;
+    if (!window.confirm('هل أنت متأكد من حذف هذه الرسالة نهائياً من الشات؟')) return;
+
+    try {
+      // Delete from Firestore
+      const msgRef = doc(db, 'community_chats', activeRoomId, 'messages', msgId);
+      await deleteDoc(msgRef);
+
+      // Delete locally
+      setMessages(prev => {
+        const updated = prev.filter(m => m.id !== msgId);
+        saveLocalBackupMessages(activeRoomId, updated);
+        return updated;
+      });
+    } catch (err: any) {
+      console.error("Error deleting message:", err);
+      // Delete locally as fallback
+      setMessages(prev => {
+        const updated = prev.filter(m => m.id !== msgId);
+        saveLocalBackupMessages(activeRoomId, updated);
+        return updated;
+      });
+    }
+  };
+
+  // Admin Action: Pin / Unpin message
+  const handleTogglePinMessage = async (msgId: string, currentPinStatus: boolean) => {
+    if (!isAdmin) return;
+
+    const newPinStatus = !currentPinStatus;
+    const nowStr = new Date().toISOString();
+
+    try {
+      const msgRef = doc(db, 'community_chats', activeRoomId, 'messages', msgId);
+      await updateDoc(msgRef, {
+        isPinned: newPinStatus,
+        pinnedAt: newPinStatus ? nowStr : null,
+        pinnedBy: newPinStatus ? (currentUser?.displayName || 'المسؤول') : null
+      });
+
+      // Update state locally
+      setMessages(prev => {
+        const updated = prev.map(m => m.id === msgId ? { ...m, isPinned: newPinStatus } : m);
+        saveLocalBackupMessages(activeRoomId, updated);
+        return updated;
+      });
+    } catch (err: any) {
+      console.warn("Notice updating pin status:", err);
+      setMessages(prev => {
+        const updated = prev.map(m => m.id === msgId ? { ...m, isPinned: newPinStatus } : m);
+        saveLocalBackupMessages(activeRoomId, updated);
+        return updated;
+      });
+    }
+  };
+
+  // Everyone Action: Toggle Reaction (Add or remove reaction)
+  const handleToggleReaction = async (msgId: string, emoji: string) => {
+    if (!currentUser) return;
+
+    const userKey = currentUser.uid || currentUser.email;
+    const targetMsg = messages.find(m => m.id === msgId);
+    if (!targetMsg) return;
+
+    const currentReactions = { ...(targetMsg.reactions || {}) };
+    const currentUsersForEmoji = currentReactions[emoji] ? [...currentReactions[emoji]] : [];
+
+    const hasReacted = currentUsersForEmoji.includes(userKey);
+    let updatedUsersForEmoji: string[];
+
+    if (hasReacted) {
+      updatedUsersForEmoji = currentUsersForEmoji.filter(u => u !== userKey);
+    } else {
+      updatedUsersForEmoji = [...currentUsersForEmoji, userKey];
+    }
+
+    if (updatedUsersForEmoji.length === 0) {
+      delete currentReactions[emoji];
+    } else {
+      currentReactions[emoji] = updatedUsersForEmoji;
+    }
+
+    // Close reaction picker
+    setReactionPickerMsgId(null);
+
+    // Optimistically update UI
+    setMessages(prev => {
+      const updated = prev.map(m => m.id === msgId ? { ...m, reactions: currentReactions } : m);
+      saveLocalBackupMessages(activeRoomId, updated);
+      return updated;
+    });
+
+    try {
+      const msgRef = doc(db, 'community_chats', activeRoomId, 'messages', msgId);
+      await updateDoc(msgRef, {
+        reactions: currentReactions
+      });
+    } catch (err: any) {
+      console.warn("Notice toggling reaction in Firestore:", err);
+    }
+  };
+
+  // Admin Action: Inspect User Profile
+  const handleInspectUserProfile = async (msg: ChatMessage) => {
+    if (!isAdmin) return;
+
+    setIsLoadingProfile(true);
+    setInspectedUserProfile({
+      uid: msg.senderUid,
+      displayName: msg.senderName,
+      email: msg.senderEmail,
+      photoURL: msg.senderPhoto,
+      role: msg.senderRole
+    });
+
+    try {
+      if (msg.senderUid) {
+        const userDocRef = doc(db, 'users', msg.senderUid);
+        const snap = await getDoc(userDocRef);
+        if (snap.exists()) {
+          const uData = snap.data();
+          setInspectedUserProfile(prev => ({
+            ...prev!,
+            displayName: uData.displayName || prev!.displayName,
+            phoneNumber: uData.phoneNumber,
+            guardianPhone: uData.guardianPhone,
+            gradeName: uData.gradeName,
+            createdAt: uData.createdAt,
+            lastLoginAt: uData.lastLoginAt,
+            examsCompletedCount: uData.examsCompletedCount || 0,
+            lessonsCompletedCount: uData.lessonsCompletedCount || 0,
+            points: uData.points || 0,
+            averageScore: uData.averageScore || 0,
+            role: uData.role || prev!.role
+          }));
+        }
+      }
+    } catch (err) {
+      console.warn("Could not fetch extra profile details from firestore:", err);
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
   // Handle Send Message
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!currentUser) return;
     if (!inputText.trim() && !attachedFile) return;
 
-    // Check for profanity and offensive language
+    // Check for profanity, vulgarity, offensive language or insults
     if (containsProfanity(inputText)) {
       setProfanityWarning('⚠️ يُحظر إرسال الألفاظ غير اللائقة أو البذيئة أو الشتم في الشات العام. يرجى الالتزام بالحديث المحترم الراقي.');
       return;
@@ -257,6 +447,8 @@ service cloud.firestore {
       senderPhoto: currentUser.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(currentUser.email)}`,
       senderRole: role,
       text: sanitizeText(inputText.trim()),
+      isPinned: false,
+      reactions: {},
       fileUrl: attachedFile?.url || '',
       fileName: attachedFile?.name || '',
       fileType: attachedFile?.type || '',
@@ -371,6 +563,8 @@ service cloud.firestore {
               text: '🎙️ تسجيل صوتي',
               audioUrl: base64Audio,
               audioDuration: recordingTime,
+              isPinned: false,
+              reactions: {},
               createdAt: new Date().toISOString()
             };
             try {
@@ -443,6 +637,7 @@ service cloud.firestore {
 
   // Compute attached media count for shared files drawer button
   const attachedMediaList = messages.filter(m => m.fileUrl || m.audioUrl);
+  const pinnedMessagesList = messages.filter(m => m.isPinned);
   const imageCount = attachedMediaList.filter(m => m.fileType === 'image').length;
   const docsCount = attachedMediaList.filter(m => m.fileType === 'pdf' || m.fileType === 'doc' || m.fileType === 'file').length;
   const audioCount = attachedMediaList.filter(m => m.audioUrl || m.fileType === 'audio').length;
@@ -489,9 +684,15 @@ service cloud.firestore {
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                   مباشر ومحفوظ
                 </span>
+                {isAdmin && (
+                  <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow">
+                    <Crown className="w-3 h-3 text-slate-950" />
+                    لوحة تحكم المسؤول
+                  </span>
+                )}
               </div>
               <p className="text-xs text-white/80 font-medium hidden sm:block">
-                تواصل وتفاعل مع زملائك - جميع الرسائل والمرفقات محفوظة دائمًا
+                تواصل وتفاعل مع زملائك - مع ميزة التفاعل بالرموز، وتثبيت وحذف الرسائل للمسؤول
               </p>
             </div>
           </div>
@@ -576,10 +777,44 @@ service cloud.firestore {
             <span className="text-amber-300 font-bold">{activeRoom.icon} {activeRoom.name}:</span>
             <span className="text-slate-300 truncate">{activeRoom.description}</span>
           </div>
-          <span className="text-[10px] text-slate-500 shrink-0 font-mono hidden sm:inline">
-            سجل محفوظ دائماً • Firestore DB
-          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            {pinnedMessagesList.length > 0 && (
+              <span className="text-[10px] text-amber-400 bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold">
+                <Pin className="w-3 h-3 fill-amber-400" />
+                {pinnedMessagesList.length} مثبتة
+              </span>
+            )}
+            <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">
+              سجل محفوظ دائماً • Firestore DB
+            </span>
+          </div>
         </div>
+
+        {/* PINNED MESSAGES CAROUSEL / NOTICE BAR */}
+        {pinnedMessagesList.length > 0 && !showMediaLibrary && (
+          <div className="bg-amber-950/40 border-b border-amber-500/30 px-4 py-2 flex items-center gap-2 text-xs text-amber-200 shrink-0">
+            <Pin className="w-4 h-4 text-amber-400 shrink-0 fill-amber-400" />
+            <div className="flex-1 overflow-hidden">
+              <div className="font-extrabold text-amber-300 flex items-center gap-1.5 text-[11px]">
+                <span>رسالة مثبتة بواسطة المسؤول ({pinnedMessagesList[0].senderName}):</span>
+              </div>
+              <p className="text-slate-200 text-xs truncate">
+                {pinnedMessagesList[0].text || (pinnedMessagesList[0].fileUrl ? 'مرفق وسائط' : 'تسجيل صوتي')}
+              </p>
+            </div>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => handleTogglePinMessage(pinnedMessagesList[0].id, true)}
+                className="px-2 py-1 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 text-[10px] font-bold transition cursor-pointer flex items-center gap-1 border border-amber-400/40"
+                title="إلغاء التثبيت"
+              >
+                <PinOff className="w-3 h-3" />
+                <span>إلغاء التثبيت</span>
+              </button>
+            )}
+          </div>
+        )}
 
         {/* MAIN BODY: CHAT MESSAGES OR MEDIA LIBRARY DRAWER */}
         <div className="flex-1 relative overflow-hidden flex flex-col bg-slate-950/40">
@@ -600,122 +835,117 @@ service cloud.firestore {
                   </p>
                 </div>
 
-                {/* Filter Tabs */}
-                <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 w-full sm:w-auto justify-center">
-                  <button
-                    onClick={() => setMediaFilter('all')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                      mediaFilter === 'all' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    الكل ({attachedMediaList.length})
-                  </button>
-                  <button
-                    onClick={() => setMediaFilter('images')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                      mediaFilter === 'images' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    🖼️ الصور ({imageCount})
-                  </button>
-                  <button
-                    onClick={() => setMediaFilter('docs')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                      mediaFilter === 'docs' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    📄 المستندات ({docsCount})
-                  </button>
-                  <button
-                    onClick={() => setMediaFilter('audio')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                      mediaFilter === 'audio' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    🎙️ صوتيات ({audioCount})
-                  </button>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:w-56">
+                    <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
+                    <input
+                      type="text"
+                      placeholder="بحث في المرفقات..."
+                      value={mediaSearchQuery}
+                      onChange={(e) => setMediaSearchQuery(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pr-9 pl-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-400 transition"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Search Bar for Media */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="ابحث عن ملف، اسم الطالب أو عنوان..."
-                  value={mediaSearchQuery}
-                  onChange={(e) => setMediaSearchQuery(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl py-2 px-3 pr-9 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-                />
-                <Search className="w-4 h-4 absolute right-3 top-2.5 text-slate-500 pointer-events-none" />
+              {/* Filters */}
+              <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                <button
+                  onClick={() => setMediaFilter('all')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    mediaFilter === 'all' ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  الكل ({attachedMediaList.length})
+                </button>
+                <button
+                  onClick={() => setMediaFilter('images')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    mediaFilter === 'images' ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  الصور ({imageCount})
+                </button>
+                <button
+                  onClick={() => setMediaFilter('docs')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    mediaFilter === 'docs' ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  المستندات والملفات ({docsCount})
+                </button>
+                <button
+                  onClick={() => setMediaFilter('audio')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    mediaFilter === 'audio' ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  التسجيلات الصوتية ({audioCount})
+                </button>
               </div>
 
               {/* Media Items Grid */}
               {filteredMedia.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-12 text-center text-slate-500 space-y-2 my-auto">
-                  <Folder className="w-12 h-12 text-slate-600 opacity-50" />
-                  <p className="font-bold text-sm text-slate-400">لا توجد مرفقات في هذه الفئة حالياً</p>
-                  <p className="text-xs text-slate-500">قم برفع صورة، ملف PDF أو تسجيل صوتي في الشات ليظهر هنا فوراً</p>
+                <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-slate-500 space-y-2">
+                  <Folder className="w-12 h-12 text-slate-700 stroke-1" />
+                  <p className="text-sm font-bold text-slate-400">لا توجد ملفات أو مرفقات في هذا القسم حتى الآن</p>
+                  <p className="text-xs text-slate-500">شارك الصور والملخصات الصوتية مع زملائك لتظهر هنا</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
                   {filteredMedia.map((item) => (
                     <div 
                       key={item.id}
-                      className="bg-slate-900 border border-slate-800 hover:border-slate-700 p-3 rounded-2xl flex flex-col justify-between space-y-2 transition shadow-sm group"
+                      className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 flex flex-col justify-between space-y-2.5 hover:border-slate-700 transition shadow-lg group"
                     >
-                      {/* Sender Info */}
-                      <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 truncate">
                           <img 
                             src={item.senderPhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.senderEmail)}`} 
                             alt={item.senderName} 
-                            className="w-6 h-6 rounded-full border border-indigo-500 shrink-0"
+                            className="w-6 h-6 rounded-full border border-slate-700 shrink-0 object-cover"
                           />
-                          <span className="font-bold text-slate-200 truncate">{item.senderName}</span>
+                          <span className="text-xs font-bold text-slate-300 truncate">{item.senderName}</span>
                         </div>
-                        <span className="text-[10px] text-slate-500 shrink-0">{item.createdAt}</span>
+                        <span className="text-[10px] text-slate-500 font-mono shrink-0">{item.createdAt}</span>
                       </div>
 
-                      {/* Content Preview */}
                       {item.fileType === 'image' && item.fileUrl && (
-                        <div className="relative rounded-xl overflow-hidden bg-slate-950 border border-slate-800 h-36 flex items-center justify-center">
-                          <img 
-                            src={item.fileUrl} 
-                            alt={item.fileName || 'مرفق صورة'} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                          />
-                          <a 
-                            href={item.fileUrl} 
+                        <div className="relative rounded-xl overflow-hidden bg-slate-950 aspect-video flex items-center justify-center group-hover:ring-1 group-hover:ring-indigo-500/50 transition">
+                          <img src={item.fileUrl} alt={item.fileName || 'صورة'} className="w-full h-full object-cover" />
+                          <a
+                            href={item.fileUrl}
                             download={item.fileName || 'image.png'}
                             target="_blank"
                             rel="noreferrer"
-                            className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2 text-white font-bold text-xs"
+                            className="absolute bottom-2 left-2 p-1.5 rounded-lg bg-slate-950/80 hover:bg-indigo-600 text-white transition backdrop-blur-md shadow cursor-pointer"
+                            title="تحميل الصورة"
                           >
-                            <Download className="w-4 h-4 text-amber-300" />
-                            <span>تحميل الصورة</span>
+                            <Download className="w-4 h-4" />
                           </a>
                         </div>
                       )}
 
-                      {(item.fileType === 'pdf' || item.fileType === 'doc' || item.fileType === 'file') && (
-                        <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-3">
-                          <FileText className="w-8 h-8 text-indigo-400 shrink-0" />
-                          <div className="truncate flex-1">
-                            <p className="text-xs font-bold text-slate-200 truncate">{item.fileName || 'مستند مرفق'}</p>
-                            <span className="text-[10px] text-slate-400">{item.fileSize || 'مستند'}</span>
+                      {(item.fileType === 'pdf' || item.fileType === 'doc' || item.fileType === 'file') && item.fileUrl && (
+                        <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5 truncate">
+                            <FileText className="w-8 h-8 text-indigo-400 shrink-0" />
+                            <div className="truncate">
+                              <p className="text-xs font-bold text-slate-200 truncate">{item.fileName || 'ملف مرفق'}</p>
+                              <span className="text-[10px] text-slate-500">{item.fileSize}</span>
+                            </div>
                           </div>
-                          {item.fileUrl && (
-                            <a
-                              href={item.fileUrl}
-                              download={item.fileName || 'document.pdf'}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="p-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition shrink-0"
-                              title="تحميل الملف"
-                            >
-                              <Download className="w-4 h-4" />
-                            </a>
-                          )}
+                          <a
+                            href={item.fileUrl}
+                            download={item.fileName || 'file'}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="p-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition shrink-0"
+                            title="تحميل"
+                          >
+                            <Download className="w-4 h-4" />
+                          </a>
                         </div>
                       )}
 
@@ -746,7 +976,7 @@ service cloud.firestore {
             /* ========================================================= */
             /* 💬 MESSAGES STREAM VIEW                                   */
             /* ========================================================= */
-            <div className="flex-1 p-3 md:p-5 overflow-y-auto custom-scrollbar space-y-3.5">
+            <div className="flex-1 p-3 md:p-5 overflow-y-auto custom-scrollbar space-y-4">
               
               {/* FIRESTORE RULES NOTICE BANNER WHEN PERMISSION IS DENIED */}
               {hasPermissionError && (
@@ -809,109 +1039,264 @@ service cloud.firestore {
                 messages.map((msg) => {
                   const isMe = currentUser?.uid === msg.senderUid || currentUser?.email === msg.senderEmail;
                   const isMsgAdmin = msg.senderRole === 'admin';
+                  const userKey = currentUser?.uid || currentUser?.email || '';
 
                   return (
                     <div 
                       key={msg.id}
-                      className={`flex gap-2.5 max-w-[88%] md:max-w-[78%] ${
+                      className={`relative group/msg flex gap-2.5 max-w-[90%] md:max-w-[80%] ${
                         isMe ? 'mr-auto flex-row-reverse' : 'ml-auto flex-row'
                       }`}
                     >
                       {/* Avatar */}
-                      <img 
-                        src={msg.senderPhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(msg.senderEmail)}`} 
-                        alt={msg.senderName} 
-                        className="w-8 h-8 rounded-full border border-slate-700 shrink-0 mt-0.5 object-cover"
-                      />
+                      <div className="relative shrink-0 mt-0.5">
+                        <img 
+                          src={msg.senderPhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(msg.senderEmail)}`} 
+                          alt={msg.senderName} 
+                          onClick={() => {
+                            if (isAdmin) handleInspectUserProfile(msg);
+                          }}
+                          className={`w-8 h-8 rounded-full border border-slate-700 object-cover ${
+                            isAdmin ? 'cursor-pointer hover:ring-2 hover:ring-amber-400 transition transform hover:scale-105' : ''
+                          }`}
+                          title={isAdmin ? 'اضغط لعرض ملف الطالب ومستواه التعليمي (خاص بالمسؤول)' : undefined}
+                        />
+                        {isMsgAdmin && (
+                          <span className="absolute -bottom-1 -right-1 p-0.5 bg-amber-400 rounded-full text-slate-950 shadow">
+                            <Crown className="w-2.5 h-2.5 fill-slate-950" />
+                          </span>
+                        )}
+                      </div>
 
-                      {/* Bubble */}
-                      <div className={`flex flex-col space-y-1 ${isMe ? 'items-end' : 'items-start'}`}>
+                      {/* Bubble & Controls */}
+                      <div className={`flex flex-col space-y-1.5 ${isMe ? 'items-end' : 'items-start'}`}>
                         
-                        {/* Header: Name, Role Badge, Time */}
+                        {/* Header: Name (Clickable for Admin), Role Badge, Time, Pin Badge */}
                         <div className="flex items-center gap-1.5 text-[11px] px-1">
-                          <span className="font-bold text-slate-300">{msg.senderName}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (isAdmin) handleInspectUserProfile(msg);
+                            }}
+                            className={`font-bold transition ${
+                              isAdmin 
+                                ? 'text-amber-300 hover:text-amber-200 hover:underline cursor-pointer flex items-center gap-1' 
+                                : 'text-slate-300 cursor-default'
+                            }`}
+                            title={isAdmin ? 'اضغط لعرض ملف الطالب والبيانات التفصيلية (خاص بالمسؤول)' : undefined}
+                          >
+                            <span>{msg.senderName}</span>
+                            {isAdmin && (
+                              <Eye className="w-3 h-3 text-amber-400 opacity-60 group-hover/msg:opacity-100 transition" />
+                            )}
+                          </button>
+
                           {isMsgAdmin && (
                             <span className="bg-amber-400/20 text-amber-300 border border-amber-400/50 text-[9px] font-black px-1.5 py-0.2 rounded-md flex items-center gap-0.5">
                               <Crown className="w-3 h-3 text-amber-400 shrink-0" />
                               أدمن
                             </span>
                           )}
+
+                          {msg.isPinned && (
+                            <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-extrabold px-1.5 py-0.2 rounded-md flex items-center gap-0.5 shadow-sm">
+                              <Pin className="w-2.5 h-2.5 fill-amber-400" />
+                              مثبتة
+                            </span>
+                          )}
+
                           <span className="text-[10px] text-slate-500 font-mono">{msg.createdAt}</span>
                         </div>
 
-                        {/* Content Container */}
-                        <div 
-                          className={`p-3 rounded-2xl space-y-2 text-xs md:text-sm leading-relaxed shadow-md ${
-                            isMe 
-                              ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-tr-none' 
-                              : isMsgAdmin
-                                ? 'bg-slate-900 border border-amber-500/40 text-slate-100 rounded-tl-none shadow-amber-500/5'
-                                : 'bg-slate-900 border border-slate-800 text-slate-100 rounded-tl-none'
-                          }`}
-                        >
-                          {/* Image Attachment */}
-                          {msg.fileType === 'image' && msg.fileUrl && (
-                            <div className="rounded-xl overflow-hidden border border-slate-700/80 max-w-sm">
-                              <img 
-                                src={msg.fileUrl} 
-                                alt={msg.fileName || 'صورة مرفقة'} 
-                                className="w-full max-h-72 object-contain bg-slate-950" 
-                              />
-                            </div>
-                          )}
-
-                          {/* File Attachment */}
-                          {(msg.fileType === 'pdf' || msg.fileType === 'doc' || msg.fileType === 'file') && msg.fileUrl && (
-                            <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-3">
-                              <FileText className="w-7 h-7 text-indigo-400 shrink-0" />
-                              <div className="flex-1 truncate">
-                                <p className="text-xs font-bold text-slate-200 truncate">{msg.fileName || 'ملف مرفق'}</p>
-                                <span className="text-[10px] text-slate-400">{msg.fileSize || 'مستند'}</span>
+                        {/* Content Bubble with Action Toolbar on Hover */}
+                        <div className="relative group/bubble">
+                          <div 
+                            className={`p-3 rounded-2xl space-y-2 text-xs md:text-sm leading-relaxed shadow-md transition-all ${
+                              msg.isPinned ? 'ring-2 ring-amber-400/60 shadow-amber-500/10' : ''
+                            } ${
+                              isMe 
+                                ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-tr-none' 
+                                : isMsgAdmin
+                                  ? 'bg-slate-900 border border-amber-500/40 text-slate-100 rounded-tl-none shadow-amber-500/5'
+                                  : 'bg-slate-900 border border-slate-800 text-slate-100 rounded-tl-none'
+                            }`}
+                          >
+                            {/* Image Attachment */}
+                            {msg.fileType === 'image' && msg.fileUrl && (
+                              <div className="rounded-xl overflow-hidden border border-slate-700/80 max-w-sm">
+                                <img 
+                                  src={msg.fileUrl} 
+                                  alt={msg.fileName || 'صورة مرفقة'} 
+                                  className="w-full max-h-72 object-contain bg-slate-950" 
+                                />
                               </div>
-                              <a 
-                                href={msg.fileUrl} 
-                                download={msg.fileName || 'file'}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="p-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition shrink-0"
-                                title="تحميل"
-                              >
-                                <Download className="w-4 h-4" />
-                              </a>
-                            </div>
-                          )}
+                            )}
 
-                          {/* Voice Note / Audio Player */}
-                          {msg.audioUrl && (
-                            <div className="p-2.5 rounded-xl bg-slate-950/90 border border-slate-800 flex items-center gap-3 min-w-[200px]">
-                              <button
-                                onClick={() => togglePlayAudio(msg.id, msg.audioUrl!)}
-                                className="p-2 rounded-full bg-amber-400 text-slate-950 hover:bg-amber-300 transition shrink-0 cursor-pointer shadow"
-                              >
-                                {playingAudioId === msg.id ? (
-                                  <Pause className="w-4 h-4 fill-slate-950" />
-                                ) : (
-                                  <Play className="w-4 h-4 fill-slate-950 ml-0.5" />
-                                )}
-                              </button>
-                              <div className="flex-1">
-                                <p className="text-[11px] font-bold text-amber-300 flex items-center gap-1">
-                                  <Mic className="w-3 h-3" />
-                                  تسجيل صوتي
-                                </p>
-                                {msg.audioDuration && (
-                                  <span className="text-[9px] text-slate-400 font-mono">{msg.audioDuration} ثانية</span>
-                                )}
+                            {/* File Attachment */}
+                            {(msg.fileType === 'pdf' || msg.fileType === 'doc' || msg.fileType === 'file') && msg.fileUrl && (
+                              <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-3">
+                                <FileText className="w-7 h-7 text-indigo-400 shrink-0" />
+                                <div className="flex-1 truncate">
+                                  <p className="text-xs font-bold text-slate-200 truncate">{msg.fileName || 'ملف مرفق'}</p>
+                                  <span className="text-[10px] text-slate-400">{msg.fileSize || 'مستند'}</span>
+                                </div>
+                                <a 
+                                  href={msg.fileUrl} 
+                                  download={msg.fileName || 'file'}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="p-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition shrink-0"
+                                  title="تحميل"
+                                >
+                                  <Download className="w-4 h-4" />
+                                </a>
                               </div>
-                            </div>
-                          )}
+                            )}
 
-                          {/* Text Content */}
-                          {msg.text && (
-                            <p className="whitespace-pre-wrap break-words">{msg.text}</p>
-                          )}
+                            {/* Voice Note / Audio Player */}
+                            {msg.audioUrl && (
+                              <div className="p-2.5 rounded-xl bg-slate-950/90 border border-slate-800 flex items-center gap-3 min-w-[200px]">
+                                <button
+                                  onClick={() => togglePlayAudio(msg.id, msg.audioUrl!)}
+                                  className="p-2 rounded-full bg-amber-400 text-slate-950 hover:bg-amber-300 transition shrink-0 cursor-pointer shadow"
+                                >
+                                  {playingAudioId === msg.id ? (
+                                    <Pause className="w-4 h-4 fill-slate-950" />
+                                  ) : (
+                                    <Play className="w-4 h-4 fill-slate-950 ml-0.5" />
+                                  )}
+                                </button>
+                                <div className="flex-1">
+                                  <p className="text-[11px] font-bold text-amber-300 flex items-center gap-1">
+                                    <Mic className="w-3 h-3" />
+                                    تسجيل صوتي
+                                  </p>
+                                  {msg.audioDuration && (
+                                    <span className="text-[9px] text-slate-400 font-mono">{msg.audioDuration} ثانية</span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Text Content */}
+                            {msg.text && (
+                              <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+                            )}
+
+                          </div>
+
+                          {/* FLOATING ACTION TOOLBAR (Reactions for everyone, Delete & Pin for Admin only) */}
+                          <div className={`absolute top-0 transform -translate-y-1/2 flex items-center gap-1 bg-slate-900 border border-slate-700/80 rounded-full px-1.5 py-0.5 shadow-xl opacity-0 group-hover/msg:opacity-100 transition z-10 ${
+                            isMe ? 'left-0' : 'right-0'
+                          }`}>
+                            
+                            {/* Add Reaction Button */}
+                            <button
+                              type="button"
+                              onClick={() => setReactionPickerMsgId(reactionPickerMsgId === msg.id ? null : msg.id)}
+                              className="p-1 rounded-full hover:bg-slate-800 text-amber-400 transition cursor-pointer"
+                              title="إضافة تفاعل"
+                            >
+                              <Smile className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* Admin Actions: Pin & Delete & Profile View */}
+                            {isAdmin && (
+                              <>
+                                <span className="w-px h-3 bg-slate-700" />
+                                
+                                {/* Pin Toggle Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleTogglePinMessage(msg.id, !!msg.isPinned)}
+                                  className={`p-1 rounded-full transition cursor-pointer ${
+                                    msg.isPinned 
+                                      ? 'text-amber-400 bg-amber-400/20 hover:bg-amber-400/30' 
+                                      : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800'
+                                  }`}
+                                  title={msg.isPinned ? 'إلغاء تثبيت الرسالة' : 'تثبيت الرسالة في أعلى الشات'}
+                                >
+                                  {msg.isPinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
+                                </button>
+
+                                {/* Delete Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteMessage(msg.id)}
+                                  className="p-1 rounded-full text-rose-400 hover:text-rose-300 hover:bg-rose-950/60 transition cursor-pointer"
+                                  title="حذف الرسالة نهائياً (صلاحية مسؤول)"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+
+                                {/* Inspect Profile Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleInspectUserProfile(msg)}
+                                  className="p-1 rounded-full text-indigo-300 hover:text-indigo-200 hover:bg-indigo-950/60 transition cursor-pointer"
+                                  title="عرض ملف الطالب"
+                                >
+                                  <User className="w-3.5 h-3.5" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+
+                          {/* REACTION PICKER POPUP */}
+                          <AnimatePresence>
+                            {reactionPickerMsgId === msg.id && (
+                              <motion.div
+                                initial={{ scale: 0.8, opacity: 0, y: 5 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.8, opacity: 0, y: 5 }}
+                                className={`absolute -top-11 bg-slate-900 border border-slate-700/90 rounded-full px-2 py-1 flex items-center gap-1.5 shadow-2xl z-20 ${
+                                  isMe ? 'left-0' : 'right-0'
+                                }`}
+                              >
+                                {AVAILABLE_REACTIONS.map(item => (
+                                  <button
+                                    key={item.emoji}
+                                    type="button"
+                                    onClick={() => handleToggleReaction(msg.id, item.emoji)}
+                                    className="hover:scale-125 transition transform text-base p-1 rounded-full hover:bg-slate-800 cursor-pointer"
+                                    title={item.label}
+                                  >
+                                    {item.emoji}
+                                  </button>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
 
                         </div>
+
+                        {/* RENDERED REACTIONS BADGES */}
+                        {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                          <div className={`flex flex-wrap gap-1 mt-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                            {Object.entries(msg.reactions).map(([emoji, rawUsers]) => {
+                              const usersList = Array.isArray(rawUsers) ? rawUsers : [];
+                              if (usersList.length === 0) return null;
+                              const hasReacted = usersList.includes(userKey);
+                              return (
+                                <button
+                                  key={emoji}
+                                  type="button"
+                                  onClick={() => handleToggleReaction(msg.id, emoji)}
+                                  className={`px-2 py-0.5 rounded-full text-xs font-bold transition flex items-center gap-1 border cursor-pointer ${
+                                    hasReacted 
+                                      ? 'bg-indigo-600/30 border-indigo-400/60 text-indigo-200' 
+                                      : 'bg-slate-900/90 hover:bg-slate-800 border-slate-800 text-slate-300'
+                                  }`}
+                                  title={hasReacted ? 'إلغاء التفاعل' : 'تفاعل بهذا الرمز'}
+                                >
+                                  <span>{emoji}</span>
+                                  <span className="text-[10px] font-mono font-black">{usersList.length}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+
                       </div>
                     </div>
                   );
@@ -1072,6 +1457,131 @@ service cloud.firestore {
             </form>
           )}
         </div>
+
+        {/* ========================================================= */}
+        {/* 🛡️ ADMIN ONLY: USER PROFILE INSPECTOR MODAL               */}
+        {/* ========================================================= */}
+        <AnimatePresence>
+          {inspectedUserProfile && (
+            <div className="fixed inset-0 z-60 flex items-center justify-center p-3 bg-slate-950/85 backdrop-blur-sm animate-fadeIn">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 15 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 15 }}
+                className="bg-slate-900 border border-amber-500/50 rounded-3xl p-6 max-w-md w-full shadow-2xl relative space-y-4 text-slate-100"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2 text-amber-400 font-extrabold text-sm">
+                    <Shield className="w-5 h-5 text-amber-400" />
+                    <span>الملف الشخصي للطالب (خاص بالمسؤول)</span>
+                  </div>
+                  <button
+                    onClick={() => setInspectedUserProfile(null)}
+                    className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Profile Card */}
+                <div className="flex items-center gap-4 bg-slate-950/80 p-4 rounded-2xl border border-slate-800">
+                  <img
+                    src={inspectedUserProfile.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(inspectedUserProfile.email)}`}
+                    alt={inspectedUserProfile.displayName}
+                    className="w-16 h-16 rounded-full border-2 border-amber-400 object-cover shadow"
+                  />
+                  <div className="space-y-1">
+                    <h4 className="font-extrabold text-base text-white flex items-center gap-1.5">
+                      <span>{inspectedUserProfile.displayName}</span>
+                      {inspectedUserProfile.role === 'admin' && (
+                        <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.2 rounded-md">
+                          مسؤول
+                        </span>
+                      )}
+                    </h4>
+                    <p className="text-xs text-slate-400 flex items-center gap-1 font-mono">
+                      <Mail className="w-3 h-3 text-slate-500" />
+                      <span>{inspectedUserProfile.email}</span>
+                    </p>
+                    {inspectedUserProfile.gradeName && (
+                      <span className="inline-block bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        {inspectedUserProfile.gradeName}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-2 gap-2.5 text-xs">
+                  <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80 space-y-1">
+                    <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1">
+                      <BookOpen className="w-3 h-3 text-indigo-400" />
+                      الامتحانات المكتملة
+                    </span>
+                    <p className="text-sm font-extrabold text-indigo-300 font-mono">
+                      {inspectedUserProfile.examsCompletedCount ?? 0}
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80 space-y-1">
+                    <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1">
+                      <Zap className="w-3 h-3 text-amber-400" />
+                      مجموع النقاط
+                    </span>
+                    <p className="text-sm font-extrabold text-amber-300 font-mono">
+                      {inspectedUserProfile.points ?? 0} XP
+                    </p>
+                  </div>
+
+                  {inspectedUserProfile.phoneNumber && (
+                    <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80 space-y-1 col-span-2">
+                      <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1">
+                        <Phone className="w-3 h-3 text-emerald-400" />
+                        رقم هاتف الطالب
+                      </span>
+                      <p className="text-xs font-bold text-slate-200 font-mono">
+                        {inspectedUserProfile.phoneNumber}
+                      </p>
+                    </div>
+                  )}
+
+                  {inspectedUserProfile.guardianPhone && (
+                    <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80 space-y-1 col-span-2">
+                      <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1">
+                        <Phone className="w-3 h-3 text-amber-400" />
+                        رقم هاتف ولي الأمر
+                      </span>
+                      <p className="text-xs font-bold text-slate-200 font-mono">
+                        {inspectedUserProfile.guardianPhone}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80 space-y-1 col-span-2">
+                    <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-slate-400" />
+                      معرّف الحساب (UID)
+                    </span>
+                    <p className="text-[10px] text-slate-400 font-mono truncate">
+                      {inspectedUserProfile.uid || 'غير محدد'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Footer Action */}
+                <button
+                  type="button"
+                  onClick={() => setInspectedUserProfile(null)}
+                  className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition cursor-pointer"
+                >
+                  إغلاق نافذة الملف
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
       </motion.div>
     </div>
   );
