@@ -24,6 +24,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 // server.ts
 var import_express = __toESM(require("express"), 1);
 var import_path = __toESM(require("path"), 1);
+var import_fs = __toESM(require("fs"), 1);
 var import_dotenv = __toESM(require("dotenv"), 1);
 var import_genai = require("@google/genai");
 var import_cors = __toESM(require("cors"), 1);
@@ -247,8 +248,14 @@ app.post("/api/generate-flashcards", async (req, res) => {
     res.status(500).json({ cards: [] });
   }
 });
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", service: "4U Educational Platform Backend" });
+});
 app.get("/api/fetch-lesson-text", async (req, res) => {
   const lessonUrl = req.query.url;
+  const title = req.query.title || "";
+  const subject = req.query.subject || "\u0627\u0644\u0631\u064A\u0627\u0636\u064A\u0627\u062A \u0648\u0627\u0644\u0639\u0644\u0648\u0645";
+  const grade = req.query.grade || "";
   if (!lessonUrl) {
     return res.status(400).json({ error: "URL is required" });
   }
@@ -298,7 +305,7 @@ app.get("/api/fetch-lesson-text", async (req, res) => {
           try {
             const ai = getAiClient();
             const base64 = buffer.toString("base64");
-            const promptText = "\u0623\u0646\u062A \u0627\u0644\u0645\u0639\u0644\u0645 \u0627\u0644\u0627\u0641\u062A\u0631\u0627\u0636\u064A \u0627\u0644\u0630\u0643\u064A \u0644\u0645\u0627\u062F\u0629 \u0627\u0644\u0639\u0644\u0648\u0645. \u0627\u0642\u0631\u0623 \u0645\u0644\u0641 \u0634\u0631\u062D \u0627\u0644\u062F\u0631\u0633 \u0627\u0644\u0645\u0631\u0641\u0642 \u0648\u0627\u0634\u0631\u062D \u0645\u062D\u062A\u0648\u0627\u0647 \u0628\u0627\u0644\u062A\u0641\u0635\u064A\u0644 \u0628\u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0639\u0631\u0628\u064A\u0629 \u0627\u0644\u0641\u0635\u062D\u0649 \u0634\u0631\u062D\u0627\u064B \u0648\u0627\u0641\u064A\u0627\u064B \u0648\u0645\u0645\u062A\u0639\u0627\u064B \u0648\u0645\u0628\u0633\u0651\u0637\u0627\u064B \u0644\u0644\u0637\u0644\u0627\u0628 \u0648\u0643\u0623\u0646\u0643 \u062A\u0644\u0642\u064A \u062F\u0631\u0633\u0627\u064B \u0635\u0648\u062A\u064A\u0627\u064B \u0631\u0627\u0626\u0639\u0627\u064B \u0641\u064A \u0627\u0644\u0641\u0635\u0644. \u0627\u0643\u062A\u0628 \u0627\u0644\u0634\u0631\u062D \u0641\u064A \u0634\u0643\u0644 \u0641\u0642\u0631\u0627\u062A \u0646\u0635\u064A\u0629 \u0645\u062A\u0635\u0644\u0629 \u0648\u0648\u0627\u0636\u062D\u0629 \u062C\u062F\u0627\u064B \u0644\u062A\u062A\u0645 \u0642\u0631\u0627\u0621\u062A\u0647\u0627 \u0628\u0648\u0627\u0633\u0637\u0629 \u0642\u0627\u0631\u0626 \u0627\u0644\u0646\u0635\u0648\u0635 \u0627\u0644\u0635\u0648\u062A\u064A (\u0644\u0627 \u062A\u0633\u062A\u062E\u062F\u0645 \u0623\u0628\u062F\u0627\u064B \u062C\u062F\u0627\u0648\u0644 \u0623\u0648 \u0631\u0645\u0648\u0632\u0627\u064B \u063A\u0631\u064A\u0628\u0629 \u0623\u0648 \u0645\u0639\u0627\u062F\u0644\u0627\u062A \u0645\u0639\u0642\u062F\u0629\u060C \u0641\u0642\u0637 \u0644\u063A\u0629 \u0639\u0631\u0628\u064A\u0629 \u0641\u0635\u062D\u0649 \u062C\u0645\u064A\u0644\u0629 \u0645\u0634\u0631\u0648\u062D\u0629 \u0644\u0644\u0637\u0644\u0627\u0628). \u0631\u0643\u0632 \u0639\u0644\u0649 \u062A\u0641\u0633\u064A\u0631 \u0627\u0644\u0645\u0641\u0627\u0647\u064A\u0645 \u0627\u0644\u0641\u064A\u0632\u064A\u0627\u0626\u064A\u0629 \u0648\u0627\u0644\u0642\u0648\u0627\u0646\u064A\u0646 \u0628\u0634\u0643\u0644 \u0644\u0641\u0638\u064A \u0648\u0627\u0636\u062D \u0648\u0633\u0644\u0633 \u064A\u0633\u062A\u0637\u064A\u0639 \u0627\u0644\u0637\u0627\u0644\u0628 \u0627\u0633\u062A\u064A\u0639\u0627\u0628\u0647 \u0633\u0645\u0627\u0639\u064A\u0627\u064B.";
+            const promptText = `\u0623\u0646\u062A \u0627\u0644\u0645\u0639\u0644\u0645 \u0627\u0644\u0627\u0641\u062A\u0631\u0627\u0636\u064A \u0627\u0644\u0630\u0643\u064A \u0627\u0644\u0645\u062A\u0645\u064A\u0632 \u0644\u0645\u0627\u062F\u0629 ${subject} ${grade ? `(${grade})` : ""}. \u0627\u0642\u0631\u0623 \u0645\u0644\u0641 \u0634\u0631\u062D \u0627\u0644\u062F\u0631\u0633 \u0627\u0644\u0645\u0631\u0641\u0642 ${title ? `(\u0639\u0646\u0648\u0627\u0646 \u0627\u0644\u062F\u0631\u0633: "${title}")` : ""} \u0648\u0627\u0634\u0631\u062D \u0645\u062D\u062A\u0648\u0627\u0647 \u0628\u0627\u0644\u062A\u0641\u0635\u064A\u0644 \u0628\u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0639\u0631\u0628\u064A\u0629 \u0627\u0644\u0641\u0635\u062D\u0649 \u0634\u0631\u062D\u0627\u064B \u0648\u0627\u0641\u064A\u0627\u064B \u0648\u0645\u0645\u062A\u0639\u0627\u064B \u0648\u0645\u0628\u0633\u0651\u0637\u0627\u064B \u0644\u0644\u0637\u0644\u0627\u0628 \u0648\u0643\u0623\u0646\u0643 \u062A\u0644\u0642\u064A \u062F\u0631\u0633\u0627\u064B \u0635\u0648\u062A\u064A\u0627\u064B \u0631\u0627\u0626\u0639\u0627\u064B \u0641\u064A \u0627\u0644\u0641\u0635\u0644. \u0627\u0643\u062A\u0628 \u0627\u0644\u0634\u0631\u062D \u0641\u064A \u0634\u0643\u0644 \u0641\u0642\u0631\u0627\u062A \u0646\u0635\u064A\u0629 \u0645\u062A\u0635\u0644\u0629 \u0648\u0648\u0627\u0636\u062D\u0629 \u062C\u062F\u0627\u064B \u0644\u062A\u062A\u0645 \u0642\u0631\u0627\u0621\u062A\u0647\u0627 \u0628\u0648\u0627\u0633\u0637\u0629 \u0642\u0627\u0631\u0626 \u0627\u0644\u0646\u0635\u0648\u0635 \u0627\u0644\u0635\u0648\u062A\u064A (\u0644\u0627 \u062A\u0633\u062A\u062E\u062F\u0645 \u0623\u0628\u062F\u0627\u064B \u062C\u062F\u0627\u0648\u0644 \u0623\u0648 \u0631\u0645\u0648\u0632\u0627\u064B \u063A\u0631\u064A\u0628\u0629 \u0623\u0648 \u0645\u0639\u0627\u062F\u0644\u0627\u062A \u0645\u0639\u0642\u062F\u0629\u060C \u0641\u0642\u0637 \u0644\u063A\u0629 \u0639\u0631\u0628\u064A\u0629 \u0641\u0635\u062D\u0649 \u062C\u0645\u064A\u0644\u0629 \u0645\u0634\u0631\u0648\u062D\u0629 \u0644\u0644\u0637\u0644\u0627\u0628). \u0631\u0643\u0632 \u0639\u0644\u0649 \u062A\u0641\u0633\u064A\u0631 \u0627\u0644\u0645\u0641\u0627\u0647\u064A\u0645 \u0627\u0644\u0623\u0633\u0627\u0633\u064A\u0629 \u0648\u0627\u0644\u0642\u0648\u0627\u0646\u064A\u0646 \u0648\u0627\u0644\u062E\u0637\u0648\u0627\u062A \u0628\u0634\u0643\u0644 \u0644\u0641\u0638\u064A \u0648\u0627\u0636\u062D \u0648\u0633\u0644\u0633 \u064A\u0633\u062A\u0637\u064A\u0639 \u0627\u0644\u0637\u0627\u0644\u0628 \u0627\u0633\u062A\u064A\u0639\u0627\u0628\u0647 \u0633\u0645\u0627\u0639\u064A\u0627\u064B.`;
             const genRes = await generatePdfContentWithFallbackAndRetry(ai, base64, promptText);
             if (genRes.text && genRes.text.trim().length > 100) {
               extractedText = genRes.text;
@@ -328,6 +335,40 @@ app.get("/api/fetch-lesson-text", async (req, res) => {
     });
   }
 });
+function transformHtmlForSocialPreviews(rawHtml, req) {
+  const forwardedProto = req.headers["x-forwarded-proto"] || "";
+  const protocol = forwardedProto.split(",")[0].trim() || (req.secure ? "https" : "http");
+  const forwardedHost = req.headers["x-forwarded-host"] || "";
+  const host = forwardedHost.split(",")[0].trim() || req.headers.host || "localhost:3000";
+  const currentBaseUrl = `${protocol}://${host}`;
+  const currentFullUrl = `${currentBaseUrl}${req.originalUrl || req.url || "/"}`;
+  return rawHtml.replace(/https:\/\/hesham-afandi\.github\.io\/4U\/og-image\.jpg/g, `${currentBaseUrl}/og-image.jpg`).replace(/https:\/\/hesham-afandi\.github\.io\/4U\/og-logo\.jpg/g, `${currentBaseUrl}/og-logo.jpg`).replace(/https:\/\/hesham-afandi\.github\.io\/4U\//g, `${currentBaseUrl}/`).replace(/https:\/\/hesham-afandi\.github\.io\/4U/g, currentBaseUrl).replace(/<meta property="og:url" content="[^"]*"/, `<meta property="og:url" content="${currentFullUrl}"`).replace(/<meta name="twitter:url" content="[^"]*"/, `<meta name="twitter:url" content="${currentFullUrl}"`);
+}
+var publicDir = import_path.default.join(process.cwd(), "public");
+app.use(import_express.default.static(publicDir, {
+  maxAge: "1d",
+  setHeaders: (res, filePath) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) {
+      res.setHeader("Content-Type", "image/jpeg");
+    } else if (filePath.endsWith(".png")) {
+      res.setHeader("Content-Type", "image/png");
+    } else if (filePath.endsWith(".svg")) {
+      res.setHeader("Content-Type", "image/svg+xml");
+    }
+  }
+}));
+app.get("/og-preview", (req, res) => {
+  const indexPath = import_path.default.join(process.cwd(), "index.html");
+  if (import_fs.default.existsSync(indexPath)) {
+    const rawHtml = import_fs.default.readFileSync(indexPath, "utf8");
+    const transformed = transformHtmlForSocialPreviews(rawHtml, req);
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    return res.send(transformed);
+  }
+  res.redirect("/");
+});
 async function initServer() {
   if (process.env.NODE_ENV !== "production") {
     console.log("Starting server in DEVELOPMENT mode with Vite Middleware...");
@@ -336,13 +377,42 @@ async function initServer() {
       server: { middlewareMode: true },
       appType: "spa"
     });
+    app.use(async (req, res, next) => {
+      if (req.path.startsWith("/api") || req.path.startsWith("/@") || req.path.startsWith("/src") || req.path.includes(".")) {
+        return next();
+      }
+      try {
+        const indexPath = import_path.default.join(process.cwd(), "index.html");
+        if (import_fs.default.existsSync(indexPath)) {
+          let rawHtml = import_fs.default.readFileSync(indexPath, "utf8");
+          rawHtml = await vite.transformIndexHtml(req.originalUrl || req.url, rawHtml);
+          const transformed = transformHtmlForSocialPreviews(rawHtml, req);
+          res.setHeader("Content-Type", "text/html; charset=utf-8");
+          return res.status(200).send(transformed);
+        }
+      } catch (e) {
+        return next();
+      }
+      next();
+    });
     app.use(vite.middlewares);
   } else {
     console.log("Starting server in PRODUCTION mode...");
     const distPath = import_path.default.join(process.cwd(), "dist");
-    app.use(import_express.default.static(distPath));
+    app.use(import_express.default.static(distPath, {
+      setHeaders: (res) => {
+        res.setHeader("Access-Control-Allow-Origin", "*");
+      }
+    }));
     app.get("*", (req, res) => {
-      res.sendFile(import_path.default.join(distPath, "index.html"));
+      const indexPath = import_path.default.join(distPath, "index.html");
+      if (import_fs.default.existsSync(indexPath)) {
+        const rawHtml = import_fs.default.readFileSync(indexPath, "utf8");
+        const transformed = transformHtmlForSocialPreviews(rawHtml, req);
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        return res.send(transformed);
+      }
+      res.sendFile(indexPath);
     });
   }
   app.listen(PORT, "0.0.0.0", () => {
