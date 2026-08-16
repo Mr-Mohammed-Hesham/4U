@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
 import cors from "cors";
@@ -405,6 +406,49 @@ app.get("/api/fetch-lesson-text", async (req, res) => {
   }
 });
 
+// Helper function to inject the dynamic host URL for WhatsApp and social media bots
+function transformHtmlForSocialPreviews(rawHtml: string, req: express.Request): string {
+  const forwardedProto = (req.headers['x-forwarded-proto'] as string) || '';
+  const protocol = forwardedProto.split(',')[0].trim() || (req.secure ? 'https' : 'http');
+  const forwardedHost = (req.headers['x-forwarded-host'] as string) || '';
+  const host = forwardedHost.split(',')[0].trim() || req.headers.host;
+  
+  if (!host) return rawHtml;
+  
+  const currentBaseUrl = `${protocol}://${host}`;
+  return rawHtml
+    .replace(/https:\/\/hesham-afandi\.github\.io\/4U\/og-image\.jpg/g, `${currentBaseUrl}/og-image.jpg`)
+    .replace(/https:\/\/hesham-afandi\.github\.io\/4U\/og-logo\.jpg/g, `${currentBaseUrl}/og-logo.jpg`)
+    .replace(/https:\/\/hesham-afandi\.github\.io\/4U\//g, `${currentBaseUrl}/`);
+}
+
+// Serve public directory assets directly with explicit content types for og-image / favicons
+const publicDir = path.join(process.cwd(), "public");
+app.use(express.static(publicDir, {
+  maxAge: "1d",
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) {
+      res.setHeader("Content-Type", "image/jpeg");
+    } else if (filePath.endsWith(".png")) {
+      res.setHeader("Content-Type", "image/png");
+    } else if (filePath.endsWith(".svg")) {
+      res.setHeader("Content-Type", "image/svg+xml");
+    }
+  }
+}));
+
+// Route to serve dynamic social preview index.html specifically for crawlers and root requests
+app.get("/og-preview", (req, res) => {
+  const indexPath = path.join(process.cwd(), "index.html");
+  if (fs.existsSync(indexPath)) {
+    const rawHtml = fs.readFileSync(indexPath, "utf8");
+    const transformed = transformHtmlForSocialPreviews(rawHtml, req);
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    return res.send(transformed);
+  }
+  res.redirect("/");
+});
+
 // Start dev server with Vite middleware if in development, else serve static production files
 async function initServer() {
   if (process.env.NODE_ENV !== "production") {
@@ -414,13 +458,43 @@ async function initServer() {
       server: { middlewareMode: true },
       appType: "spa",
     });
+
+    // Custom middleware to inject dynamic OG tags for HTML responses
+    app.use(async (req, res, next) => {
+      const url = req.originalUrl;
+      const isBot = /whatsapp|facebookexternalhit|twitterbot|telegrambot|slackbot|discordbot|linkedinbot/i.test(
+        req.headers['user-agent'] || ''
+      );
+
+      if (isBot || url === "/" || url.startsWith("/?")) {
+        try {
+          const indexPath = path.join(process.cwd(), "index.html");
+          let rawHtml = fs.readFileSync(indexPath, "utf8");
+          rawHtml = await vite.transformIndexHtml(url, rawHtml);
+          const transformed = transformHtmlForSocialPreviews(rawHtml, req);
+          res.setHeader("Content-Type", "text/html; charset=utf-8");
+          return res.status(200).end(transformed);
+        } catch (e) {
+          return next();
+        }
+      }
+      next();
+    });
+
     app.use(vite.middlewares);
   } else {
     console.log("Starting server in PRODUCTION mode...");
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
+      const indexPath = path.join(distPath, "index.html");
+      if (fs.existsSync(indexPath)) {
+        const rawHtml = fs.readFileSync(indexPath, "utf8");
+        const transformed = transformHtmlForSocialPreviews(rawHtml, req);
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        return res.send(transformed);
+      }
+      res.sendFile(indexPath);
     });
   }
 
