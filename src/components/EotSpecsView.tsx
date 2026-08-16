@@ -39,18 +39,20 @@ import {
 
 interface EotSpecsViewProps {
   onSwitchToCurriculum?: () => void;
+  language?: 'ar' | 'en';
 }
 
 export type SubjectType = 'math' | 'physics' | 'chemistry' | 'biology';
 
 const SUBJECT_OPTIONS = [
-  { id: 'math', name: 'الرياضيات', icon: BookOpen, color: 'from-indigo-600 to-blue-600' },
-  { id: 'physics', name: 'الفيزياء', icon: Atom, color: 'from-amber-500 to-orange-600' },
-  { id: 'chemistry', name: 'الكيمياء', icon: FlaskConical, color: 'from-emerald-500 to-teal-600' },
-  { id: 'biology', name: 'الأحياء', icon: Dna, color: 'from-rose-500 to-pink-600' },
+  { id: 'math', name: 'الرياضيات', nameEn: 'Mathematics', icon: BookOpen, color: 'from-indigo-600 to-blue-600' },
+  { id: 'physics', name: 'الفيزياء', nameEn: 'Physics', icon: Atom, color: 'from-amber-500 to-orange-600' },
+  { id: 'chemistry', name: 'الكيمياء', nameEn: 'Chemistry', icon: FlaskConical, color: 'from-emerald-500 to-teal-600' },
+  { id: 'biology', name: 'الأحياء', nameEn: 'Biology', icon: Dna, color: 'from-rose-500 to-pink-600' },
 ];
 
-export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum }) => {
+export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum, language = 'ar' }) => {
+  const isEn = language === 'en';
   // Navigation View Mode: 'selection' (step 1) or 'exam' (step 2)
   const [viewMode, setViewMode] = useState<'selection' | 'exam'>('selection');
 
@@ -202,7 +204,7 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum
                     Mr. Mohammed Hesham
                   </span>
                   <span className="bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full text-xs font-bold border border-emerald-500/30">
-                    العام الدراسي 2026-2027
+                    {isEn ? 'Academic Year 2026-2027' : 'العام الدراسي 2026-2027'}
                   </span>
                   {onSwitchToCurriculum && (
                     <button
@@ -210,17 +212,17 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum
                       className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1 rounded-full transition flex items-center gap-1 cursor-pointer"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
-                      <span>قسم المناهج والدروس 📚</span>
+                      <span>{isEn ? 'Curriculum & Lessons 📚' : 'قسم المناهج والدروس 📚'}</span>
                     </button>
                   )}
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
-                  منصة تحديد ورؤية الهياكل الامتحانية
+                  {isEn ? 'EOT Exam Specifications & Solved Questions Bank' : 'منصة تحديد ورؤية الهياكل الامتحانية'}
                 </h2>
 
                 <p className="text-slate-300 text-xs sm:text-sm leading-relaxed max-w-2xl">
-                  يرجى تحديد المادة، والصف، والمسار التعليمي، والفصل الدراسي للانتقال مباشرة إلى صفحة الامتحان وبنك الأسئلة المحلولة بالكامل.
+                  {isEn ? 'Please select the subject, grade, stream, and term to access the solved questions bank directly.' : 'يرجى تحديد المادة، والصف، والمسار التعليمي، والفصل الدراسي للانتقال مباشرة إلى صفحة الامتحان وبنك الأسئلة المحلولة بالكامل.'}
                 </p>
 
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs pt-3 border-t border-slate-800/80 text-slate-300 font-mono">
@@ -240,12 +242,12 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-lg space-y-6">
               <h3 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
                 <Filter className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                قائمة اختيار المادة والصف والمسار
+                {isEn ? 'Select Subject, Grade, and Stream' : 'قائمة اختيار المادة والصف والمسار'}
               </h3>
 
               {/* 1. Subjects Grid */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-600 dark:text-slate-300">اختر المادة الدراسية:</label>
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-300">{isEn ? 'Select Subject:' : 'اختر المادة الدراسية:'}</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {SUBJECT_OPTIONS.map((sub) => {
                     const IconComp = sub.icon;
@@ -268,7 +270,7 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum
                           <IconComp className="w-5 h-5" />
                         </div>
                         <div>
-                          <span className="block font-black text-sm">{sub.name}</span>
+                          <span className="block font-black text-sm">{isEn ? (sub as any).nameEn || sub.name : sub.name}</span>
                         </div>
                       </button>
                     );
@@ -280,45 +282,45 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                 {/* Grade Select */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-300">الصف الدراسي</label>
+                  <label className="text-xs font-bold text-slate-600 dark:text-slate-300">{isEn ? 'Academic Grade' : 'الصف الدراسي'}</label>
                   <select
                     value={selectedGrade}
                     onChange={(e) => setSelectedGrade(e.target.value as GradeType)}
                     className="bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
                   >
-                    <option value="12">الصف 12 (Grade 12)</option>
-                    <option value="11">الصف 11 (Grade 11)</option>
-                    <option value="10">الصف 10 (Grade 10)</option>
-                    <option value="9">الصف 9 (Grade 9)</option>
+                    <option value="12">{isEn ? 'Grade 12' : 'الصف 12 (Grade 12)'}</option>
+                    <option value="11">{isEn ? 'Grade 11' : 'الصف 11 (Grade 11)'}</option>
+                    <option value="10">{isEn ? 'Grade 10' : 'الصف 10 (Grade 10)'}</option>
+                    <option value="9">{isEn ? 'Grade 9' : 'الصف 9 (Grade 9)'}</option>
                   </select>
                 </div>
 
                 {/* Stream Select */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-300">المسار التعليمي</label>
+                  <label className="text-xs font-bold text-slate-600 dark:text-slate-300">{isEn ? 'Academic Stream' : 'المسار التعليمي'}</label>
                   <select
                     value={selectedStream}
                     onChange={(e) => setSelectedStream(e.target.value as StreamType)}
                     className="bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
                   >
-                    <option value="advanced">المسار المتقدم (Advanced)</option>
-                    <option value="advanced_bridge">متقدم بريدج (Advanced Bridge)</option>
-                    <option value="advanced_inspire">متقدم انسباير (Advanced Inspire)</option>
-                    <option value="general">المسار العام (General)</option>
+                    <option value="advanced">{isEn ? 'Advanced Stream' : 'المسار المتقدم (Advanced)'}</option>
+                    <option value="advanced_bridge">{isEn ? 'Advanced Bridge' : 'متقدم بريدج (Advanced Bridge)'}</option>
+                    <option value="advanced_inspire">{isEn ? 'Advanced Inspire' : 'متقدم انسباير (Advanced Inspire)'}</option>
+                    <option value="general">{isEn ? 'General Stream' : 'المسار العام (General)'}</option>
                   </select>
                 </div>
 
                 {/* Term Select */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-300">الفصل الدراسي</label>
+                  <label className="text-xs font-bold text-slate-600 dark:text-slate-300">{isEn ? 'Term' : 'الفصل الدراسي'}</label>
                   <select
                     value={selectedTerm}
                     onChange={(e) => setSelectedTerm(e.target.value as TermType)}
                     className="bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
                   >
-                    <option value="EOT1">الفصل الأول (EOT1)</option>
-                    <option value="EOT2">الفصل الثاني (EOT2)</option>
-                    <option value="EOT3">الفصل الثالث (EOT3)</option>
+                    <option value="EOT1">{isEn ? 'Term 1 (EOT1)' : 'الفصل الأول (EOT1)'}</option>
+                    <option value="EOT2">{isEn ? 'Term 2 (EOT2)' : 'الفصل الثاني (EOT2)'}</option>
+                    <option value="EOT3">{isEn ? 'Term 3 (EOT3)' : 'الفصل الثالث (EOT3)'}</option>
                   </select>
                 </div>
               </div>
@@ -334,11 +336,11 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum
                     {isLoading ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>جاري التحميل...</span>
+                        <span>{isEn ? 'Loading...' : 'جاري التحميل...'}</span>
                       </>
                     ) : (
                       <>
-                        <span>الانتقال لصفحة الامتحان وهيكل المادة 🚀</span>
+                        <span>{isEn ? 'View Exam Specifications & Solved Questions 🚀' : 'الانتقال لصفحة الامتحان وهيكل المادة 🚀'}</span>
                         <ArrowLeft className="w-5 h-5" />
                       </>
                     )}
@@ -346,7 +348,7 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum
                 ) : (
                   <div className="text-center space-y-3 py-2">
                     <span className="text-xs font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-200 px-4 py-1.5 rounded-full border border-amber-200 dark:border-amber-800 inline-block">
-                      قريبا إن شاء الله سيتوفر الإمتحان
+                      {isEn ? 'Exam specs coming soon' : 'قريبا إن شاء الله سيتوفر الإمتحان'}
                     </span>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                       هيكل هذا الصف والمادة قيد الرفع والتدقيق النهائي. يمكنك اختيار إحدى المواد المتاحة حالياً للبدء فوراً:
