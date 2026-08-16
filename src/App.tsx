@@ -37,6 +37,7 @@ import {
 import { WeeklyStudyPlanner } from './components/layout';
 import { STUDY_QUOTES } from './data/quotes';
 import { extractTextFromLessonUrl } from './utils/pdfParser';
+import { generateComprehensiveSpokenLessonLecture, mathToSpokenArabicText } from './utils/lessonVoiceLectureEngine';
 import { getEnglishSubjectName, getEnglishGradeName, getEnglishTermName, getEnglishStreamName } from './utils/language';
 import { EotSpecsView } from './components/EotSpecsView';
 import { SatView } from './components/SatView';
@@ -966,26 +967,20 @@ export default function App() {
 
   const getLessonTextToRead = (lesson: any): string => {
     if (!lesson) return '';
-    let text = `${lesson.title || ''}.\n`;
-    if (lesson.content?.intro) {
-      text += `${lesson.content.intro}\n`;
-    }
-    if (lesson.content?.sections && Array.isArray(lesson.content.sections)) {
-      lesson.content.sections.forEach((sec: any) => {
-        if (sec.title) text += `${sec.title}.\n`;
-        if (typeof sec.content === 'string') {
-          text += `${sec.content}\n`;
-        } else if (Array.isArray(sec.content)) {
-          text += `${sec.content.join('\n')}\n`;
-        }
-      });
-    }
-    return text;
+    const gradeName = appState.grade?.name || '';
+    const subjectName = appState.subject?.title || appState.subject?.name || 'الرياضيات والعلوم';
+    const unitTitle = appState.unit?.title || '';
+    
+    return generateComprehensiveSpokenLessonLecture(lesson, {
+      grade: gradeName,
+      subject: subjectName,
+      unitTitle: unitTitle
+    });
   };
 
   const getDetailedLessonExplanationText = async (lesson: any): Promise<string> => {
     if (!lesson) return '';
-    const cacheKey = `4u_tts_v3_${lesson.id || ''}_${encodeURIComponent(lesson.lessonUrl || lesson.title || '')}`;
+    const cacheKey = `4u_tts_v4_${lesson.id || ''}_${encodeURIComponent(lesson.lessonUrl || lesson.title || '')}`;
     
     // Step 0: Check client-side persistent cache (localStorage) for instant 0ms playback
     try {
@@ -1004,7 +999,7 @@ export default function App() {
     const subject = appState.subject?.title || appState.subject?.name || 'العلوم والرياضيات';
     const grade = appState.grade?.name || '';
 
-    // Step 1: Try the Cloud Run backend servers with automatic multi-host fallback (Gemini Visual OCR on PDFs)
+    // Step 1: Try the Cloud Run backend servers with fast timeout (Gemini Visual OCR on PDFs)
     if (lesson.lessonUrl) {
       const targetQuery = `?url=${encodeURIComponent(lesson.lessonUrl)}&title=${encodeURIComponent(title)}&subject=${encodeURIComponent(subject)}&grade=${encodeURIComponent(grade)}`;
       const serverCandidates = [
@@ -1013,15 +1008,18 @@ export default function App() {
         `${BACKUP_CLOUD_RUN_BACKEND}/api/fetch-lesson-text${targetQuery}`
       ];
 
-      // Remove duplicate candidates
       const uniqueCandidates = Array.from(new Set(serverCandidates));
 
       for (const endpoint of uniqueCandidates) {
         try {
-          console.log("[TTS Engine] Requesting backend explanation parser from:", endpoint);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2500);
+          
           const response = await fetch(endpoint, {
-            headers: { 'Accept': 'application/json' }
-          });
+            headers: { 'Accept': 'application/json' },
+            signal: controller.signal
+          }).finally(() => clearTimeout(timeoutId));
+
           if (response.ok) {
             const data = await response.json();
             if (data.text && data.text.trim().length > 100) {
@@ -1036,13 +1034,12 @@ export default function App() {
             }
           }
         } catch (backendErr) {
-          console.warn(`[TTS Engine] Backend endpoint ${endpoint} failed or unreachable:`, backendErr);
+          // Silent fallback - will proceed to client-side engine
         }
       }
 
       // Step 2: Try client-side extraction (PDF.js / HTML parser) as backup
       try {
-        console.log("[TTS Engine] Extracting text client-side directly...");
         const clientExtracted = await extractTextFromLessonUrl(lesson.lessonUrl);
         if (clientExtracted && clientExtracted.trim().length > 100) {
           textToRead = clientExtracted;
@@ -1053,13 +1050,12 @@ export default function App() {
           return textToRead;
         }
       } catch (clientErr) {
-        console.warn("[TTS Engine] Client-side extraction failed:", clientErr);
+        // Continue to next step
       }
 
-      // Step 2.5: Direct Client-Side PDF OCR using Custom Gemini API key (extremely robust for scanned PDFs on GitHub Pages!)
+      // Step 2.5: Direct Client-Side PDF OCR using Custom Gemini API key
       if (hasCustomKey) {
         try {
-          console.log("[TTS Engine] Client-side text extracted is empty or minimal. Attempting direct custom Gemini API key OCR on PDF file...");
           const pdfRes = await fetch(lesson.lessonUrl);
           if (pdfRes.ok) {
             const arrayBuffer = await pdfRes.arrayBuffer();
@@ -1111,14 +1107,10 @@ export default function App() {
       }
     }
 
-    // Step 3: If still empty, use AI to dynamically generate a comprehensive multi-paragraph explanation
-    try {
-      console.log("[TTS Engine] Lesson file is scanned or empty. Generating rich comprehensive lesson lecture on the fly...");
-      const prompt = `أنت المعلم الافتراضي الذكي المتميز لمادة ${subject} للصف ${grade}. من فضلك اشرح بالتفصيل وبشكل وافٍ وممتع جداً درس: "${title}". اكتب الشرح في شكل فقرات نصية متصلة وواضحة جداً باللغة العربية الفصحى المبسطة لتتم قراءتها بوضوح وسلاسة بواسطة قارئ النصوص الصوتي (لا تستخدم أبداً جداول أو رموزاً غريبة أو معادلات معقدة، فقط لغة عربية ممتعة وسلسة تشرح المفاهيم ليفهمها الطالب تماماً). ركز على تبسيط المفاهيم الفيزيائية أو الرياضية بذكاء وتشويق.`;
-
-      // Sub-step 3.1: Try direct Custom Gemini API key first if provided
-      if (hasCustomKey) {
-        console.log("[TTS Engine] Requesting direct custom Gemini API Key prompt generation...");
+    // Step 3: Try custom Gemini key for direct smart lecture if provided
+    if (hasCustomKey) {
+      try {
+        const prompt = `أنت المعلم الافتراضي الذكي المتميز لمادة ${subject} للصف ${grade}. من فضلك اشرح بالتفصيل وبشكل وافٍ وممتع جداً درس: "${title}". اكتب الشرح في شكل فقرات نصية متصلة وواضحة جداً باللغة العربية الفصحى المبسطة لتتم قراءتها بوضوح وسلاسة بواسطة قارئ النصوص الصوتي. ركز على تبسيط المفاهيم الفيزيائية أو الرياضية والقوانين بشكل لفظي واضح.`;
         const clientModels = ['gemini-3.6-flash', 'gemini-3.1-flash-lite'];
         for (const model of clientModels) {
           try {
@@ -1148,88 +1140,20 @@ export default function App() {
             console.warn(`[TTS Engine] Custom API key prompt generation failed for model ${model}:`, err);
           }
         }
+      } catch (geminiKeyErr) {
+        console.warn("[TTS Engine] Custom key generation error:", geminiKeyErr);
       }
-
-      // Sub-step 3.2: Try backend chat to generate explanation
-      const chatCandidates = [
-        getApiUrl('/api/chat'),
-        `${PRIMARY_CLOUD_RUN_BACKEND}/api/chat`,
-        `${BACKUP_CLOUD_RUN_BACKEND}/api/chat`
-      ];
-      for (const chatEndpoint of Array.from(new Set(chatCandidates))) {
-        try {
-          const response = await fetch(chatEndpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: prompt })
-          });
-          if (response.ok) {
-            const data = await response.json();
-            if (data.reply && data.reply.trim().length > 100) {
-              console.log("[TTS Engine] Successfully generated rich lecture via backend AI:", chatEndpoint);
-              try {
-                localStorage.setItem(cacheKey, data.reply);
-              } catch (e) {}
-              return data.reply;
-            }
-          }
-        } catch (chatApiErr) {
-          console.warn(`[TTS Engine] Chat endpoint ${chatEndpoint} failed:`, chatApiErr);
-        }
-      }
-
-      // Sub-step 3.3: Try keyless Hercai with CORS proxies
-      const hercaiEndpoints = [
-        `https://hercai.onrender.com/v3/hercai?question=${encodeURIComponent(prompt)}`,
-        `https://hercai.onrender.com/v3-beta/hercai?question=${encodeURIComponent(prompt)}`
-      ];
-
-      for (const targetUrl of hercaiEndpoints) {
-        try {
-          const res = await fetch(targetUrl);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.reply && data.reply.trim().length > 100) {
-              console.log("[TTS Engine] Successfully generated rich lecture via direct Hercai.");
-              try {
-                localStorage.setItem(cacheKey, data.reply);
-              } catch (e) {}
-              return data.reply;
-            }
-          }
-        } catch (directErr) {
-          console.warn("[TTS Engine] Direct Hercai lecture call failed, trying via CORS proxy...", directErr);
-          try {
-            const proxiedUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
-            const res = await fetch(proxiedUrl);
-            if (res.ok) {
-              const data = await res.json();
-              if (data.reply && data.reply.trim().length > 100) {
-                console.log("[TTS Engine] Successfully generated rich lecture via proxied Hercai.");
-                try {
-                  localStorage.setItem(cacheKey, data.reply);
-                } catch (e) {}
-                return data.reply;
-              }
-            }
-          } catch (proxyErr) {
-            console.warn("[TTS Engine] Proxied Hercai lecture call failed:", proxyErr);
-          }
-        }
-      }
-    } catch (lectureErr) {
-      console.warn("[TTS Engine] Dynamic lecture generation failed:", lectureErr);
     }
 
-    // Step 4: Final last-resort fallback: Use the short local description/intro from the page database
-    console.log("[TTS Engine] All dynamic extraction and generation failed. Falling back to local brief page description.");
-    const fallbackText = getLessonTextToRead(lesson);
-    if (fallbackText) {
+    // Step 4: Robust, immediate Master Teacher Pedagogical Voice Engine (100% reliable everywhere)
+    console.log("[TTS Engine] Synthesizing comprehensive pedagogical lecture using built-in Teacher Masterclass Engine.");
+    const masterLecture = getLessonTextToRead(lesson);
+    if (masterLecture) {
       try {
-        localStorage.setItem(cacheKey, fallbackText);
+        localStorage.setItem(cacheKey, masterLecture);
       } catch (e) {}
     }
-    return fallbackText;
+    return masterLecture;
   };
 
   const handleStartTts = async () => {
@@ -1347,6 +1271,22 @@ export default function App() {
       window.speechSynthesis.cancel();
     };
   }, [appState.lesson]);
+
+  // Keep-alive timer for speech synthesis in Chromium/Safari for long spoken lectures
+  useEffect(() => {
+    let keepAliveTimer: any = null;
+    if (ttsState === 'playing') {
+      keepAliveTimer = setInterval(() => {
+        if (window.speechSynthesis && window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+          window.speechSynthesis.pause();
+          window.speechSynthesis.resume();
+        }
+      }, 10000);
+    }
+    return () => {
+      if (keepAliveTimer) clearInterval(keepAliveTimer);
+    };
+  }, [ttsState]);
 
   // 2. Track Study Time for Active Lesson
   useEffect(() => {
