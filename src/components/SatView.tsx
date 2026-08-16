@@ -38,6 +38,7 @@ import {
 interface SatViewProps {
   onSwitchToCurriculum?: () => void;
   onSwitchToEot?: () => void;
+  language?: 'ar' | 'en';
 }
 
 type SatSubjectId = 'math' | 'reading-writing';
@@ -57,10 +58,17 @@ const SAT_SUBJECTS: SatSubject[] = [
 
 export const SatView: React.FC<SatViewProps> = ({
   onSwitchToCurriculum,
-  onSwitchToEot
+  onSwitchToEot,
+  language = 'en'
 }) => {
-  // Default language is English
-  const [lang, setLang] = useState<'en' | 'ar'>('en');
+  // Sync language with global platform language prop
+  const [lang, setLang] = useState<'en' | 'ar'>(language);
+
+  useEffect(() => {
+    if (language) {
+      setLang(language);
+    }
+  }, [language]);
 
   // Selected SAT Subject
   const [selectedSubject, setSelectedSubject] = useState<SatSubjectId>('math');

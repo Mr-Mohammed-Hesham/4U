@@ -284,9 +284,18 @@ app.post("/api/generate-flashcards", async (req, res) => {
   }
 });
 
+// Health check endpoint for monitoring and keep-alive
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", service: "4U Educational Platform Backend" });
+});
+
 // Endpoint to fetch and parse lesson content (HTML or PDF) to feed to TTS
 app.get("/api/fetch-lesson-text", async (req, res) => {
   const lessonUrl = req.query.url as string;
+  const title = (req.query.title as string) || "";
+  const subject = (req.query.subject as string) || "الرياضيات والعلوم";
+  const grade = (req.query.grade as string) || "";
+
   if (!lessonUrl) {
     return res.status(400).json({ error: "URL is required" });
   }
@@ -353,7 +362,7 @@ app.get("/api/fetch-lesson-text", async (req, res) => {
           try {
             const ai = getAiClient();
             const base64 = buffer.toString("base64");
-            const promptText = "أنت المعلم الافتراضي الذكي لمادة العلوم. اقرأ ملف شرح الدرس المرفق واشرح محتواه بالتفصيل باللغة العربية الفصحى شرحاً وافياً وممتعاً ومبسّطاً للطلاب وكأنك تلقي درساً صوتياً رائعاً في الفصل. اكتب الشرح في شكل فقرات نصية متصلة وواضحة جداً لتتم قراءتها بواسطة قارئ النصوص الصوتي (لا تستخدم أبداً جداول أو رموزاً غريبة أو معادلات معقدة، فقط لغة عربية فصحى جميلة مشروحة للطلاب). ركز على تفسير المفاهيم الفيزيائية والقوانين بشكل لفظي واضح وسلس يستطيع الطالب استيعابه سماعياً.";
+            const promptText = `أنت المعلم الافتراضي الذكي المتميز لمادة ${subject} ${grade ? `(${grade})` : ''}. اقرأ ملف شرح الدرس المرفق ${title ? `(عنوان الدرس: "${title}")` : ''} واشرح محتواه بالتفصيل باللغة العربية الفصحى شرحاً وافياً وممتعاً ومبسّطاً للطلاب وكأنك تلقي درساً صوتياً رائعاً في الفصل. اكتب الشرح في شكل فقرات نصية متصلة وواضحة جداً لتتم قراءتها بواسطة قارئ النصوص الصوتي (لا تستخدم أبداً جداول أو رموزاً غريبة أو معادلات معقدة، فقط لغة عربية فصحى جميلة مشروحة للطلاب). ركز على تفسير المفاهيم الأساسية والقوانين والخطوات بشكل لفظي واضح وسلس يستطيع الطالب استيعابه سماعياً.`;
             
             const genRes = await generatePdfContentWithFallbackAndRetry(ai, base64, promptText);
 
@@ -411,22 +420,27 @@ function transformHtmlForSocialPreviews(rawHtml: string, req: express.Request): 
   const forwardedProto = (req.headers['x-forwarded-proto'] as string) || '';
   const protocol = forwardedProto.split(',')[0].trim() || (req.secure ? 'https' : 'http');
   const forwardedHost = (req.headers['x-forwarded-host'] as string) || '';
-  const host = forwardedHost.split(',')[0].trim() || req.headers.host;
-  
-  if (!host) return rawHtml;
+  const host = forwardedHost.split(',')[0].trim() || req.headers.host || 'localhost:3000';
   
   const currentBaseUrl = `${protocol}://${host}`;
+  const currentFullUrl = `${currentBaseUrl}${req.originalUrl || req.url || '/'}`;
+
   return rawHtml
     .replace(/https:\/\/hesham-afandi\.github\.io\/4U\/og-image\.jpg/g, `${currentBaseUrl}/og-image.jpg`)
     .replace(/https:\/\/hesham-afandi\.github\.io\/4U\/og-logo\.jpg/g, `${currentBaseUrl}/og-logo.jpg`)
-    .replace(/https:\/\/hesham-afandi\.github\.io\/4U\//g, `${currentBaseUrl}/`);
+    .replace(/https:\/\/hesham-afandi\.github\.io\/4U\//g, `${currentBaseUrl}/`)
+    .replace(/https:\/\/hesham-afandi\.github\.io\/4U/g, currentBaseUrl)
+    .replace(/<meta property="og:url" content="[^"]*"/, `<meta property="og:url" content="${currentFullUrl}"`)
+    .replace(/<meta name="twitter:url" content="[^"]*"/, `<meta name="twitter:url" content="${currentFullUrl}"`);
 }
 
-// Serve public directory assets directly with explicit content types for og-image / favicons
+// Serve public directory assets directly with explicit content types & CORS for og-image / favicons
 const publicDir = path.join(process.cwd(), "public");
 app.use(express.static(publicDir, {
   maxAge: "1d",
   setHeaders: (res, filePath) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
     if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) {
       res.setHeader("Content-Type", "image/jpeg");
     } else if (filePath.endsWith(".png")) {
@@ -459,24 +473,24 @@ async function initServer() {
       appType: "spa",
     });
 
-    // Custom middleware to inject dynamic OG tags for HTML responses
+    // Custom middleware to inject dynamic OG tags for all HTML responses
     app.use(async (req, res, next) => {
-      const url = req.originalUrl;
-      const isBot = /whatsapp|facebookexternalhit|twitterbot|telegrambot|slackbot|discordbot|linkedinbot/i.test(
-        req.headers['user-agent'] || ''
-      );
+      // Skip API routes, Vite internal modules, and static file extensions
+      if (req.path.startsWith('/api') || req.path.startsWith('/@') || req.path.startsWith('/src') || req.path.includes('.')) {
+        return next();
+      }
 
-      if (isBot || url === "/" || url.startsWith("/?")) {
-        try {
-          const indexPath = path.join(process.cwd(), "index.html");
+      try {
+        const indexPath = path.join(process.cwd(), "index.html");
+        if (fs.existsSync(indexPath)) {
           let rawHtml = fs.readFileSync(indexPath, "utf8");
-          rawHtml = await vite.transformIndexHtml(url, rawHtml);
+          rawHtml = await vite.transformIndexHtml(req.originalUrl || req.url, rawHtml);
           const transformed = transformHtmlForSocialPreviews(rawHtml, req);
           res.setHeader("Content-Type", "text/html; charset=utf-8");
-          return res.status(200).end(transformed);
-        } catch (e) {
-          return next();
+          return res.status(200).send(transformed);
         }
+      } catch (e) {
+        return next();
       }
       next();
     });
@@ -485,7 +499,11 @@ async function initServer() {
   } else {
     console.log("Starting server in PRODUCTION mode...");
     const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
+    app.use(express.static(distPath, {
+      setHeaders: (res) => {
+        res.setHeader("Access-Control-Allow-Origin", "*");
+      }
+    }));
     app.get("*", (req, res) => {
       const indexPath = path.join(distPath, "index.html");
       if (fs.existsSync(indexPath)) {

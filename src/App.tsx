@@ -144,12 +144,15 @@ const QURAN_RECITERS: Reciter[] = [
 const platformLogo = new URL('./assets/images/platform_logo_transparent.svg', import.meta.url).href;
 const teacherLoader = new URL('./assets/images/teacher_loader_1783347042138.jpg', import.meta.url).href;
 
+const PRIMARY_CLOUD_RUN_BACKEND = "https://ais-pre-zkin4elv7zwqu2e6fa3gzm-684462415759.europe-west2.run.app";
+const BACKUP_CLOUD_RUN_BACKEND = "https://ais-dev-zkin4elv7zwqu2e6fa3gzm-684462415759.europe-west2.run.app";
+
 const getApiUrl = (path: string): string => {
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  if (hostname.includes('github.io') || (hostname !== 'localhost' && !hostname.endsWith('run.app') && !hostname.includes('3000'))) {
-    return `https://ais-pre-t5z4xmcbcttqdwgdadfuls-72955753475.europe-west2.run.app${path}`;
+  if (hostname === 'localhost' || hostname.endsWith('run.app') || hostname.includes('3000') || !hostname) {
+    return path;
   }
-  return path;
+  return `${PRIMARY_CLOUD_RUN_BACKEND}${path}`;
 };
 
 export default function App() {
@@ -982,26 +985,59 @@ export default function App() {
 
   const getDetailedLessonExplanationText = async (lesson: any): Promise<string> => {
     if (!lesson) return '';
+    const cacheKey = `4u_tts_v3_${lesson.id || ''}_${encodeURIComponent(lesson.lessonUrl || lesson.title || '')}`;
+    
+    // Step 0: Check client-side persistent cache (localStorage) for instant 0ms playback
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached && cached.trim().length > 100) {
+        console.log("[TTS Engine] Loaded explanation instantly from local storage cache.");
+        return cached;
+      }
+    } catch (e) {
+      console.warn("Storage cache read error:", e);
+    }
+
     let textToRead = '';
     const hasCustomKey = chatGeminiKey && chatGeminiKey.trim().length > 5;
+    const title = lesson.title || '';
+    const subject = appState.subject?.title || appState.subject?.name || 'العلوم والرياضيات';
+    const grade = appState.grade?.name || '';
 
-    // Step 1: Try the Cloud Run backend server first (supports Gemini Visual OCR of scanned PDFs!)
+    // Step 1: Try the Cloud Run backend servers with automatic multi-host fallback (Gemini Visual OCR on PDFs)
     if (lesson.lessonUrl) {
-      try {
-        console.log("[TTS Engine] Requesting backend explanation parser for URL:", lesson.lessonUrl);
-        const response = await fetch(getApiUrl(`/api/fetch-lesson-text?url=${encodeURIComponent(lesson.lessonUrl)}`), {
-          credentials: 'include'
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (data.text && data.text.trim().length > 100) {
-            textToRead = data.text;
-            console.log("[TTS Engine] Successfully loaded rich text from backend server.");
-            return textToRead;
+      const targetQuery = `?url=${encodeURIComponent(lesson.lessonUrl)}&title=${encodeURIComponent(title)}&subject=${encodeURIComponent(subject)}&grade=${encodeURIComponent(grade)}`;
+      const serverCandidates = [
+        getApiUrl(`/api/fetch-lesson-text${targetQuery}`),
+        `${PRIMARY_CLOUD_RUN_BACKEND}/api/fetch-lesson-text${targetQuery}`,
+        `${BACKUP_CLOUD_RUN_BACKEND}/api/fetch-lesson-text${targetQuery}`
+      ];
+
+      // Remove duplicate candidates
+      const uniqueCandidates = Array.from(new Set(serverCandidates));
+
+      for (const endpoint of uniqueCandidates) {
+        try {
+          console.log("[TTS Engine] Requesting backend explanation parser from:", endpoint);
+          const response = await fetch(endpoint, {
+            headers: { 'Accept': 'application/json' }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.text && data.text.trim().length > 100) {
+              textToRead = data.text;
+              console.log("[TTS Engine] Successfully loaded rich text from backend server:", endpoint);
+              try {
+                localStorage.setItem(cacheKey, textToRead);
+              } catch (storageErr) {
+                console.warn("Could not cache lesson text:", storageErr);
+              }
+              return textToRead;
+            }
           }
+        } catch (backendErr) {
+          console.warn(`[TTS Engine] Backend endpoint ${endpoint} failed or unreachable:`, backendErr);
         }
-      } catch (backendErr) {
-        console.warn("[TTS Engine] Backend parser failed or unreachable. Trying client-side fallback...", backendErr);
       }
 
       // Step 2: Try client-side extraction (PDF.js / HTML parser) as backup
@@ -1011,6 +1047,9 @@ export default function App() {
         if (clientExtracted && clientExtracted.trim().length > 100) {
           textToRead = clientExtracted;
           console.log("[TTS Engine] Successfully extracted rich text client-side.");
+          try {
+            localStorage.setItem(cacheKey, textToRead);
+          } catch (e) {}
           return textToRead;
         }
       } catch (clientErr) {
@@ -1036,7 +1075,7 @@ export default function App() {
             for (const model of clientModels) {
               try {
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${chatGeminiKey.trim()}`;
-                const promptOCR = `أنت المعلم الافتراضي الذكي لمادة العلوم. اقرأ ملف شرح الدرس المرفق واشرح محتواه بالتفصيل باللغة العربية الفصحى شرحاً وافياً وممتعاً ومبسّطاً للطلاب وكأنك تلقي درساً صوتياً رائعاً في الفصل. اكتب الشرح في شكل فقرات نصية متصلة وواضحة جداً لتتم قراءتها بواسطة قارئ النصوص الصوتي (لا تستخدم أبداً جداول أو رموزاً غريبة أو معادلات معقدة، فقط لغة عربية فصحى جميلة مشروحة للطلاب). ركز على تفسير المفاهيم الفيزيائية والقوانين بشكل لفظي واضح وسلس يستطيع الطالب استيعابه سماعياً.`;
+                const promptOCR = `أنت المعلم الافتراضي الذكي المتميز لمادة ${subject} ${grade ? `(${grade})` : ''}. اقرأ ملف شرح الدرس المرفق ${title ? `(عنوان الدرس: "${title}")` : ''} واشرح محتواه بالتفصيل باللغة العربية الفصحى شرحاً وافياً وممتعاً ومبسّطاً للطلاب وكأنك تلقي درساً صوتياً رائعاً في الفصل. اكتب الشرح في شكل فقرات نصية متصلة وواضحة جداً لتتم قراءتها بواسطة قارئ النصوص الصوتي (لا تستخدم أبداً جداول أو رموزاً غريبة أو معادلات معقدة، فقط لغة عربية فصحى جميلة مشروحة للطلاب). ركز على تفسير المفاهيم الأساسية والقوانين والخطوات بشكل لفظي واضح وسلس يستطيع الطالب استيعابه سماعياً.`;
                 const response = await fetch(url, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -1055,6 +1094,9 @@ export default function App() {
                   const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
                   if (reply && reply.trim().length > 100) {
                     console.log("[TTS Engine] Successfully generated detailed PDF explanation client-side using custom Gemini API Key OCR!");
+                    try {
+                      localStorage.setItem(cacheKey, reply);
+                    } catch (e) {}
                     return reply;
                   }
                 }
@@ -1072,9 +1114,6 @@ export default function App() {
     // Step 3: If still empty, use AI to dynamically generate a comprehensive multi-paragraph explanation
     try {
       console.log("[TTS Engine] Lesson file is scanned or empty. Generating rich comprehensive lesson lecture on the fly...");
-      const title = lesson.title || '';
-      const subject = appState.subject?.title || '';
-      const grade = appState.grade?.name || '';
       const prompt = `أنت المعلم الافتراضي الذكي المتميز لمادة ${subject} للصف ${grade}. من فضلك اشرح بالتفصيل وبشكل وافٍ وممتع جداً درس: "${title}". اكتب الشرح في شكل فقرات نصية متصلة وواضحة جداً باللغة العربية الفصحى المبسطة لتتم قراءتها بوضوح وسلاسة بواسطة قارئ النصوص الصوتي (لا تستخدم أبداً جداول أو رموزاً غريبة أو معادلات معقدة، فقط لغة عربية ممتعة وسلسة تشرح المفاهيم ليفهمها الطالب تماماً). ركز على تبسيط المفاهيم الفيزيائية أو الرياضية بذكاء وتشويق.`;
 
       // Sub-step 3.1: Try direct Custom Gemini API key first if provided
@@ -1099,6 +1138,9 @@ export default function App() {
               const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
               if (reply && reply.trim().length > 100) {
                 console.log("[TTS Engine] Successfully generated rich lecture via direct custom Gemini API key.");
+                try {
+                  localStorage.setItem(cacheKey, reply);
+                } catch (e) {}
                 return reply;
               }
             }
@@ -1109,22 +1151,31 @@ export default function App() {
       }
 
       // Sub-step 3.2: Try backend chat to generate explanation
-      try {
-        const response = await fetch(getApiUrl('/api/chat'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: prompt }),
-          credentials: 'include'
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (data.reply && data.reply.trim().length > 100) {
-            console.log("[TTS Engine] Successfully generated rich lecture via backend AI.");
-            return data.reply;
+      const chatCandidates = [
+        getApiUrl('/api/chat'),
+        `${PRIMARY_CLOUD_RUN_BACKEND}/api/chat`,
+        `${BACKUP_CLOUD_RUN_BACKEND}/api/chat`
+      ];
+      for (const chatEndpoint of Array.from(new Set(chatCandidates))) {
+        try {
+          const response = await fetch(chatEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: prompt })
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.reply && data.reply.trim().length > 100) {
+              console.log("[TTS Engine] Successfully generated rich lecture via backend AI:", chatEndpoint);
+              try {
+                localStorage.setItem(cacheKey, data.reply);
+              } catch (e) {}
+              return data.reply;
+            }
           }
+        } catch (chatApiErr) {
+          console.warn(`[TTS Engine] Chat endpoint ${chatEndpoint} failed:`, chatApiErr);
         }
-      } catch (chatApiErr) {
-        console.warn("[TTS Engine] Backend AI failed to generate lecture, trying keyless Hercai...", chatApiErr);
       }
 
       // Sub-step 3.3: Try keyless Hercai with CORS proxies
@@ -1140,6 +1191,9 @@ export default function App() {
             const data = await res.json();
             if (data.reply && data.reply.trim().length > 100) {
               console.log("[TTS Engine] Successfully generated rich lecture via direct Hercai.");
+              try {
+                localStorage.setItem(cacheKey, data.reply);
+              } catch (e) {}
               return data.reply;
             }
           }
@@ -1152,6 +1206,9 @@ export default function App() {
               const data = await res.json();
               if (data.reply && data.reply.trim().length > 100) {
                 console.log("[TTS Engine] Successfully generated rich lecture via proxied Hercai.");
+                try {
+                  localStorage.setItem(cacheKey, data.reply);
+                } catch (e) {}
                 return data.reply;
               }
             }
@@ -1166,7 +1223,13 @@ export default function App() {
 
     // Step 4: Final last-resort fallback: Use the short local description/intro from the page database
     console.log("[TTS Engine] All dynamic extraction and generation failed. Falling back to local brief page description.");
-    return getLessonTextToRead(lesson);
+    const fallbackText = getLessonTextToRead(lesson);
+    if (fallbackText) {
+      try {
+        localStorage.setItem(cacheKey, fallbackText);
+      } catch (e) {}
+    }
+    return fallbackText;
   };
 
   const handleStartTts = async () => {
@@ -1186,7 +1249,7 @@ export default function App() {
     window.speechSynthesis.cancel();
     
     setTtsState('loading');
-    showToastMsg('📥 جاري استخراج وتحضير شرح الدرس من ملف الشرح، يرجى الانتظار ثوانٍ...');
+    showToastMsg('🎙️ جاري استخراج وتحضير شرح المعلم من ملف الدرس، يرجى الانتظار ثوانٍ...');
 
     const textToRead = await getDetailedLessonExplanationText(appState.lesson);
     ttsActiveTextRef.current = textToRead;
@@ -1204,10 +1267,11 @@ export default function App() {
     utterance.rate = ttsRate;
 
     const voices = window.speechSynthesis.getVoices();
+    // Prioritize natural sounding Arabic voices across browsers (Chrome/Edge/iOS/Android)
     const voice = voices.find((v) => 
       isEnglish 
         ? v.lang.startsWith('en') 
-        : v.lang.startsWith('ar')
+        : (v.lang.startsWith('ar') || v.name.toLowerCase().includes('arabic') || v.name.includes('Maged') || v.name.includes('Salma') || v.name.includes('Tariq') || v.name.includes('Zeina') || v.name.includes('Laila'))
     );
     if (voice) {
       utterance.voice = voice;
@@ -1227,7 +1291,7 @@ export default function App() {
     window.speechSynthesis.speak(utterance);
     setTtsState('playing');
     setTtsCurrentParagraph(appState.lesson.title);
-    showToastMsg('🔊 تم بدء الشرح الصوتي المباشر من ملف شرح الدرس بنجاح!');
+    showToastMsg('🔊 تم بدء شرح المعلم الصوتي من محتوى الدرس الفعلي بنجاح!');
   };
 
   const handleStopTts = () => {
@@ -3050,6 +3114,20 @@ export default function App() {
               )}
             </button>
 
+            {/* Platform Share Button */}
+            <button 
+              onClick={() => setShowShareModal({
+                title: 'المنصة التعليمية المتكاملة 4U | م. محمد هشام',
+                url: window.location.href,
+                description: 'منصة تعليمية متكاملة للمناهج والخطط الدراسية التفاعلية: اختبارات إلكترونية ذاتية، شروحات ذكية، ومكتبة شاملة لكافة المواد والصفوف.'
+              })}
+              className="bg-white/10 hover:bg-white/20 p-2 rounded-xl backdrop-blur-sm border border-white/15 transition flex items-center gap-1.5 text-sm font-semibold relative cursor-pointer text-amber-300"
+              title="مشاركة المنصة مع زملائك"
+            >
+              <Share2 className="w-4 h-4 text-amber-300" />
+              <span className="hidden sm:inline">مشاركة</span>
+            </button>
+
             {/* Student Dashboard Statistics */}
             <button 
               onClick={() => setShowStatsModal(true)}
@@ -3721,14 +3799,18 @@ export default function App() {
 
             {/* VIEW 1: HOME (SELECT SECTION OR TERMS) */}
             {appState.country === 'UAE' && activePlatformSection === 'eot' && (
-              <EotSpecsView onSwitchToCurriculum={() => {
-                setActivePlatformSection('curriculum');
-                setCurriculumSubView('terms');
-              }} />
+              <EotSpecsView 
+                language={language}
+                onSwitchToCurriculum={() => {
+                  setActivePlatformSection('curriculum');
+                  setCurriculumSubView('terms');
+                }} 
+              />
             )}
 
             {appState.country && activePlatformSection === 'sat' && (
               <SatView 
+                language={language}
                 onSwitchToCurriculum={() => {
                   setActivePlatformSection('curriculum');
                   setCurriculumSubView(appState.country === 'UAE' ? 'terms' : 'landing');
@@ -3778,13 +3860,28 @@ export default function App() {
             {appState.country === 'UAE' && activePlatformSection === 'curriculum' && !appState.term && curriculumSubView === 'landing' && (
               <div className="fade-in space-y-8 my-6">
                 {/* Hero Card Banner */}
-                <div className="gradient-primary rounded-3xl p-8 md:p-10 text-white shadow-xl relative overflow-hidden">
+                <div className="gradient-primary rounded-3xl p-8 md:p-10 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent_50%)] pointer-events-none" />
                   <div className="text-center md:text-right relative z-10">
                     <h2 className="text-2xl md:text-4xl font-black mb-2 leading-tight text-amber-300">
-                      مرحباً بك في منصة 4U التعليمية
+                      {language === 'en' ? 'Welcome to 4U Educational Platform' : 'مرحباً بك في منصة 4U التعليمية'}
                     </h2>
-                    <p className="text-sm md:text-base opacity-90 font-medium">اختر القسم المطلوب للتصفح والمذاكرة الذكية</p>
+                    <p className="text-sm md:text-base opacity-90 font-medium">
+                      {language === 'en' ? 'Choose the desired section for smart study and practice' : 'اختر القسم المطلوب للتصفح والمذاكرة الذكية'}
+                    </p>
+                  </div>
+                  <div className="relative z-10 shrink-0">
+                    <button
+                      onClick={() => setShowShareModal({
+                        title: 'المنصة التعليمية المتكاملة 4U | م. محمد هشام',
+                        url: window.location.href,
+                        description: 'منصة تعليمية متكاملة للمناهج والخطط الدراسية التفاعلية: اختبارات إلكترونية ذاتية، شروحات ذكية، ومكتبة شاملة لكافة المواد والصفوف.'
+                      })}
+                      className="bg-amber-400 hover:bg-amber-300 text-slate-950 px-5 py-2.5 rounded-2xl font-black text-sm transition-all shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2 cursor-pointer border border-amber-300"
+                    >
+                      <Share2 className="w-4 h-4" />
+                      <span>{language === 'en' ? 'Share Platform 📤' : 'مشاركة المنصة مع زملائك 📤'}</span>
+                    </button>
                   </div>
                 </div>
 
@@ -3799,7 +3896,7 @@ export default function App() {
                       📚
                     </div>
                     <h3 className="text-lg font-black text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                      قسم المناهج والدروس
+                      {language === 'en' ? 'Curriculum & Lessons' : 'قسم المناهج والدروس'}
                     </h3>
                   </div>
 
@@ -3812,7 +3909,7 @@ export default function App() {
                       📜
                     </div>
                     <h3 className="text-lg font-black text-amber-300 group-hover:text-amber-200 transition-colors">
-                      قسم الهياكل (EOT)
+                      {language === 'en' ? 'EOT Specs & Exams' : 'قسم الهياكل (EOT)'}
                     </h3>
                   </div>
 
@@ -3825,7 +3922,7 @@ export default function App() {
                       🎓
                     </div>
                     <h3 className="text-lg font-black text-purple-300 group-hover:text-purple-200 transition-colors">
-                      قسم السات (SAT)
+                      {language === 'en' ? 'SAT Section' : 'قسم السات (SAT)'}
                     </h3>
                   </div>
 
@@ -3851,7 +3948,7 @@ export default function App() {
                       💻
                     </div>
                     <h3 className="text-lg font-black text-blue-300 group-hover:text-blue-200 transition-colors">
-                      اختبارات مايكروسوفت (MS Exams)
+                      {language === 'en' ? 'Microsoft Exams (MS)' : 'اختبارات مايكروسوفت (MS Exams)'}
                     </h3>
                   </div>
                 </div>
@@ -3862,13 +3959,13 @@ export default function App() {
               <div className="fade-in space-y-8">
                 <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
                   <h3 className="text-2xl font-black text-gray-800 dark:text-white flex items-center gap-2">
-                    <span>📅</span> اختر الترم الدراسي في قسم المناهج
+                    <span>📅</span> {language === 'en' ? 'Select Academic Term' : 'اختر الترم الدراسي في قسم المناهج'}
                   </h3>
                   <button
                     onClick={() => setCurriculumSubView('landing')}
                     className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5"
                   >
-                    <span>← العودة للأقسام</span>
+                    <span>{language === 'en' ? '← Back to Sections' : '← العودة للأقسام'}</span>
                   </button>
                 </div>
 
@@ -3880,12 +3977,20 @@ export default function App() {
                       className="card-hover bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-md border-2 border-transparent hover:border-indigo-500 text-right cursor-pointer"
                     >
                       <div className="text-5xl mb-4">{t.icon}</div>
-                      <h4 className="font-extrabold text-xl mb-1 text-gray-800 dark:text-white">{t.name}</h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">اضغط لاستعراض كافة الفصول والمواد</p>
+                      <h4 className="font-extrabold text-xl mb-1 text-gray-800 dark:text-white">
+                        {language === 'en' ? getEnglishTermName(t.name, t.id) : t.name}
+                      </h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                        {language === 'en' ? 'Click to browse all grades and subjects' : 'اضغط لاستعراض كافة الفصول والمواد'}
+                      </p>
                       
                       <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3">
-                        <span className="text-indigo-600 dark:text-indigo-400 text-xs font-bold">استعرض الآن ←</span>
-                        <span className="bg-slate-100 dark:bg-slate-800 text-[10px] px-2.5 py-1 rounded-full text-gray-600 dark:text-gray-300 font-semibold">عام + متقدم</span>
+                        <span className="text-indigo-600 dark:text-indigo-400 text-xs font-bold">
+                          {language === 'en' ? 'Explore Now →' : 'استعرض الآن ←'}
+                        </span>
+                        <span className="bg-slate-100 dark:bg-slate-800 text-[10px] px-2.5 py-1 rounded-full text-gray-600 dark:text-gray-300 font-semibold">
+                          {language === 'en' ? 'General + Advanced' : 'عام + متقدم'}
+                        </span>
                       </div>
                     </button>
                   ))}
@@ -4512,6 +4617,20 @@ export default function App() {
                             >
                               <span>❤️</span>
                               <span>{isFav ? 'مفضل' : 'تفضيل'}</span>
+                            </button>
+
+                            {/* Share Lesson Button */}
+                            <button 
+                              onClick={() => setShowShareModal({
+                                title: `${appState.lesson?.title} - ${appState.subject?.name} (${appState.grade?.name})`,
+                                url: window.location.href,
+                                description: `شرح تفاعلي واختبار ذاتي لدرس ${appState.lesson?.title} ضمن ${appState.unit?.name} في مادة ${appState.subject?.name}.`
+                              })}
+                              className="bg-white/10 hover:bg-white/20 p-2.5 rounded-xl border border-white/20 backdrop-blur-md transition flex items-center gap-1.5 text-xs font-bold cursor-pointer text-amber-300"
+                              title="مشاركة هذا الدرس"
+                            >
+                              <Share2 className="w-3.5 h-3.5 text-amber-300" />
+                              <span>مشاركة</span>
                             </button>
 
                           </div>
