@@ -1,6 +1,6 @@
 export type QuestionType = 'mcq' | 'paper';
 export type StreamType = 'advanced' | 'advanced_bridge' | 'advanced_inspire' | 'general';
-export type GradeType = '12' | '11' | '10' | '9';
+export type GradeType = '12' | '11' | '10' | '9' | '8' | '7';
 export type TermType = 'EOT1' | 'EOT2' | 'EOT3';
 
 export interface QuestionOption {

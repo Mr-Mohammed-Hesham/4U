@@ -181,7 +181,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Grade Selector */}
             <div className="flex items-center gap-1 bg-slate-900 rounded-xl p-1 border border-slate-700/80">
               <span className="text-[10px] text-slate-400 px-1 font-semibold">الصف:</span>
-              {(['12', '11', '10', '9'] as GradeType[]).map((grade) => (
+              {(['12', '11', '10', '9', '8', '7'] as GradeType[]).map((grade) => (
                 <button
                   key={grade}
                   onClick={() => setSelectedGrade(grade)}

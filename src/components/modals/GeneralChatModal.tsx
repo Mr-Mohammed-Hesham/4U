@@ -100,14 +100,18 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
   // Determine initial chat room based on user's grade
   const getInitialRoomId = () => {
     if (!userGradeName) return 'general';
-    if (userGradeName.includes('12') && userGradeName.includes('متقدم')) return 'grade12_adv';
-    if (userGradeName.includes('12')) return 'grade12_gen';
-    if (userGradeName.includes('11') && userGradeName.includes('متقدم')) return 'grade11_adv';
-    if (userGradeName.includes('11')) return 'grade11_gen';
-    if (userGradeName.includes('10') && userGradeName.includes('متقدم')) return 'grade10_adv';
-    if (userGradeName.includes('10')) return 'grade10_gen';
-    if (userGradeName.includes('9') && userGradeName.includes('متقدم')) return 'grade9_adv';
-    if (userGradeName.includes('9')) return 'grade9_gen';
+    if ((userGradeName.includes('12') || userGradeName.includes('ثاني عشر')) && userGradeName.includes('متقدم')) return 'grade12_adv';
+    if (userGradeName.includes('12') || userGradeName.includes('ثاني عشر')) return 'grade12_gen';
+    if ((userGradeName.includes('11') || userGradeName.includes('حادي عشر')) && userGradeName.includes('متقدم')) return 'grade11_adv';
+    if (userGradeName.includes('11') || userGradeName.includes('حادي عشر')) return 'grade11_gen';
+    if ((userGradeName.includes('10') || userGradeName.includes('عاشر')) && userGradeName.includes('متقدم')) return 'grade10_adv';
+    if (userGradeName.includes('10') || userGradeName.includes('عاشر')) return 'grade10_gen';
+    if ((userGradeName.includes('9') || userGradeName.includes('تاسع')) && userGradeName.includes('متقدم')) return 'grade9_adv';
+    if (userGradeName.includes('9') || userGradeName.includes('تاسع')) return 'grade9_gen';
+    if ((userGradeName.includes('8') || userGradeName.includes('ثامن')) && userGradeName.includes('متقدم')) return 'grade8_adv';
+    if (userGradeName.includes('8') || userGradeName.includes('ثامن')) return 'grade8_gen';
+    if ((userGradeName.includes('7') || userGradeName.includes('سابع')) && userGradeName.includes('متقدم')) return 'grade7_adv';
+    if (userGradeName.includes('7') || userGradeName.includes('سابع')) return 'grade7_gen';
     return 'general';
   };
 

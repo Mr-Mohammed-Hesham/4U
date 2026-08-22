@@ -19,7 +19,11 @@ export const CHAT_ROOMS: ChatRoomInfo[] = [
   { id: 'grade10_adv', name: 'الصف 10 متقدم', icon: '📚', description: 'مناقشات ومراجعات الصف العاشر متقدم', gradeBadge: '10 متقدم' },
   { id: 'grade10_gen', name: 'الصف 10 عام', icon: '📚', description: 'مناقشات ومراجعات الصف العاشر عام', gradeBadge: '10 عام' },
   { id: 'grade9_adv', name: 'الصف 9 متقدم', icon: '✏️', description: 'مساحة التواصل لطلاب الصف التاسع متقدم', gradeBadge: '9 متقدم' },
-  { id: 'grade9_gen', name: 'الصف 9 عام', icon: '✏️', description: 'مساحة التواصل لطلاب الصف التاسع عام', gradeBadge: '9 عام' }
+  { id: 'grade9_gen', name: 'الصف 9 عام', icon: '✏️', description: 'مساحة التواصل لطلاب الصف التاسع عام', gradeBadge: '9 عام' },
+  { id: 'grade8_adv', name: 'الصف 8 متقدم', icon: '📗', description: 'مساحة الحوار والمذاكرة للصف الثامن متقدم', gradeBadge: '8 متقدم' },
+  { id: 'grade8_gen', name: 'الصف 8 عام', icon: '📗', description: 'مساحة الحوار والمذاكرة للصف الثامن عام', gradeBadge: '8 عام' },
+  { id: 'grade7_adv', name: 'الصف 7 متقدم', icon: '📘', description: 'مساحة الحوار والمذاكرة للصف السابع متقدم', gradeBadge: '7 متقدم' },
+  { id: 'grade7_gen', name: 'الصف 7 عام', icon: '📘', description: 'مساحة الحوار والمذاكرة للصف السابع عام', gradeBadge: '7 عام' }
 ];
 
 const STORAGE_KEY = '4u_chat_last_read_v1';

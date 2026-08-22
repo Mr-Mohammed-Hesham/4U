@@ -79,7 +79,13 @@ export function mathToSpokenArabicText(text: string): string {
   spoken = spoken.replace(/log\s*\(\s*([^\)]+)\s*\)|log\s+([a-zA-Z0-9]+)/gi, 'اللوغاريتم لوغ $1$2');
   spoken = spoken.replace(/e\^([a-zA-Z0-9\+\-]+)/gi, 'الدالة الأسية إي أس $1');
 
-  // Physics formulas
+  // Physics and Science formulas
+  spoken = spoken.replace(/ρ\s*=\s*m\s*\/\s*V/gi, 'الكثافة رو تساوي الكتلة إم مقسومة على الحجم في');
+  spoken = spoken.replace(/c²\s*=\s*a²\s*\+\s*b²/gi, 'نظرية فيثاغورس: مربع الوتر سي تربيع يساوي إيه تربيع زائد بي تربيع');
+  spoken = spoken.replace(/y\s*=\s*k\s*·?\s*x/gi, 'معادلة التغير الطردي: واي تساوي ثابت التناسب كيه مضروباً في إكس');
+  spoken = spoken.replace(/k\s*=\s*y\s*\/\s*x/gi, 'ثابت التناسب كيه يساوي واي مقسومة على إكس');
+  spoken = spoken.replace(/y\s*=\s*m\s*·?\s*x\s*\+\s*b/gi, 'معادلة المستقيم بصيغة الميل والمقطع: واي تساوي الميل إم في إكس زائد المقطع الصادي بي');
+  spoken = spoken.replace(/v\s*=\s*f\s*·?\s*λ/gi, 'معادلة سرعة الموجة: السرعة في تساوي التردد إف مضروباً في الطول الموجي لامدا');
   spoken = spoken.replace(/F\s*=\s*m\s*a|F\s*=\s*m\s*×\s*a/gi, 'القوة المحصلة إف تساوي الكتلة إم مضروبة في التسارع إيه');
   spoken = spoken.replace(/E\s*=\s*m\s*c²/gi, 'الطاقة إي تساوي الكتلة إم مضروبة في مربع سرعة الضوء سي تربيع');
   spoken = spoken.replace(/W\s*=\s*F\s*d\s*cos\s*θ|W\s*=\s*F\s*d\s*cosθ/gi, 'الشغل دبليو يساوي القوة مضروبة في الإزاحة في جيب تمام الزاوية ثيتا');
@@ -87,6 +93,7 @@ export function mathToSpokenArabicText(text: string): string {
   spoken = spoken.replace(/a\s*=\s*Δv\s*\/\s*Δt/gi, 'التسارع يساوي التغير في السرعة مقسوماً على التغير في الزمن');
   spoken = spoken.replace(/P\s*=\s*I\s*V|P\s*=\s*I\s*×\s*V/gi, 'القدرة الكهربائية تساوي شدة التيار مضروبة في فرق الجهد');
   spoken = spoken.replace(/V\s*=\s*I\s*R|V\s*=\s*I\s*×\s*R/gi, 'قانون أوم: فرق الجهد يساوي شدة التيار مضروبة في المقاومة الكهربائية');
+  spoken = spoken.replace(/∛\s*\(\s*([^\)]+)\s*\)|∛([a-zA-Z0-9]+)/gi, 'الجذر التكعيبي لـ $1$2');
 
   // Common symbols
   spoken = spoken.replace(/→/g, ' تقترب من ');

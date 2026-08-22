@@ -4072,7 +4072,7 @@ export default function App() {
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
                         {DB.grades.map(g => {
                           const displayName = isInspire ? getEnglishGradeName(g.name, g.id) : g.name;
                           return (
@@ -4118,7 +4118,8 @@ export default function App() {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                         {DB.subjects.map(s => {
                           const key = getCurriculumKey({ ...appState, subject: s });
-                          const isAvailable = getCurriculum(key) ? true : false;
+                          const curr = getCurriculum(key);
+                          const isAvailable = Boolean(curr && curr.units && curr.units.length > 0);
                           const subjectDisplayName = isInspire ? getEnglishSubjectName(s.name, s.id) : s.name;
                           
                           return (
@@ -4131,7 +4132,7 @@ export default function App() {
                               <h4 className="font-extrabold text-lg text-gray-800 dark:text-white mb-2">{subjectDisplayName}</h4>
                               
                               <span className={`text-[10px] font-bold py-1 px-3 rounded-full ${isAvailable ? 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'}`}>
-                                {isAvailable ? (isInspire ? '✅ Available' : '✅ متاح حالياً') : (isInspire ? '🚧 Coming Soon' : '🚧 قريباً')}
+                                {isAvailable ? (isInspire ? '✅ Available' : '✅ متاح حالياً') : (isInspire ? '🚧 Coming Soon' : '🚧 قريباً إن شاء الله')}
                               </span>
                             </button>
                           );
@@ -4156,7 +4157,7 @@ export default function App() {
                   const termDisplayName = isEnglish ? getEnglishTermName(appState.term.name, appState.term.id) : appState.term.name;
                   const streamDisplayName = isEnglish ? getEnglishStreamName(appState.stream.name, appState.stream.id) : appState.stream.name;
 
-                  if (!curriculum) {
+                  if (!curriculum || !curriculum.units || curriculum.units.length === 0) {
                     return (
                       <div>
                         <div className="bg-gradient-to-br from-slate-600 to-slate-800 rounded-3xl p-8 text-white mb-8 shadow-md">
@@ -4167,11 +4168,11 @@ export default function App() {
                         </div>
                         <div className="bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-200 dark:border-slate-800 rounded-2xl p-8 text-center shadow-sm">
                           <div className="text-5xl mb-4">🚧</div>
-                          <h3 className="text-lg font-bold text-gray-800 dark:text-indigo-300 mb-2">
-                            {isEnglish ? 'Content Under Preparation' : 'المحتوى قيد التحضير'}
+                          <h3 className="text-xl font-bold text-gray-800 dark:text-indigo-300 mb-2">
+                            {isEnglish ? 'Coming Soon Insha\'Allah' : 'قريباً إن شاء الله'}
                           </h3>
                           <p className="text-gray-600 dark:text-gray-300 text-sm">
-                            {isEnglish ? 'Units and lessons for this selection will be available very soon.' : 'سيتم توفير الوحدات والدروس الخاصة بهذا الاختيار قريباً جداً.'}
+                            {isEnglish ? 'Curriculum units and lessons for this subject will be added soon Insha\'Allah.' : 'سيتم إضافة محتوى المنهج والدروس الخاصة بهذه المادة قريباً إن شاء الله.'}
                           </p>
                         </div>
                       </div>
