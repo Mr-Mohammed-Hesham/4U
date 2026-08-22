@@ -17,6 +17,7 @@ import { QuestionCard } from '../sat/components/QuestionCard';
 import { ResultsPanel } from '../sat/components/ResultsPanel';
 import { FormulaCheatsheet } from '../sat/components/FormulaCheatsheet';
 import { Header } from '../sat/components/Header';
+import { StandardizedMathBankView } from '../sat/bank/components/StandardizedMathBankView';
 import { 
   Award, 
   Play, 
@@ -32,7 +33,8 @@ import {
   Sparkles,
   Check,
   Lock,
-  FileCheck
+  FileCheck,
+  GraduationCap
 } from 'lucide-react';
 
 interface SatViewProps {
@@ -72,6 +74,9 @@ export const SatView: React.FC<SatViewProps> = ({
 
   // Selected SAT Subject
   const [selectedSubject, setSelectedSubject] = useState<SatSubjectId>('math');
+
+  // Math Sections: 'models' (Section 1 - Existing Models) vs 'standardized-bank' (Section 2 - Imported Standardized Tests)
+  const [mathSubSection, setMathSubSection] = useState<'models' | 'standardized-bank'>('models');
 
   // Selected Exam Model (Model 1, Model 2, Model 3, or All Bank)
   const [selectedModelId, setSelectedModelId] = useState<string>('model-1');
@@ -415,79 +420,121 @@ export const SatView: React.FC<SatViewProps> = ({
         </div>
       </div>
 
-      {/* SAT Models Selector Bar (Multiple Models per Subject) */}
-      <div className="bg-slate-900 border border-indigo-900/60 rounded-2xl p-4 shadow-md space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-black text-amber-300 flex items-center gap-1.5">
-            <FileCheck className="w-4 h-4 text-amber-400" />
-            <span>
-              {selectedSubject === 'math'
-                ? (lang === 'ar' ? 'نماذج امتحانات الرياضيات المتاحة (Math Models):' : 'Available SAT Math Models:')
-                : (lang === 'ar' ? 'نماذج امتحانات اللغة الإنجليزية المتاحة (Reading & Writing Models):' : 'Available SAT Reading & Writing Models:')}
+      {/* For SAT Math: Two Primary Sections Selector (1. Models vs 2. Standardized Tests) */}
+      {selectedSubject === 'math' && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-black text-slate-800 dark:text-amber-300 px-1 flex items-center gap-1.5">
+              <span className="text-base">📑</span>
+              <span>{lang === 'ar' ? 'أقسام رياضيات السات:' : 'SAT Math Sections:'}</span>
             </span>
-          </span>
-          <span className="text-[11px] text-slate-400 font-bold">
-            {lang === 'ar' ? `النموذج النشط: ${currentModel.titleAr}` : `Active: ${currentModel.titleEn}`}
-          </span>
+          </div>
+
+          <div className="flex items-center bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 flex-1 sm:flex-initial">
+            <button
+              onClick={() => setMathSubSection('models')}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                mathSubSection === 'models'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              <span>{lang === 'ar' ? 'القسم الأول: النماذج الشاملة' : 'Section 1: Exam Models'}</span>
+            </button>
+
+            <button
+              onClick={() => setMathSubSection('standardized-bank')}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                mathSubSection === 'standardized-bank'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <GraduationCap className="w-4 h-4 text-emerald-400" />
+              <span>{lang === 'ar' ? 'القسم الثاني: الاختبارات المعيارية وبنك الأسئلة' : 'Section 2: Standardized Tests Bank'}</span>
+            </button>
+          </div>
         </div>
+      )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {(selectedSubject === 'math' ? SAT_MATH_EXAM_MODELS : SAT_RW_EXAM_MODELS).map((model) => {
-            const isActive = selectedModelId === model.id;
+      {/* Render Section 2 (Standardized Tests Bank) OR Section 1 (Models & Practice) */}
+      {selectedSubject === 'math' && mathSubSection === 'standardized-bank' ? (
+        <StandardizedMathBankView language={lang} />
+      ) : (
+        <>
+          {/* SAT Models Selector Bar (Multiple Models per Subject) */}
+          <div className="bg-slate-900 border border-indigo-900/60 rounded-2xl p-4 shadow-md space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-amber-300 flex items-center gap-1.5">
+                <FileCheck className="w-4 h-4 text-amber-400" />
+                <span>
+                  {selectedSubject === 'math'
+                    ? (lang === 'ar' ? 'نماذج امتحانات الرياضيات المتاحة (Math Models):' : 'Available SAT Math Models:')
+                    : (lang === 'ar' ? 'نماذج امتحانات اللغة الإنجليزية المتاحة (Reading & Writing Models):' : 'Available SAT Reading & Writing Models:')}
+                </span>
+              </span>
+              <span className="text-[11px] text-slate-400 font-bold">
+                {lang === 'ar' ? `النموذج النشط: ${currentModel.titleAr}` : `Active: ${currentModel.titleEn}`}
+              </span>
+            </div>
 
-            return (
-              <button
-                key={model.id}
-                onClick={() => setSelectedModelId(model.id)}
-                className={`p-3.5 rounded-xl border text-right font-medium text-xs transition flex flex-col justify-between cursor-pointer ${
-                  isActive
-                    ? 'bg-gradient-to-br from-indigo-950 to-slate-900 border-indigo-500 text-white shadow-lg ring-2 ring-indigo-500/40'
-                    : 'bg-slate-950/70 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-800/50'
-                }`}
-              >
-                <div className="space-y-1 mb-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-extrabold text-amber-300 text-sm">
-                      {lang === 'ar' ? model.titleAr : model.titleEn}
-                    </span>
-                    {model.badgeAr && (
-                      <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-md text-[10px] font-bold">
-                        {lang === 'ar' ? model.badgeAr : model.badgeEn}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {(selectedSubject === 'math' ? SAT_MATH_EXAM_MODELS : SAT_RW_EXAM_MODELS).map((model) => {
+                const isActive = selectedModelId === model.id;
+
+                return (
+                  <button
+                    key={model.id}
+                    onClick={() => setSelectedModelId(model.id)}
+                    className={`p-3.5 rounded-xl border text-right font-medium text-xs transition flex flex-col justify-between cursor-pointer ${
+                      isActive
+                        ? 'bg-gradient-to-br from-indigo-950 to-slate-900 border-indigo-500 text-white shadow-lg ring-2 ring-indigo-500/40'
+                        : 'bg-slate-950/70 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-800/50'
+                    }`}
+                  >
+                    <div className="space-y-1 mb-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-extrabold text-amber-300 text-sm">
+                          {lang === 'ar' ? model.titleAr : model.titleEn}
+                        </span>
+                        {model.badgeAr && (
+                          <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-md text-[10px] font-bold">
+                            {lang === 'ar' ? model.badgeAr : model.badgeEn}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-snug line-clamp-2">
+                        {lang === 'ar' ? model.descriptionAr : model.descriptionEn}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[10px]">
+                      <span className="text-indigo-400 font-bold">
+                        {lang === 'ar' ? `${model.questions.length} سؤالاً` : `${model.questions.length} Questions`}
                       </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-slate-400 leading-snug line-clamp-2">
-                    {lang === 'ar' ? model.descriptionAr : model.descriptionEn}
-                  </p>
-                </div>
+                      <span className={`font-black ${isActive ? 'text-emerald-400' : 'text-slate-500'}`}>
+                        {isActive ? (lang === 'ar' ? '✓ المحدد حالياً' : '✓ Active') : (lang === 'ar' ? 'اختيار النموذج' : 'Select')}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[10px]">
-                  <span className="text-indigo-400 font-bold">
-                    {lang === 'ar' ? `${model.questions.length} سؤالاً` : `${model.questions.length} Questions`}
-                  </span>
-                  <span className={`font-black ${isActive ? 'text-emerald-400' : 'text-slate-500'}`}>
-                    {isActive ? (lang === 'ar' ? '✓ المحدد حالياً' : '✓ Active') : (lang === 'ar' ? 'اختيار النموذج' : 'Select')}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <>
-        {/* Header Tabs (Practice / Exam / Formulas) */}
-        <Header
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-            selectedDomain={selectedDomain}
-            setSelectedDomain={setSelectedDomain}
-            lang={lang}
-            setLang={setLang}
-            examTimerSeconds={examTimerSeconds}
-            isExamRunning={isExamRunning}
-          />
+          {/* Main Content Area */}
+          {/* Header Tabs (Practice / Exam / Formulas) */}
+          <Header
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+              selectedDomain={selectedDomain}
+              setSelectedDomain={setSelectedDomain}
+              lang={lang}
+              setLang={setLang}
+              examTimerSeconds={examTimerSeconds}
+              isExamRunning={isExamRunning}
+            />
 
           {/* Views based on activeTab */}
           <div className="pt-2">
@@ -776,6 +823,7 @@ export const SatView: React.FC<SatViewProps> = ({
 
           </div>
         </>
+      )}
     </div>
   );
 };
