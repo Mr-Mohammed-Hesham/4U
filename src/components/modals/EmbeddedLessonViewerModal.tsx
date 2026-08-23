@@ -319,10 +319,11 @@ export const EmbeddedLessonViewerModal: React.FC<EmbeddedLessonViewerModalProps>
             {/* Primary Exit Button */}
             <button
               onClick={handleBackClick}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white transition cursor-pointer"
+              className="p-2 sm:p-2.5 rounded-xl bg-red-500/80 hover:bg-red-600 active:bg-red-700 text-white transition cursor-pointer shrink-0 border border-red-400/40 shadow"
               title="تأكيد الخروج"
+              aria-label="تأكيد الخروج"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 text-white" strokeWidth={2.5} />
             </button>
           </div>
         </header>

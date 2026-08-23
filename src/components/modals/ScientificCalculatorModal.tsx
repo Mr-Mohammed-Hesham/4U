@@ -896,23 +896,23 @@ export const ScientificCalculatorModal: React.FC<ScientificCalculatorModalProps>
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-2 md:p-4 overflow-y-auto animate-fadeIn">
-      <div className="relative w-full max-w-5xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-0 sm:p-2 md:p-4 overflow-y-auto animate-fadeIn">
+      <div className="relative w-full h-[100dvh] sm:h-auto sm:max-h-[95vh] max-w-5xl bg-slate-900 border-0 sm:border border-slate-800 rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col">
         
         {/* MODAL HEADER */}
-        <div className="gradient-primary px-4 md:px-6 py-4 flex items-center justify-between border-b border-slate-700/50 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-amber-500/20 rounded-2xl border border-amber-400/30 text-amber-300 shadow-inner">
-              <Calculator className="w-6 h-6 animate-pulse" />
+        <div className="gradient-primary px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-slate-700/50 shrink-0 gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <div className="p-2 sm:p-2.5 bg-amber-500/20 rounded-xl sm:rounded-2xl border border-amber-400/30 text-amber-300 shadow-inner shrink-0">
+              <Calculator className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
             </div>
-            <div>
-              <h2 className="text-lg md:text-xl font-black text-white tracking-tight flex items-center gap-2">
-                الآلة الحاسبة العلمية والبيانية الشاملة
-                <span className="text-[10px] bg-amber-400 text-slate-950 font-bold px-2 py-0.5 rounded-full shadow-sm">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-sm sm:text-lg md:text-xl font-black text-white tracking-tight flex items-center gap-1.5 truncate">
+                <span>الآلة الحاسبة العلمية والبيانية</span>
+                <span className="text-[9px] sm:text-[10px] bg-amber-400 text-slate-950 font-bold px-1.5 sm:px-2 py-0.5 rounded-full shadow-sm shrink-0">
                   FX-Pro
                 </span>
               </h2>
-              <p className="text-xs text-indigo-100 opacity-90">
+              <p className="text-[11px] sm:text-xs text-indigo-100 opacity-90 truncate">
                 رسم بياني • حل معادلات • مصفوفات • إحصاء • حساب علمي متقدم
               </p>
             </div>
@@ -920,15 +920,16 @@ export const ScientificCalculatorModal: React.FC<ScientificCalculatorModalProps>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
-            title="إغلاق (Esc)"
+            className="p-2 sm:p-2.5 rounded-xl bg-red-500/80 hover:bg-red-600 active:bg-red-700 text-white transition cursor-pointer flex items-center justify-center shadow-lg active:scale-95 shrink-0 border border-red-400/40"
+            title="إغلاق الآلة الحاسبة"
+            aria-label="إغلاق الآلة الحاسبة"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 text-white" strokeWidth={2.5} />
           </button>
         </div>
 
         {/* TOP TABS NAVIGATION */}
-        <div className="bg-slate-950 px-3 py-2 border-b border-slate-800 flex items-center gap-1 overflow-x-auto shrink-0 scrollbar-none">
+        <div className="bg-slate-950 px-2 sm:px-3 py-2 border-b border-slate-800 flex items-center gap-1 overflow-x-auto shrink-0 scrollbar-none touch-pan-x">
           <button
             onClick={() => setActiveTab('scientific')}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${

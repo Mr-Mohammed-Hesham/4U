@@ -80,16 +80,23 @@ export const PlannerModal: React.FC<PlannerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-900/70 backdrop-blur-md overflow-y-auto" onClick={onClose}>
       <div 
-        className="bg-white dark:bg-gray-950 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 text-right"
+        className="bg-white dark:bg-gray-950 rounded-none sm:rounded-3xl max-w-lg w-full h-[100dvh] sm:h-auto p-4 sm:p-6 shadow-2xl border-0 sm:border border-slate-100 dark:border-slate-800 text-right overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-5 flex-row-reverse">
-          <h3 className="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-4 sm:mb-5 flex-row-reverse gap-2">
+          <h3 className="text-base sm:text-xl font-black text-slate-800 dark:text-white flex items-center gap-2 truncate">
             <span>📅</span> جدولة حصة مذاكرة أسبوعية
           </h3>
-          <button onClick={onClose} className="text-2xl text-gray-400 hover:text-gray-600 dark:hover:text-white cursor-pointer select-none">×</button>
+          <button 
+            onClick={onClose} 
+            className="text-white bg-red-500/80 hover:bg-red-600 p-2 sm:p-2.5 rounded-xl transition cursor-pointer shrink-0 border border-red-400/40 shadow"
+            title="إغلاق"
+            aria-label="إغلاق"
+          >
+            <span className="text-lg font-bold leading-none">✕</span>
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

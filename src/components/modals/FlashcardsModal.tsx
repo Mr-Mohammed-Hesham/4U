@@ -483,37 +483,39 @@ export const FlashcardsModal: React.FC<FlashcardsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn" onClick={onClose}>
       <div 
-        className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 dark:border-slate-800 text-right overflow-hidden flex flex-col max-h-[92vh]"
+        className="bg-white dark:bg-slate-900 rounded-none sm:rounded-3xl max-w-2xl w-full h-[100dvh] sm:h-auto sm:max-h-[92vh] shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-800 text-right overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* HEADER BAR */}
-        <div className="bg-gradient-to-r from-purple-950 via-indigo-950 to-slate-950 text-white p-4 sm:p-5 border-b border-slate-800 shrink-0">
-          <div className="flex items-center justify-between flex-row-reverse mb-3">
-            <div className="flex items-center gap-3 flex-row-reverse">
-              <div className="p-2.5 rounded-2xl bg-purple-500/20 border border-purple-400/30 text-purple-300">
-                <Brain className="w-6 h-6 animate-pulse" />
+        <div className="bg-gradient-to-r from-purple-950 via-indigo-950 to-slate-950 text-white p-3.5 sm:p-5 border-b border-slate-800 shrink-0">
+          <div className="flex items-center justify-between flex-row-reverse mb-2.5 sm:mb-3 gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 flex-row-reverse min-w-0 flex-1">
+              <div className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-purple-500/20 border border-purple-400/30 text-purple-300 shrink-0">
+                <Brain className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
               </div>
-              <div>
-                <h3 className="text-lg md:text-xl font-extrabold text-white flex items-center gap-2">
-                  <span>🎴 بطاقات الاستذكار المتباعد (Flashcards)</span>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm sm:text-lg md:text-xl font-extrabold text-white flex items-center gap-1.5 truncate">
+                  <span>🎴 بطاقات الاستذكار (Flashcards)</span>
                 </h3>
-                <p className="text-xs text-purple-200/80 font-medium">
-                  أسئلة حقيقية ومفاهيم دقيقة وقوانين رياضية وعلمية مؤكدة 100%
+                <p className="text-[11px] sm:text-xs text-purple-200/80 font-medium truncate">
+                  أسئلة حقيقية ومفاهيم دقيقة وقوانين علمية مؤكدة 100%
                 </p>
               </div>
             </div>
             <button 
               onClick={onClose} 
-              className="text-gray-400 hover:text-white p-2 rounded-xl hover:bg-white/10 transition cursor-pointer"
+              className="text-white bg-red-500/80 hover:bg-red-600 p-2 sm:p-2.5 rounded-xl transition cursor-pointer shrink-0 border border-red-400/40 shadow"
+              title="إغلاق البطاقات"
+              aria-label="إغلاق البطاقات"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 text-white" strokeWidth={2.5} />
             </button>
           </div>
 
           {/* DECK SELECTOR TABS */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none pt-1">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-none pt-1 touch-pan-x">
             {Object.entries(PRESET_DECKS).map(([key, deck]) => (
               <button
                 key={key}

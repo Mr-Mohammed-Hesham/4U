@@ -292,7 +292,7 @@ export const SubscribersModal: React.FC<SubscribersModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md overflow-hidden">
         {/* Toast Notification Banner */}
         {toastMessage && (
           <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[1200] bg-indigo-600 text-white font-bold text-xs py-3 px-6 rounded-2xl shadow-2xl border border-indigo-400/40 flex items-center gap-2 animate-bounce">
@@ -340,43 +340,45 @@ export const SubscribersModal: React.FC<SubscribersModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="bg-slate-900 border border-slate-800 text-white rounded-2xl md:rounded-3xl w-full max-w-5xl my-auto max-h-[92vh] flex flex-col shadow-2xl overflow-hidden"
+          className="bg-slate-900 border-0 sm:border border-slate-800 text-white rounded-none sm:rounded-3xl w-full max-w-5xl h-[100dvh] sm:h-auto sm:max-h-[92vh] flex flex-col shadow-2xl overflow-hidden"
         >
           {/* Admin Header Banner */}
-          <div className="bg-gradient-to-r from-amber-600 via-indigo-700 to-violet-900 p-4 md:p-5 flex items-center justify-between border-b border-white/10 shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 md:w-12 md:h-12 rounded-2xl bg-amber-400/20 backdrop-blur-md border border-amber-300/40 flex items-center justify-center text-amber-300 shadow-xl shrink-0">
-                <Crown className="w-6 h-6 text-amber-300" />
+          <div className="bg-gradient-to-r from-amber-600 via-indigo-700 to-violet-900 p-3.5 sm:p-5 flex items-center justify-between border-b border-white/10 shrink-0 gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-400/20 backdrop-blur-md border border-amber-300/40 flex items-center justify-center text-amber-300 shadow-xl shrink-0">
+                <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-amber-300" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base md:text-lg font-black text-white">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <h3 className="text-sm sm:text-base md:text-lg font-black text-white truncate">
                     صفحة لوحة الأدمن العامة
                   </h3>
-                  <span className="bg-amber-400 text-slate-950 text-[10px] px-2 py-0.5 rounded-full font-black flex items-center gap-1 shadow">
-                    Admin Panel
+                  <span className="bg-amber-400 text-slate-950 text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-black flex items-center gap-1 shadow shrink-0">
+                    Admin
                   </span>
                 </div>
-                <p className="text-[11px] text-amber-100/90 font-mono mt-0.5 truncate max-w-xs md:max-w-md">
+                <p className="text-[10px] sm:text-[11px] text-amber-100/90 font-mono mt-0.5 truncate">
                   المسؤول: <strong className="text-white underline">{adminEmail}</strong>
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <button
                 onClick={onRefresh}
                 disabled={isLoading}
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
+                className="p-2 sm:p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
                 title="تحديث البيانات"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
               <button
                 onClick={onClose}
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
+                className="p-2 sm:p-2.5 rounded-xl bg-red-500/80 hover:bg-red-600 active:bg-red-700 text-white transition cursor-pointer shadow-lg border border-red-400/40"
+                title="إغلاق"
+                aria-label="إغلاق"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5 text-white" strokeWidth={2.5} />
               </button>
             </div>
           </div>

@@ -244,32 +244,34 @@ export const StatsModal: React.FC<StatsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-1.5 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn" onClick={onClose}>
       <div 
-        className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-4xl shadow-2xl border border-slate-200 dark:border-slate-800 text-right overflow-hidden flex flex-col max-h-[94vh] sm:max-h-[90vh]"
+        className="bg-white dark:bg-slate-900 rounded-none sm:rounded-3xl w-full max-w-4xl h-[100dvh] sm:h-auto sm:max-h-[90vh] shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-800 text-right overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* HEADER BAR */}
         <div className="bg-gradient-to-r from-indigo-900 via-slate-900 to-purple-900 text-white p-3.5 sm:p-5 pb-3 sm:pb-4 border-b border-slate-800 shrink-0">
-          <div className="flex items-center justify-between flex-row-reverse mb-2 sm:mb-3">
-            <div className="flex items-center gap-2 sm:gap-3 flex-row-reverse">
-              <div className="p-2 sm:p-2.5 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 text-amber-300 shrink-0">
+          <div className="flex items-center justify-between flex-row-reverse mb-2 sm:mb-3 gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 flex-row-reverse min-w-0 flex-1">
+              <div className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-indigo-500/20 border border-indigo-400/30 text-amber-300 shrink-0">
                 <Trophy className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
               </div>
-              <div>
-                <h3 className="text-base sm:text-lg md:text-xl font-extrabold text-white">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm sm:text-lg md:text-xl font-extrabold text-white truncate">
                   لوحة إنجازات الطالب (Dashboard)
                 </h3>
-                <p className="text-[11px] sm:text-xs text-indigo-200/80 font-medium hidden sm:block">
+                <p className="text-[11px] sm:text-xs text-indigo-200/80 font-medium hidden sm:block truncate">
                   تابع تقدمك الدراسي، أوسمتك، وسجل درجاتك في المنصة
                 </p>
               </div>
             </div>
             <button 
               onClick={onClose} 
-              className="text-gray-400 hover:text-white p-1.5 sm:p-2 rounded-xl hover:bg-white/10 transition cursor-pointer select-none"
+              className="text-white bg-red-500/80 hover:bg-red-600 active:bg-red-700 p-2 sm:p-2.5 rounded-xl transition cursor-pointer shrink-0 border border-red-400/40 shadow"
+              title="إغلاق"
+              aria-label="إغلاق"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 text-white" strokeWidth={2.5} />
             </button>
           </div>
 

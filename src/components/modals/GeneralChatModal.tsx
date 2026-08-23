@@ -691,47 +691,48 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-hidden">
       <motion.div
-        initial={{ scale: 0.95, opacity: 0, y: 15 }}
+        initial={{ scale: 0.98, opacity: 0, y: 15 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.95, opacity: 0, y: 15 }}
-        className="relative w-full max-w-5xl h-[92vh] max-h-[850px] bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100"
+        exit={{ scale: 0.98, opacity: 0, y: 15 }}
+        className="relative w-full h-[100dvh] sm:h-[92vh] sm:max-h-[850px] sm:max-w-5xl bg-slate-900 border-0 sm:border border-slate-800 rounded-none sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100"
       >
         {/* MODAL HEADER */}
-        <div className="gradient-primary px-4 md:px-6 py-3.5 flex items-center justify-between gap-3 border-b border-white/10 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-amber-300">
-              <MessageSquare className="w-6 h-6 animate-pulse" />
+        <div className="gradient-primary px-3 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-3 border-b border-white/10 shrink-0 z-20">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <div className="p-1.5 sm:p-2 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-amber-300 shrink-0">
+              <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-extrabold text-base md:text-lg text-white">
-                  غرف الدردشة والتواصل الطلابي المباشر
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h3 className="font-extrabold text-sm sm:text-base md:text-lg text-white truncate">
+                  غرف الدردشة والتواصل
                 </h3>
-                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  مباشر ومحفوظ
+                  <span className="hidden xs:inline">مباشر ومحفوظ</span>
+                  <span className="xs:hidden">مباشر</span>
                 </span>
                 {isAdmin && (
-                  <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow">
+                  <span className="bg-amber-400 text-slate-950 text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-full hidden sm:flex items-center gap-1 shadow shrink-0">
                     <Crown className="w-3 h-3 text-slate-950" />
-                    لوحة تحكم المسؤول
+                    <span>لوحة الأدمن</span>
                   </span>
                 )}
               </div>
-              <p className="text-xs text-white/80 font-medium hidden sm:block">
+              <p className="text-[11px] sm:text-xs text-white/80 font-medium hidden md:block truncate">
                 تواصل وتفاعل مع زملائك - مع ميزة التفاعل بالرموز، وتثبيت وحذف الرسائل للمسؤول
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Shared Files & Media Library Drawer Toggle */}
             <button
               type="button"
               onClick={() => setShowMediaLibrary(!showMediaLibrary)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border shrink-0 ${
                 showMediaLibrary 
                   ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-md font-black' 
                   : 'bg-white/10 hover:bg-white/20 text-amber-300 border-white/20'
@@ -739,28 +740,29 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
               title="مكتبة الملفات والوسائط المرفوعة"
             >
               <Folder className="w-4 h-4 text-amber-300 shrink-0" />
-              <span className="hidden md:inline">مكتبة المرفقات</span>
+              <span className="hidden sm:inline">المرفقات</span>
               <span className="bg-slate-950 text-amber-300 text-[10px] font-extrabold px-1.5 py-0.2 rounded-full">
                 {attachedMediaList.length}
               </span>
             </button>
 
-            {/* Close Button */}
+            {/* Close Button - High visibility, red-accented on mobile, prominent touch target */}
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
+              className="p-2 sm:p-2.5 rounded-xl bg-red-500/80 hover:bg-red-600 active:bg-red-700 text-white transition cursor-pointer flex items-center justify-center shadow-lg active:scale-95 shrink-0 border border-red-400/40"
               title="إغلاق الشات"
+              aria-label="إغلاق الشات"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 text-white" strokeWidth={2.5} />
             </button>
           </div>
         </div>
 
         {/* CHAT ROOM SELECTOR BAR (Horizontal Scrollable Tabs) */}
-        <div className="bg-slate-950/90 border-b border-slate-800/80 p-2.5 px-4 flex items-center gap-2 overflow-x-auto custom-scrollbar shrink-0">
-          <span className="text-xs font-extrabold text-amber-400 whitespace-nowrap pl-1 flex items-center gap-1">
+        <div className="bg-slate-950/90 border-b border-slate-800/80 p-2 sm:p-2.5 px-3 sm:px-4 flex items-center gap-1.5 sm:gap-2 overflow-x-auto custom-scrollbar scrollbar-none shrink-0 touch-pan-x">
+          <span className="text-[11px] sm:text-xs font-extrabold text-amber-400 whitespace-nowrap pl-1 flex items-center gap-1 shrink-0">
             <Users className="w-3.5 h-3.5" />
-            <span>اختر الغرفة:</span>
+            <span className="hidden xs:inline">اختر الغرفة:</span>
           </span>
 
           {CHAT_ROOMS.map((room) => {
@@ -775,14 +777,14 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
                   onMarkRoomAsRead?.(room.id);
                   onActiveRoomChange?.(room.id);
                 }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 border shrink-0 relative ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1 sm:gap-1.5 border shrink-0 relative ${
                   isActive
                     ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white border-indigo-400 shadow-lg shadow-indigo-600/30'
                     : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800 hover:border-slate-700'
                 }`}
               >
                 <span>{room.icon}</span>
-                <span>{room.name}</span>
+                <span className="text-xs">{room.name}</span>
                 {room.gradeBadge && (
                   <span className={`text-[9px] px-1.5 py-0.2 rounded-md font-mono ${
                     isActive ? 'bg-amber-400 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'
@@ -801,19 +803,20 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
         </div>
 
         {/* ACTIVE ROOM DESCRIPTION BADGE */}
-        <div className="bg-slate-950/50 px-4 py-1.5 border-b border-slate-800/60 text-xs text-slate-400 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2 truncate">
-            <span className="text-amber-300 font-bold">{activeRoom.icon} {activeRoom.name}:</span>
-            <span className="text-slate-300 truncate">{activeRoom.description}</span>
+        <div className="bg-slate-950/50 px-3 sm:px-4 py-1.5 border-b border-slate-800/60 text-xs text-slate-400 flex items-center justify-between shrink-0 gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 truncate min-w-0 flex-1">
+            <span className="text-amber-300 font-bold whitespace-nowrap text-xs">{activeRoom.icon} {activeRoom.name}:</span>
+            <span className="text-slate-300 truncate text-[11px] sm:text-xs">{activeRoom.description}</span>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {pinnedMessagesList.length > 0 && (
-              <span className="text-[10px] text-amber-400 bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold">
+              <span className="text-[10px] text-amber-400 bg-amber-400/10 border border-amber-400/30 px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-1 font-bold">
                 <Pin className="w-3 h-3 fill-amber-400" />
-                {pinnedMessagesList.length} مثبتة
+                <span>{pinnedMessagesList.length}</span>
+                <span className="hidden sm:inline">مثبتة</span>
               </span>
             )}
-            <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">
+            <span className="text-[10px] text-slate-500 font-mono hidden md:inline">
               سجل محفوظ دائماً • Firestore DB
             </span>
           </div>
@@ -1173,7 +1176,7 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
                           </div>
 
                           {/* FLOATING ACTION TOOLBAR (Reactions for everyone, Delete & Pin for Admin only) */}
-                          <div className={`absolute top-0 transform -translate-y-1/2 flex items-center gap-1 bg-slate-900 border border-slate-700/80 rounded-full px-1.5 py-0.5 shadow-xl opacity-0 group-hover/msg:opacity-100 transition z-10 ${
+                          <div className={`absolute top-0 transform -translate-y-1/2 flex items-center gap-1 bg-slate-900 border border-slate-700/80 rounded-full px-1.5 py-0.5 shadow-xl opacity-90 sm:opacity-0 sm:group-hover/msg:opacity-100 transition z-10 ${
                             isMe ? 'left-0' : 'right-0'
                           }`}>
                             
@@ -1339,39 +1342,39 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
         )}
 
         {/* INPUT FOOTER BAR */}
-        <div className="bg-slate-950 p-3 md:p-4 border-t border-slate-800 shrink-0">
+        <div className="bg-slate-950 p-2 sm:p-3 md:p-4 border-t border-slate-800 shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           {isRecording ? (
             /* Voice Recording Bar */
-            <div className="flex items-center justify-between gap-3 bg-red-950/60 border border-red-500/40 p-3 rounded-2xl animate-pulse">
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-red-500 animate-ping" />
-                <span className="text-xs font-bold text-red-200">جاري تسجيل الصوتي...</span>
-                <span className="text-xs font-mono text-amber-300 font-bold bg-slate-900 px-2 py-0.5 rounded-md border border-red-500/30">
+            <div className="flex items-center justify-between gap-2 sm:gap-3 bg-red-950/60 border border-red-500/40 p-2.5 sm:p-3 rounded-2xl animate-pulse">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div className="w-3 h-3 rounded-full bg-red-500 animate-ping shrink-0" />
+                <span className="text-xs font-bold text-red-200 truncate">تسجيل صوتي...</span>
+                <span className="text-xs font-mono text-amber-300 font-bold bg-slate-900 px-2 py-0.5 rounded-md border border-red-500/30 shrink-0">
                   {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={cancelRecording}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition cursor-pointer"
+                  className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition cursor-pointer"
                 >
                   إلغاء
                 </button>
                 <button
                   type="button"
                   onClick={stopRecording}
-                  className="px-4 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-extrabold transition cursor-pointer shadow-lg flex items-center gap-1"
+                  className="px-3 sm:px-4 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-extrabold transition cursor-pointer shadow-lg flex items-center gap-1"
                 >
                   <Square className="w-3.5 h-3.5 fill-white" />
-                  <span>إرسال التسجيل</span>
+                  <span>إرسال</span>
                 </button>
               </div>
             </div>
           ) : (
             /* Standard Input Bar */
-            <form onSubmit={handleSendMessage} className="flex items-center gap-2 md:gap-3">
+            <form onSubmit={handleSendMessage} className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
               {/* Image Input Trigger */}
               <input 
                 type="file" 
@@ -1383,7 +1386,7 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
               <button
                 type="button"
                 onClick={() => imageInputRef.current?.click()}
-                className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-amber-300 border border-slate-800 transition cursor-pointer shrink-0"
+                className="p-2 sm:p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-amber-300 border border-slate-800 transition cursor-pointer shrink-0"
                 title="إرفاق صورة"
               >
                 <ImageIcon className="w-4 h-4" />
@@ -1400,7 +1403,7 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-indigo-400 border border-slate-800 transition cursor-pointer shrink-0"
+                className="p-2 sm:p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-indigo-400 border border-slate-800 transition cursor-pointer shrink-0"
                 title="إرفاق ملف أو مستند"
               >
                 <Paperclip className="w-4 h-4" />
@@ -1410,7 +1413,7 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
               <button
                 type="button"
                 onClick={startRecording}
-                className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-emerald-400 border border-slate-800 transition cursor-pointer shrink-0"
+                className="p-2 sm:p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-emerald-400 border border-slate-800 transition cursor-pointer shrink-0"
                 title="تسجيل صوتي مباشر"
               >
                 <Mic className="w-4 h-4" />
@@ -1425,14 +1428,14 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
                   setInputText(e.target.value);
                   if (profanityWarning) setProfanityWarning(null);
                 }}
-                className="flex-1 bg-slate-900 border border-slate-800 rounded-xl py-2.5 px-4 text-xs md:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition"
+                className="flex-1 min-w-0 bg-slate-900 border border-slate-800 rounded-xl py-2 sm:py-2.5 px-3 sm:px-4 text-xs md:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition"
               />
 
               {/* Send Button */}
               <button
                 type="submit"
                 disabled={isSending || (!inputText.trim() && !attachedFile)}
-                className={`p-2.5 px-4 md:px-5 rounded-xl font-extrabold text-xs transition flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                className={`p-2 sm:p-2.5 px-3 sm:px-5 rounded-xl font-extrabold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0 ${
                   isSending || (!inputText.trim() && !attachedFile)
                     ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
                     : 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-600/30'
