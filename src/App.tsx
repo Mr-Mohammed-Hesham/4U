@@ -290,6 +290,15 @@ export default function App() {
   const [loaderSrc, setLoaderSrc] = useState(teacherLoader);
   const [toast, setToast] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isStandalone, setIsStandalone] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true ||
+      document.referrer.includes('android-app://') ||
+      window.location.search.includes('source=pwa')
+    );
+  });
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [showExitConfirmModal, setShowExitConfirmModal] = useState(false);
@@ -501,6 +510,31 @@ export default function App() {
     const randomIdx = Math.floor(Math.random() * STUDY_QUOTES.length);
     setActiveQuote(STUDY_QUOTES[randomIdx]);
 
+    // Check standalone mode on mount
+    const checkStandalone = () => {
+      const isApp = (
+        window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as any).standalone === true ||
+        document.referrer.includes('android-app://') ||
+        window.location.search.includes('source=pwa')
+      );
+      setIsStandalone(isApp);
+    };
+    checkStandalone();
+
+    const mediaQuery = window.matchMedia('(display-mode: standalone)');
+    const handleMediaChange = (e: MediaQueryListEvent) => {
+      setIsStandalone(e.matches || (window.navigator as any).standalone === true || document.referrer.includes('android-app://'));
+    };
+    mediaQuery.addEventListener?.('change', handleMediaChange);
+
+    const handleAppInstalled = () => {
+      setIsStandalone(true);
+      setShowInstallModal(false);
+      showToastMsg('🎉 تم تثبيت التطبيق بنجاح!');
+    };
+    window.addEventListener('appinstalled', handleAppInstalled);
+
     // Check if the prompt was already deferred globally on window before React mounted
     if ((window as any).deferredPrompt) {
       setInstallPrompt((window as any).deferredPrompt);
@@ -521,6 +555,8 @@ export default function App() {
 
     return () => {
       clearTimeout(timer);
+      mediaQuery.removeEventListener?.('change', handleMediaChange);
+      window.removeEventListener('appinstalled', handleAppInstalled);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       delete (window as any).onBeforeInstallPrompt;
     };
@@ -1452,49 +1488,93 @@ export default function App() {
     }
   }, []);
 
+  // Helper to play harmonious alarm chime
+  const playDailyReminderChime = () => {
+    try {
+      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtxClass) return;
+      const audioCtx = new AudioCtxClass();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      
+      // Play a lovely 4-tone ascending study chime
+      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+      notes.forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.18);
+        
+        gain.gain.setValueAtTime(0, audioCtx.currentTime + i * 0.18);
+        gain.gain.linearRampToValueAtTime(0.35, audioCtx.currentTime + i * 0.18 + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.18 + 0.35);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.start(audioCtx.currentTime + i * 0.18);
+        osc.stop(audioCtx.currentTime + i * 0.18 + 0.4);
+      });
+    } catch (err) {
+      console.warn("Audio chime play failed:", err);
+    }
+  };
+
+  // Helper to trigger study reminder alert
+  const triggerDailyReminder = () => {
+    setShowAlarmTriggeredModal(true);
+    playDailyReminderChime();
+    showToastMsg('⏰ ' + (dailyReminderMsg || 'حان وقت المذاكرة اليومي! فلنجتهد معاً لنصنع التفوق 📚✨'));
+
+    // Native OS / Browser Notification if granted
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification('🔔 منبه المذاكرة اليومي - 4U', {
+          body: dailyReminderMsg || 'حان وقت المذاكرة اليومي! فلنجتهد معاً لنصنع التفوق 📚✨',
+          icon: '/favicon.png',
+          tag: '4u-daily-reminder'
+        });
+      } catch (e) {
+        console.warn("Native Notification error:", e);
+      }
+    }
+  };
+
   // Daily Reminder Interval Checker
   useEffect(() => {
-    if (!dailyReminderActive) return;
-    let alarmCheckedHourMin = '';
+    if (!dailyReminderActive || !dailyReminderTime) return;
 
     const checkAlarm = () => {
       const now = new Date();
-      const currentHourMin = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-      
-      if (currentHourMin === dailyReminderTime && alarmCheckedHourMin !== currentHourMin) {
-        alarmCheckedHourMin = currentHourMin;
-        setShowAlarmTriggeredModal(true);
-        // Play notification sound
-        try {
-          const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
-          osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15); // A5
-          osc.frequency.setValueAtTime(1174.66, audioCtx.currentTime + 0.3); // D6
-          
-          gain.gain.setValueAtTime(0, audioCtx.currentTime);
-          gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05);
-          gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.4);
-          gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
-          
-          osc.start();
-          osc.stop(audioCtx.currentTime + 0.5);
-        } catch (e) {
-          console.warn("Audio Context sound failed:", e);
-        }
+      const currentHour = now.getHours().toString().padStart(2, '0');
+      const currentMin = now.getMinutes().toString().padStart(2, '0');
+      const currentHourMin = `${currentHour}:${currentMin}`;
+      const todayDateKey = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
+      const alarmTriggerKey = `${todayDateKey}_${dailyReminderTime}`;
+      const lastTriggered = localStorage.getItem('4u_last_alarm_triggered_key');
+
+      if (currentHourMin === dailyReminderTime && lastTriggered !== alarmTriggerKey) {
+        localStorage.setItem('4u_last_alarm_triggered_key', alarmTriggerKey);
+        triggerDailyReminder();
       }
     };
 
-    const interval = setInterval(checkAlarm, 30000); // Check every 30 seconds
-    checkAlarm(); // Instant initial check
+    const interval = setInterval(checkAlarm, 5000); // Check every 5 seconds for pinpoint accuracy
+    checkAlarm();
 
-    return () => clearInterval(interval);
-  }, [dailyReminderActive, dailyReminderTime]);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkAlarm();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [dailyReminderActive, dailyReminderTime, dailyReminderMsg]);
 
   // Pomodoro timer effect
   useEffect(() => {
@@ -3185,15 +3265,17 @@ export default function App() {
               <span className="hidden sm:inline">مراجعة الامتحان</span>
             </button>
 
-            {/* Direct PWA Install Button */}
-            <button 
-              onClick={handleInstallApp}
-              className="bg-white/10 hover:bg-white/20 p-2 rounded-xl backdrop-blur-sm border border-white/15 transition flex items-center gap-1 text-sm font-semibold cursor-pointer text-amber-300"
-              title="تثبيت التطبيق مباشرة"
-            >
-              <Download className="w-4 h-4 text-amber-300" />
-              <span className="hidden sm:inline">تثبيت</span>
-            </button>
+            {/* Direct PWA Install Button (Shown only when in browser, hidden when installed/standalone) */}
+            {!isStandalone && (
+              <button 
+                onClick={handleInstallApp}
+                className="bg-white/10 hover:bg-white/20 p-2 rounded-xl backdrop-blur-sm border border-white/15 transition flex items-center gap-1 text-sm font-semibold cursor-pointer text-amber-300"
+                title="تثبيت التطبيق مباشرة"
+              >
+                <Download className="w-4 h-4 text-amber-300" />
+                <span className="hidden sm:inline">تثبيت</span>
+              </button>
+            )}
 
             {/* Admin-Only Subscribers Database Panel Button */}
             {isAdmin && (
@@ -5041,8 +5123,8 @@ export default function App() {
 
       </main>
 
-      {/* GLOBAL PWA INSTALLATION CARD FOR DEVICES */}
-      {!isFocusMode && (
+      {/* GLOBAL PWA INSTALLATION CARD FOR DEVICES (Hidden when running as standalone app) */}
+      {!isFocusMode && !isStandalone && (
         <div className="max-w-7xl mx-auto px-4 md:px-6 mb-8 mt-4">
           <div className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-indigo-500/10 border border-indigo-100 dark:border-indigo-950/60 rounded-3xl p-6 md:p-8 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6 text-right">
             <div className="flex items-center gap-4">
@@ -5090,22 +5172,24 @@ export default function App() {
         </div>
       </footer>
 
-      {/* 5. FLOATING INSTALL BUTTON */}
-      <div className="fixed bottom-6 left-6 z-40 animate-bounce group">
-        <button 
-          onClick={handleInstallApp}
-          className="bg-gradient-to-br from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-300 transform hover:scale-110 relative"
-          title="تثبيت المنصة على جهازك"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-          {/* Tooltip on hover */}
-          <span className="absolute left-16 top-1/2 -translate-y-1/2 bg-slate-900 text-white text-xs py-1.5 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap shadow-xl pointer-events-none">
-            تثبيت التطبيق 📲
-          </span>
-        </button>
-      </div>
+      {/* 5. FLOATING INSTALL BUTTON (Hidden when running as standalone app) */}
+      {!isStandalone && (
+        <div className="fixed bottom-6 left-6 z-40 animate-bounce group">
+          <button 
+            onClick={handleInstallApp}
+            className="bg-gradient-to-br from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-300 transform hover:scale-110 relative"
+            title="تثبيت المنصة على جهازك"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            {/* Tooltip on hover */}
+            <span className="absolute left-16 top-1/2 -translate-y-1/2 bg-slate-900 text-white text-xs py-1.5 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap shadow-xl pointer-events-none">
+              تثبيت التطبيق 📲
+            </span>
+          </button>
+        </div>
+      )}
 
       {/* ========================================== */}
       {/* 📻 QURAN RADIO FLOATING CONTROL WIDGET */}
@@ -5355,6 +5439,7 @@ export default function App() {
         dailyReminderMsg={dailyReminderMsg}
         updateReminderSettings={updateReminderSettings}
         showToastMsg={showToastMsg}
+        onTestAlarm={triggerDailyReminder}
       />
 
       {/* MODAL 8: ALARM TRIGGERED NOTIFICATION SCREEN */}

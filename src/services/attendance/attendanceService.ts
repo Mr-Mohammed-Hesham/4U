@@ -59,102 +59,48 @@ export function formatSecondsToArabic(totalSeconds: number): string {
   }
 }
 
-/**
- * Helper to generate default historical attendance records if user opens for the first time
- */
-function generateInitialHistoricalLogs(studentName = 'طالب المنصة', email = 'student@gmail.com'): AttendanceRecord[] {
-  const logs: AttendanceRecord[] = [];
-  const now = new Date();
-  
-  // Create 20 sample history records across 2026 and late 2025
-  const sampleData = [
-    { daysAgo: 0, hoursAgo: 0.1, durationMins: 35, device: 'Google Chrome / Windows' },
-    { daysAgo: 1, hoursAgo: 24, durationMins: 52, device: 'Google Chrome / Windows' },
-    { daysAgo: 2, hoursAgo: 48, durationMins: 45, device: 'Google Chrome / Windows' },
-    { daysAgo: 3, hoursAgo: 72, durationMins: 60, device: 'Safari / iPad' },
-    { daysAgo: 5, hoursAgo: 120, durationMins: 90, device: 'Google Chrome / Windows' },
-    { daysAgo: 7, hoursAgo: 168, durationMins: 40, device: 'Google Chrome / Windows' },
-    { daysAgo: 10, hoursAgo: 240, durationMins: 75, device: 'Safari / iPhone' },
-    { daysAgo: 14, hoursAgo: 336, durationMins: 110, device: 'Google Chrome / Windows' },
-    { daysAgo: 18, hoursAgo: 432, durationMins: 30, device: 'Firefox / Mac' },
-    { daysAgo: 22, hoursAgo: 528, durationMins: 65, device: 'Google Chrome / Windows' },
-    { daysAgo: 28, hoursAgo: 672, durationMins: 85, device: 'Google Chrome / Windows' },
-    { daysAgo: 35, hoursAgo: 840, durationMins: 50, device: 'Google Chrome / Windows' },
-    { daysAgo: 42, hoursAgo: 1008, durationMins: 95, device: 'Safari / iPad' },
-    { daysAgo: 50, hoursAgo: 1200, durationMins: 40, device: 'Google Chrome / Windows' },
-    { daysAgo: 60, hoursAgo: 1440, durationMins: 70, device: 'Google Chrome / Windows' },
-    { daysAgo: 75, hoursAgo: 1800, durationMins: 120, device: 'Google Chrome / Windows' },
-    { daysAgo: 90, hoursAgo: 2160, durationMins: 55, device: 'Google Chrome / Windows' },
-    { daysAgo: 120, hoursAgo: 2880, durationMins: 80, device: 'Google Chrome / Windows' },
-    { daysAgo: 150, hoursAgo: 3600, durationMins: 65, device: 'Google Chrome / Windows' },
-    { daysAgo: 200, hoursAgo: 4800, durationMins: 45, device: 'Google Chrome / Windows' }
-  ];
+export function getRealDeviceInfo(): string {
+  if (typeof navigator === 'undefined') return 'متصفح الإنترنت';
+  const ua = navigator.userAgent;
+  let browser = 'متصفح الإنترنت';
+  if (ua.includes('Edg/')) browser = 'Microsoft Edge';
+  else if (ua.includes('Chrome/')) browser = 'Google Chrome';
+  else if (ua.includes('Firefox/')) browser = 'Mozilla Firefox';
+  else if (ua.includes('Safari/') && !ua.includes('Chrome/')) browser = 'Apple Safari';
+  else if (ua.includes('Opera') || ua.includes('OPR/')) browser = 'Opera';
 
-  sampleData.forEach((item, index) => {
-    const logDate = new Date(now.getTime() - item.hoursAgo * 3600 * 1000);
-    const dayName = ARABIC_DAYS[logDate.getDay()];
-    const year = logDate.getFullYear();
-    const month = logDate.getMonth() + 1;
-    const monthName = ARABIC_MONTHS[month - 1]?.name || 'شهر';
-    
-    const formattedDate = `${year}-${String(month).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`;
-    
-    const loginHours = logDate.getHours();
-    const loginMins = logDate.getMinutes();
-    const ampm = loginHours >= 12 ? 'م' : 'ص';
-    const displayHours = loginHours % 12 || 12;
-    const loginTimeStr = `${String(displayHours).padStart(2, '0')}:${String(loginMins).padStart(2, '0')} ${ampm}`;
+  let os = 'جهاز المستخدم';
+  if (ua.includes('Windows NT 10.0')) os = 'Windows 10/11';
+  else if (ua.includes('Windows')) os = 'Windows';
+  else if (ua.includes('Android')) os = 'Android';
+  else if (ua.includes('iPhone')) os = 'iPhone (iOS)';
+  else if (ua.includes('iPad')) os = 'iPad (iPadOS)';
+  else if (ua.includes('Mac OS')) os = 'macOS';
+  else if (ua.includes('Linux')) os = 'Linux';
 
-    const logoutDate = new Date(logDate.getTime() + item.durationMins * 60 * 1000);
-    const logoutHours = logoutDate.getHours();
-    const logoutMins = logoutDate.getMinutes();
-    const logoutAmpm = logoutHours >= 12 ? 'م' : 'ص';
-    const displayLogoutHours = logoutHours % 12 || 12;
-    const logoutTimeStr = `${String(displayLogoutHours).padStart(2, '0')}:${String(logoutMins).padStart(2, '0')} ${logoutAmpm}`;
-
-    const durationSeconds = item.durationMins * 60;
-
-    logs.push({
-      id: `att_init_${Date.now()}_${index}`,
-      userId: 'user_default',
-      studentName,
-      email,
-      date: formattedDate,
-      dayName,
-      loginTime: loginTimeStr,
-      logoutTime: index === 0 ? 'نشط الآن' : logoutTimeStr,
-      durationSeconds,
-      durationFormatted: formatSecondsToArabic(durationSeconds),
-      timestamp: logDate.getTime(),
-      year,
-      month,
-      monthName,
-      deviceInfo: item.device,
-      status: index === 0 ? 'نشط الآن' : 'مكتملة',
-      gradeName: 'تاسع عام'
-    });
-  });
-
-  // Sort descending (newest timestamp first)
-  logs.sort((a, b) => b.timestamp - a.timestamp);
-  return logs;
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+  return `${browser} • ${os} (${isMobile ? 'هاتف محمول' : 'كمبيوتر'})`;
 }
 
 export const attendanceService = {
   /**
    * Retrieves all attendance logs sorted descending (newest first).
+   * Strips out any legacy mock logs if present.
    */
   getLogs(studentName = 'طالب المنصة', email = 'student@gmail.com'): AttendanceRecord[] {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (!stored) {
-        const initialLogs = generateInitialHistoricalLogs(studentName, email);
-        this.saveLogs(initialLogs);
-        return initialLogs;
+        return [];
       }
       const parsed: AttendanceRecord[] = JSON.parse(stored);
+      // Remove any legacy mock/fake records generated with att_init_
+      const realOnly = parsed.filter(r => r && r.id && !r.id.startsWith('att_init_'));
+      if (realOnly.length !== parsed.length) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(realOnly));
+      }
       // Ensure records are always sorted descending by timestamp
-      return parsed.sort((a, b) => b.timestamp - a.timestamp);
+      return realOnly.sort((a, b) => b.timestamp - a.timestamp);
     } catch (e) {
       console.error('Error loading attendance records:', e);
       return [];
@@ -162,32 +108,21 @@ export const attendanceService = {
   },
 
   /**
-   * Gets logs specifically for a given student email/name, auto-generating history if new.
+   * Gets logs specifically for a given student email/name.
+   * Returns purely real records (never generates fake data).
    */
   getStudentLogs(studentName = 'طالب المنصة', email = 'student@gmail.com'): AttendanceRecord[] {
     try {
       const allLogs = this.getLogs(studentName, email);
-      if (!email) return allLogs;
+      if (!email && !studentName) return allLogs;
 
-      const filtered = allLogs.filter(
-        r => (r.email && r.email.toLowerCase() === email.toLowerCase()) || 
-             (r.studentName && r.studentName.toLowerCase() === studentName.toLowerCase())
-      );
+      const filtered = allLogs.filter(r => {
+        const matchEmail = email && r.email && r.email.toLowerCase().trim() === email.toLowerCase().trim();
+        const matchName = studentName && r.studentName && r.studentName.toLowerCase().trim() === studentName.toLowerCase().trim();
+        return matchEmail || matchName;
+      });
 
-      if (filtered.length > 0) {
-        return filtered;
-      }
-
-      // Generate initial logs for this student if none exist
-      const initialLogs = generateInitialHistoricalLogs(studentName, email);
-      const combined = [...allLogs, ...initialLogs];
-      combined.sort((a, b) => b.timestamp - a.timestamp);
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(combined));
-      } catch (err) {
-        console.error('Failed to write student initial logs:', err);
-      }
-      return initialLogs;
+      return filtered.sort((a, b) => b.timestamp - a.timestamp);
     } catch (e) {
       console.error('Error loading student attendance records:', e);
       return [];
@@ -252,7 +187,7 @@ export const attendanceService = {
       year,
       month,
       monthName,
-      deviceInfo: typeof navigator !== 'undefined' ? (navigator.userAgent.includes('Chrome') ? 'Google Chrome / Desktop' : 'متصفح الإنترنت') : 'متصفح الإنترنت',
+      deviceInfo: getRealDeviceInfo(),
       status: 'نشط الآن',
       gradeName: gradeName || 'تاسع عام'
     };

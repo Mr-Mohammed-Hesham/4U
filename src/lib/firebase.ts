@@ -149,6 +149,16 @@ export interface ExamHistoryItem {
   correctQuestions?: number;
 }
 
+export interface LoginSessionRecord {
+  id: string;
+  loginAt: string;
+  loginTimeFormatted: string;
+  date: string;
+  dayName: string;
+  deviceInfo: string;
+  provider: string;
+}
+
 export interface UserRecord {
   uid: string;
   email: string;
@@ -164,6 +174,8 @@ export interface UserRecord {
   role?: 'admin' | 'user';
   customPassword?: string;
   githubUsername?: string;
+  deviceInfo?: string;
+  loginHistory?: LoginSessionRecord[];
   // Detailed Analytics for Admin View & Student Dashboard
   examsCompletedCount?: number;
   lessonsCompletedCount?: number;
@@ -214,6 +226,32 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs = 4000, fallbackVal
 }
 
 /**
+ * Detect real device and browser
+ */
+export function getClientDeviceInfo(): string {
+  if (typeof navigator === 'undefined') return 'متصفح الإنترنت';
+  const ua = navigator.userAgent;
+  let browser = 'متصفح الإنترنت';
+  if (ua.includes('Edg/')) browser = 'Microsoft Edge';
+  else if (ua.includes('Chrome/')) browser = 'Google Chrome';
+  else if (ua.includes('Firefox/')) browser = 'Mozilla Firefox';
+  else if (ua.includes('Safari/') && !ua.includes('Chrome/')) browser = 'Apple Safari';
+  else if (ua.includes('Opera') || ua.includes('OPR/')) browser = 'Opera';
+
+  let os = 'جهاز المستخدم';
+  if (ua.includes('Windows NT 10.0')) os = 'Windows 10/11';
+  else if (ua.includes('Windows')) os = 'Windows';
+  else if (ua.includes('Android')) os = 'Android';
+  else if (ua.includes('iPhone')) os = 'iPhone (iOS)';
+  else if (ua.includes('iPad')) os = 'iPad (iPadOS)';
+  else if (ua.includes('Mac OS')) os = 'macOS';
+  else if (ua.includes('Linux')) os = 'Linux';
+
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+  return `${browser} • ${os} (${isMobile ? 'هاتف محمول' : 'كمبيوتر'})`;
+}
+
+/**
  * Syncs logged in user (from Google Auth, GitHub Auth, or Direct Password login) to the subscribers/users Firestore database
  */
 export async function syncUserToFirestore(userData: { 
@@ -227,6 +265,27 @@ export async function syncUserToFirestore(userData: {
   githubUsername?: string;
 }): Promise<UserRecord> {
   const now = new Date().toISOString();
+  const dateObj = new Date();
+  const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  const dayName = days[dateObj.getDay()];
+  const hours = dateObj.getHours();
+  const mins = dateObj.getMinutes();
+  const ampm = hours >= 12 ? 'م' : 'ص';
+  const displayHours = hours % 12 || 12;
+  const loginTimeFormatted = `${String(displayHours).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${ampm}`;
+  const dateFormatted = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+  const realDevice = getClientDeviceInfo();
+
+  const currentLoginSession: LoginSessionRecord = {
+    id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    loginAt: now,
+    loginTimeFormatted,
+    date: dateFormatted,
+    dayName,
+    deviceInfo: realDevice,
+    provider: userData.provider || 'google'
+  };
+
   const cleanUid = userData.uid || ('user_' + userData.email.replace(/[^a-zA-Z0-9]/g, '_'));
   const isPrimaryAdminEmail = userData.email.toLowerCase().trim() === PRIMARY_ADMIN_EMAIL.toLowerCase().trim();
   
@@ -239,6 +298,8 @@ export async function syncUserToFirestore(userData: {
     role: isPrimaryAdminEmail ? (userData.isAdminVerified ? 'admin' : 'user') : 'user',
     createdAt: now,
     lastLoginAt: now,
+    deviceInfo: realDevice,
+    loginHistory: [currentLoginSession],
     ...(userData.customPassword ? { customPassword: userData.customPassword } : {}),
     ...(userData.githubUsername ? { githubUsername: userData.githubUsername } : {})
   };
@@ -272,8 +333,17 @@ export async function syncUserToFirestore(userData: {
         record.role = existingData.role || 'user';
       }
 
+      // Merge login history (keep up to 50 real sessions)
+      const existingHistory: LoginSessionRecord[] = Array.isArray(existingData.loginHistory) 
+        ? existingData.loginHistory.filter((item: any) => item && item.loginAt)
+        : [];
+      const updatedLoginHistory = [currentLoginSession, ...existingHistory.filter(item => item.id !== currentLoginSession.id)].slice(0, 50);
+      record.loginHistory = updatedLoginHistory;
+
       const updateData: any = {
         lastLoginAt: now,
+        deviceInfo: realDevice,
+        loginHistory: updatedLoginHistory,
         displayName: userData.displayName || existingData.displayName || record.displayName,
         photoURL: userData.photoURL || existingData.photoURL || record.photoURL,
         role: record.role
