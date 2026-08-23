@@ -294,6 +294,7 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum
                     <option value="9">{isEn ? 'Grade 9' : 'الصف 9 (Grade 9)'}</option>
                     <option value="8">{isEn ? 'Grade 8' : 'الصف 8 (Grade 8)'}</option>
                     <option value="7">{isEn ? 'Grade 7' : 'الصف 7 (Grade 7)'}</option>
+                    <option value="5">{isEn ? 'Grade 5' : 'الصف 5 (Grade 5)'}</option>
                   </select>
                 </div>
 

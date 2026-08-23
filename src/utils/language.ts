@@ -34,6 +34,7 @@ export const getEnglishSubjectName = (subjectName: string, subjectId?: string): 
 export const getEnglishGradeName = (gradeName: string, gradeId?: number): string => {
   if (!gradeName) return '';
   if (gradeId) return `Grade ${gradeId}`;
+  if (gradeName.includes('خامس') || gradeName.includes('5')) return 'Grade 5';
   if (gradeName.includes('سابع') || gradeName.includes('7')) return 'Grade 7';
   if (gradeName.includes('ثامن') || gradeName.includes('8')) return 'Grade 8';
   if (gradeName.includes('تاسع') || gradeName.includes('9')) return 'Grade 9';

@@ -22,6 +22,11 @@ import { math10General1 } from '../curriculum/uae/grade10MathGeneral';
 import { math10AdvBridge1 } from '../curriculum/uae/grade10MathBridge';
 import { math10AdvInspire1 } from '../curriculum/uae/grade10MathInspire';
 
+// Grade 5 Math & Physics / Science (General & Advanced)
+import { math5General1 } from '../curriculum/uae/grade5MathGeneral';
+import { math5AdvBridge1, math5AdvInspire1 } from '../curriculum/uae/grade5MathAdv';
+import { phy5General1, phy5AdvBridge1, phy5AdvInspire1 } from '../curriculum/uae/grade5Physics';
+
 // Grade 7 Math & Physics (General & Advanced)
 import { math7General1 } from '../curriculum/uae/grade7MathGeneral';
 import { math7AdvBridge1, math7AdvInspire1 } from '../curriculum/uae/grade7MathAdv';
@@ -37,6 +42,65 @@ export const curriculums: Record<string, Curriculum> = {
   ...mathOthersCurriculum,
   ...physics12Curriculum,
   ...physicsOthersCurriculum,
+
+  // --- Grade 5 Curriculums (General & Advanced) ---
+  // Grade 5 Math General Term 1
+  'math-5-general-1': math5General1,
+  'UAE-math-5-general-1': math5General1,
+  'math-5-gen-1': math5General1,
+  'UAE-math-5-gen-1': math5General1,
+
+  // Grade 5 Math Advanced Bridge Term 1
+  'math-5-adv-bridge-1': math5AdvBridge1,
+  'UAE-math-5-adv-bridge-1': math5AdvBridge1,
+  'math-5-bridge-1': math5AdvBridge1,
+  'UAE-math-5-bridge-1': math5AdvBridge1,
+  'math-5-advanced-1': math5AdvBridge1,
+  'UAE-math-5-advanced-1': math5AdvBridge1,
+
+  // Grade 5 Math Advanced Inspire Term 1
+  'math-5-adv-inspire-1': math5AdvInspire1,
+  'UAE-math-5-adv-inspire-1': math5AdvInspire1,
+  'math-5-inspire-1': math5AdvInspire1,
+  'UAE-math-5-inspire-1': math5AdvInspire1,
+
+  // Grade 5 Physics / Science General Term 1
+  'physics-5-general-1': phy5General1,
+  'UAE-physics-5-general-1': phy5General1,
+  'phy-5-general-1': phy5General1,
+  'UAE-phy-5-general-1': phy5General1,
+  'physics-5-gen-1': phy5General1,
+  'UAE-physics-5-gen-1': phy5General1,
+  'phy-5-gen-1': phy5General1,
+  'UAE-phy-5-gen-1': phy5General1,
+  'science-5-general-1': phy5General1,
+  'UAE-science-5-general-1': phy5General1,
+  'sci-5-general-1': phy5General1,
+  'UAE-sci-5-general-1': phy5General1,
+
+  // Grade 5 Physics / Science Advanced Bridge Term 1
+  'physics-5-adv-bridge-1': phy5AdvBridge1,
+  'UAE-physics-5-adv-bridge-1': phy5AdvBridge1,
+  'phy-5-adv-bridge-1': phy5AdvBridge1,
+  'UAE-phy-5-adv-bridge-1': phy5AdvBridge1,
+  'physics-5-bridge-1': phy5AdvBridge1,
+  'UAE-physics-5-bridge-1': phy5AdvBridge1,
+  'phy-5-bridge-1': phy5AdvBridge1,
+  'UAE-phy-5-bridge-1': phy5AdvBridge1,
+  'physics-5-advanced-1': phy5AdvBridge1,
+  'UAE-physics-5-advanced-1': phy5AdvBridge1,
+
+  // Grade 5 Physics / Science Advanced Inspire Term 1
+  'physics-5-adv-inspire-1': phy5AdvInspire1,
+  'UAE-physics-5-adv-inspire-1': phy5AdvInspire1,
+  'phy-5-adv-inspire-1': phy5AdvInspire1,
+  'UAE-phy-5-adv-inspire-1': phy5AdvInspire1,
+  'physics-5-inspire-1': phy5AdvInspire1,
+  'UAE-physics-5-inspire-1': phy5AdvInspire1,
+  'phy-5-inspire-1': phy5AdvInspire1,
+  'UAE-phy-5-inspire-1': phy5AdvInspire1,
+  'science-5-inspire-1': phy5AdvInspire1,
+  'UAE-science-5-inspire-1': phy5AdvInspire1,
 
   // --- Grade 7 Curriculums (General & Advanced) ---
   // Grade 7 Math General Term 1

@@ -4189,18 +4189,28 @@ export default function App() {
                           </p>
                         </div>
                         
-                        {/* Student Book Link */}
-                        <a 
-                          href={getStudentBookUrl() || `https://www.google.com/search?q=${encodeURIComponent(`كتاب الطالب ${appState.subject.name} الصف ${appState.grade.name} ${appState.term.name} منهج ${appState.stream.name} pdf`)}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="bg-white/10 hover:bg-white/20 p-3 rounded-2xl border border-white/20 backdrop-blur-md transition flex items-center gap-2 text-xs font-black cursor-pointer shadow-md select-none w-full md:w-auto text-center justify-center shrink-0"
-                          title="تحميل كتاب الطالب"
+                        {/* Student Book Button - Opens embedded inside the platform */}
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            const bookUrl = getStudentBookUrl();
+                            const targetUrl = bookUrl || `https://www.google.com/search?q=${encodeURIComponent(`كتاب الطالب ${appState.subject.name} الصف ${appState.grade.name} ${appState.term.name} منهج ${appState.stream.name} pdf`)}`;
+                            setActiveEmbeddedViewer({
+                              isOpen: true,
+                              title: isEnglish ? `Student Textbook - ${subjectDisplayName}` : `كتاب الطالب المنهجي - ${subjectDisplayName}`,
+                              contentType: 'lesson',
+                              url: targetUrl,
+                              unitName: `${gradeDisplayName} • ${termDisplayName}`,
+                              subjectName: subjectDisplayName
+                            });
+                          }}
+                          className="bg-white/10 hover:bg-white/20 p-3 rounded-2xl border border-white/20 backdrop-blur-md transition flex items-center gap-2 text-xs font-black cursor-pointer shadow-md select-none w-full md:w-auto text-center justify-center shrink-0 active:scale-95"
+                          title={isEnglish ? "Open Student Textbook (In-App)" : "فتح كتاب الطالب المنهجي داخل المنصة"}
                         >
                           <span className="text-lg">📖</span>
                           <span>{isEnglish ? "Student Book (PDF)" : "كتاب الطالب المنهجي (PDF)"}</span>
-                          <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">↗</span>
-                        </a>
+                          <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">4U Viewer</span>
+                        </button>
                       </div>
 
                       <h3 className="text-2xl font-black mb-6 text-gray-800 dark:text-white flex items-center gap-2">
@@ -4266,11 +4276,36 @@ export default function App() {
                   
                   return (
                     <div>
-                      <div className="gradient-violet rounded-3xl p-8 text-white mb-8 shadow-md">
-                        <h2 className="text-3xl font-black mb-1">{appState.unit.icon} {appState.unit.name}</h2>
-                        <p className="opacity-90 text-sm font-medium">
-                          {subjectDisplayName} • {gradeDisplayName} • {termDisplayName}
-                        </p>
+                      <div className="gradient-violet rounded-3xl p-6 md:p-8 text-white mb-8 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div>
+                          <h2 className="text-3xl font-black mb-1">{appState.unit.icon} {appState.unit.name}</h2>
+                          <p className="opacity-90 text-sm font-medium">
+                            {subjectDisplayName} • {gradeDisplayName} • {termDisplayName}
+                          </p>
+                        </div>
+
+                        {/* Student Book Button - Opens embedded inside the platform */}
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            const bookUrl = getStudentBookUrl();
+                            const targetUrl = bookUrl || `https://www.google.com/search?q=${encodeURIComponent(`كتاب الطالب ${appState.subject.name} الصف ${appState.grade.name} ${appState.term.name} منهج ${appState.stream.name} pdf`)}`;
+                            setActiveEmbeddedViewer({
+                              isOpen: true,
+                              title: isEnglish ? `Student Textbook - ${subjectDisplayName}` : `كتاب الطالب المنهجي - ${subjectDisplayName}`,
+                              contentType: 'lesson',
+                              url: targetUrl,
+                              unitName: `${gradeDisplayName} • ${appState.unit?.name || ''}`,
+                              subjectName: subjectDisplayName
+                            });
+                          }}
+                          className="bg-white/10 hover:bg-white/20 p-3 rounded-2xl border border-white/20 backdrop-blur-md transition flex items-center gap-2 text-xs font-black cursor-pointer shadow-md select-none w-full md:w-auto text-center justify-center shrink-0 active:scale-95"
+                          title={isEnglish ? "Open Student Textbook (In-App)" : "فتح كتاب الطالب المنهجي داخل المنصة"}
+                        >
+                          <span className="text-lg">📖</span>
+                          <span>{isEnglish ? "Student Book (PDF)" : "كتاب الطالب المنهجي (PDF)"}</span>
+                          <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">4U Viewer</span>
+                        </button>
                       </div>
 
                       <h3 className="text-2xl font-black mb-6 text-gray-800 dark:text-white flex items-center gap-2">

@@ -112,6 +112,8 @@ export const GeneralChatModal: React.FC<GeneralChatModalProps> = ({
     if (userGradeName.includes('8') || userGradeName.includes('ثامن')) return 'grade8_gen';
     if ((userGradeName.includes('7') || userGradeName.includes('سابع')) && userGradeName.includes('متقدم')) return 'grade7_adv';
     if (userGradeName.includes('7') || userGradeName.includes('سابع')) return 'grade7_gen';
+    if ((userGradeName.includes('5') || userGradeName.includes('خامس')) && userGradeName.includes('متقدم')) return 'grade5_adv';
+    if (userGradeName.includes('5') || userGradeName.includes('خامس')) return 'grade5_gen';
     return 'general';
   };
 

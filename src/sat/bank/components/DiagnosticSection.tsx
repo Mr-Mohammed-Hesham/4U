@@ -163,8 +163,8 @@ export const DiagnosticSection: React.FC<DiagnosticSectionProps> = ({
                 <div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
                 <div className="text-center space-y-1">
                   <p className="text-sm font-bold text-slate-200">{t.diagLoadingTest}</p>
-                  <p className="text-xs text-slate-400 font-mono" dir="ltr">
-                    {activeTest.url}
+                  <p className="text-xs text-indigo-300 font-medium">
+                    {language === 'ar' ? '🛡️ جاري تهيئة بيئة الاختبار المعياري المحمية...' : '🛡️ Initializing secure standardized exam environment...'}
                   </p>
                 </div>
               </div>
@@ -189,8 +189,8 @@ export const DiagnosticSection: React.FC<DiagnosticSectionProps> = ({
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="font-mono text-slate-500 hidden sm:inline" dir="ltr">
-                {activeTest.repoId}
+              <span className="text-slate-400 text-xs hidden sm:inline font-medium">
+                {language === 'ar' ? '🔒 منصة اختبارات مشفرة ومحمية' : '🔒 Secure Standardized Test'}
               </span>
               <button
                 onClick={handleCloseActiveTest}
@@ -368,8 +368,9 @@ export const DiagnosticSection: React.FC<DiagnosticSectionProps> = ({
 
                   {/* Action Button */}
                   <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
-                    <span className="text-[11px] text-indigo-400 font-mono" dir="ltr">
-                      {test.repoId}
+                    <span className="text-[11px] text-indigo-400 font-semibold flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{language === 'ar' ? 'اختبار تفاعلي' : 'Interactive Test'}</span>
                     </span>
 
                     <button

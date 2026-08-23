@@ -1,6 +1,7 @@
 import { Grade } from '../types';
 
 export const grades: Grade[] = [
+  { id: 5, name: 'الصف الخامس', icon: '📙' },
   { id: 7, name: 'الصف السابع', icon: '📘' },
   { id: 8, name: 'الصف الثامن', icon: '📗' },
   { id: 9, name: 'الصف التاسع', icon: '🎒' },
