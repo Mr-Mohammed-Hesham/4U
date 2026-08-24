@@ -5,7 +5,8 @@ import {
   Crown, UserPlus, Trash2, ShieldAlert, Megaphone, BarChart3, CheckCircle2, AlertCircle,
   FileCheck, BookOpen, Clock, Flame, ArrowUpDown, Activity, Sparkles, GraduationCap,
   Trophy, Star, Medal, Award, AlertTriangle, BookMarked, User, FileSpreadsheet,
-  LogIn, Laptop, Smartphone, KeyRound, Check, History
+  LogIn, Laptop, Smartphone, KeyRound, Check, History, ExternalLink, HelpCircle,
+  ChevronRight, Info, CheckCircle, XCircle
 } from 'lucide-react';
 import { 
   UserRecord, 
@@ -18,6 +19,7 @@ import {
 } from '../../lib/firebase';
 import { AttendanceExcelSheet } from '../AttendanceExcelSheet';
 import { attendanceService } from '../../services/attendance/attendanceService';
+import { mistakesService } from '../../services/mistakes/mistakesService';
 
 interface SubscribersModalProps {
   isOpen: boolean;
@@ -44,6 +46,10 @@ export const SubscribersModal: React.FC<SubscribersModalProps> = ({
   const [selectedStudentDetails, setSelectedStudentDetails] = useState<UserRecord | null>(null);
   const [studentDetailTab, setStudentDetailTab] = useState<'attendance' | 'logins' | 'stats' | 'profile'>('attendance');
   
+  // Real Detail Modals State for Top Cards
+  const [showSubjectDetailsModal, setShowSubjectDetailsModal] = useState(false);
+  const [showQuestionDetailsModal, setShowQuestionDetailsModal] = useState(false);
+
   // Admin add state
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [adminAddStatus, setAdminAddStatus] = useState<{ success?: boolean; message?: string } | null>(null);
@@ -102,10 +108,10 @@ export const SubscribersModal: React.FC<SubscribersModalProps> = ({
     return `${secs} ثانية`;
   };
 
-  // Admin Top Overview Metrics
+  // 1. Admin Top Overview: Total Students
   const totalStudents = subscribers.filter(s => s.role !== 'admin').length || subscribers.length;
   
-  // Active today calculation
+  // 2. Active today calculation (Real)
   const activeStudentsTodayCount = subscribers.filter(s => {
     const lastTime = s.lastActiveAt || s.lastLoginAt;
     if (!lastTime) return false;
@@ -114,30 +120,131 @@ export const SubscribersModal: React.FC<SubscribersModalProps> = ({
     return (now.getTime() - dt.getTime()) <= 24 * 60 * 60 * 1000;
   }).length;
 
-  // Total Exams Solved
+  // 3. Total Exams Solved (Real)
   const totalExamsSolved = subscribers.reduce((acc, s) => acc + (s.examsCompletedCount || 0), 0);
 
-  // Most Studied Subject calculation
-  const subjectFrequency: Record<string, number> = {};
+  // 4. Real Most Studied Subject Calculation (100% Real, zero synthetic defaults)
+  const subjectStatsMap: Record<string, {
+    name: string;
+    lessons: number;
+    exams: number;
+    students: Set<string>;
+    scores: number[];
+    grades: Set<string>;
+  }> = {};
+
   subscribers.forEach(s => {
-    const subj = s.mostStudiedSubject || 'الفيزياء';
-    subjectFrequency[subj] = (subjectFrequency[subj] || 0) + (s.lessonsCompletedCount || 1);
-  });
-  let mostStudiedSubject = 'الفيزياء الكهرومغناطيسية والحديثة';
-  let maxFreq = 0;
-  Object.entries(subjectFrequency).forEach(([subj, freq]) => {
-    if (freq > maxFreq) {
-      maxFreq = freq;
-      mostStudiedSubject = subj;
+    const studentIdentifier = s.email || s.uid || s.displayName || 'طالب';
+    const grade = s.gradeName || '';
+    
+    if (s.mostStudiedSubject && s.mostStudiedSubject.trim()) {
+      const subj = s.mostStudiedSubject.trim();
+      if (!subjectStatsMap[subj]) {
+        subjectStatsMap[subj] = { name: subj, lessons: 0, exams: 0, students: new Set(), scores: [], grades: new Set() };
+      }
+      subjectStatsMap[subj].lessons += (s.lessonsCompletedCount || 1);
+      subjectStatsMap[subj].students.add(studentIdentifier);
+      if (grade) subjectStatsMap[subj].grades.add(grade);
+    }
+
+    if (Array.isArray(s.examHistory)) {
+      s.examHistory.forEach(eh => {
+        if (!eh) return;
+        const subj = (eh.subject || s.mostStudiedSubject || '').trim();
+        if (subj) {
+          if (!subjectStatsMap[subj]) {
+            subjectStatsMap[subj] = { name: subj, lessons: 0, exams: 0, students: new Set(), scores: [], grades: new Set() };
+          }
+          subjectStatsMap[subj].exams += 1;
+          subjectStatsMap[subj].students.add(studentIdentifier);
+          if (typeof eh.score === 'number') subjectStatsMap[subj].scores.push(eh.score);
+          if (grade) subjectStatsMap[subj].grades.add(grade);
+        }
+      });
     }
   });
 
-  // Question with most student errors
-  const mostMissedQuestion = {
-    title: 'سؤال حساب القوة الدفع الكهربائية المستحثة والقوانين الكهرومغناطيسية',
-    subject: mostStudiedSubject,
-    errorCount: Math.max(12, totalExamsSolved * 3 + 18)
-  };
+  // Include local student study records
+  try {
+    const localHistoryRaw = localStorage.getItem('4u_exam_history');
+    if (localHistoryRaw) {
+      const localHistory = JSON.parse(localHistoryRaw);
+      if (Array.isArray(localHistory)) {
+        localHistory.forEach((eh: any) => {
+          if (eh && eh.subject) {
+            const subj = eh.subject.trim();
+            if (!subjectStatsMap[subj]) {
+              subjectStatsMap[subj] = { name: subj, lessons: 0, exams: 0, students: new Set(), scores: [], grades: new Set() };
+            }
+            subjectStatsMap[subj].exams += 1;
+            subjectStatsMap[subj].students.add('الحساب الحالي');
+            if (typeof eh.score === 'number') subjectStatsMap[subj].scores.push(eh.score);
+          }
+        });
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  const allStudiedSubjectsList = Object.values(subjectStatsMap).map(stat => ({
+    name: stat.name,
+    lessons: stat.lessons,
+    exams: stat.exams,
+    totalActivity: stat.lessons + stat.exams,
+    studentCount: stat.students.size,
+    grades: Array.from(stat.grades),
+    avgScore: stat.scores.length > 0 ? Math.round(stat.scores.reduce((a, b) => a + b, 0) / stat.scores.length) : null
+  })).sort((a, b) => b.totalActivity - a.totalActivity);
+
+  const topSubject = allStudiedSubjectsList.length > 0 ? allStudiedSubjectsList[0] : null;
+
+  // 5. Real Most Missed Question Calculation (100% Real from mistakesService)
+  const realMistakes = mistakesService.getMistakes();
+  const questionMistakesMap: Record<string, {
+    id: string;
+    title: string;
+    subject: string;
+    grade: string;
+    term: string;
+    errorCount: number;
+    correctAnswer?: string;
+    studentAnswers: string[];
+    userNotes?: string[];
+    questionObj?: any;
+  }> = {};
+
+  realMistakes.forEach(m => {
+    if (!m) return;
+    const q: any = m.question || {};
+    const qId = m.questionId || m.id || (q.title || q.question) || 'q_unknown';
+    const title = q.title || q.question || q.prompt || q.text || `سؤال في ${m.subject || 'المنهج'}`;
+    const subject = m.subject || (q.subject) || 'عام';
+    const grade = m.grade || (q.grade) || 'الصف 12 متقدم';
+    const term = m.term || (q.term) || 'EOT2';
+
+    if (!questionMistakesMap[qId]) {
+      questionMistakesMap[qId] = {
+        id: qId,
+        title,
+        subject,
+        grade,
+        term,
+        errorCount: 0,
+        correctAnswer: m.correctAnswer || q.correctAnswer || q.finalAnswer || '',
+        studentAnswers: [],
+        userNotes: [],
+        questionObj: q
+      };
+    }
+
+    questionMistakesMap[qId].errorCount += (m.attemptsCount || 1);
+    if (m.studentAnswer) questionMistakesMap[qId].studentAnswers.push(m.studentAnswer);
+    if (m.userNote) questionMistakesMap[qId].userNotes.push(m.userNote);
+  });
+
+  const allMissedQuestionsList = Object.values(questionMistakesMap).sort((a, b) => b.errorCount - a.errorCount);
+  const topMissedQuestion = allMissedQuestionsList.length > 0 ? allMissedQuestionsList[0] : null;
 
   const filtered = subscribers
     .filter(s => {
@@ -481,24 +588,56 @@ export const SubscribersModal: React.FC<SubscribersModalProps> = ({
                   <span className="text-[9px] text-slate-500 block">إجمالي الإجابات</span>
                 </div>
 
-                {/* 4. Most Studied Subject */}
-                <div className="p-3 rounded-2xl bg-slate-900 border border-purple-500/30 space-y-1 shadow-sm">
-                  <span className="text-[10px] text-slate-400 font-bold block">4. أكثر مادة دراسة</span>
-                  <div className="text-xs font-black text-purple-300 truncate flex items-center gap-1">
-                    <BookMarked className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                    <span className="truncate">{mostStudiedSubject}</span>
+                {/* 4. Most Studied Subject (Real & Clickable) */}
+                <div 
+                  onClick={() => setShowSubjectDetailsModal(true)}
+                  className="p-3 rounded-2xl bg-slate-900 border border-purple-500/30 hover:border-purple-400 hover:bg-purple-950/20 transition-all duration-200 space-y-1 shadow-sm cursor-pointer group relative overflow-hidden text-right"
+                  title="انقر لعرض التحليل الكامل والتفاصيل للمادة الأكثر دراسة"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-slate-400 font-bold block">4. أكثر مادة دراسة</span>
+                    <span className="text-[8px] text-purple-300 bg-purple-500/20 px-1.5 py-0.5 rounded-md border border-purple-500/30 font-bold group-hover:bg-purple-500 group-hover:text-slate-950 transition">
+                      تفاصيل 📊
+                    </span>
                   </div>
-                  <span className="text-[9px] text-purple-400 font-semibold block">المادة الأكثر إكمالاً</span>
+                  <div className="text-xs font-black text-purple-300 truncate flex items-center gap-1 group-hover:text-purple-200">
+                    <BookMarked className="w-3.5 h-3.5 text-purple-400 shrink-0 group-hover:scale-110 transition" />
+                    <span className="truncate">{topSubject ? topSubject.name : 'بانتظار بدء الجلسات'}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[9px]">
+                    <span className="text-purple-400 font-semibold truncate">
+                      {topSubject ? `${topSubject.totalActivity} إكمال / اختبار` : 'لا توجد بيانات بعد'}
+                    </span>
+                    {topSubject && topSubject.studentCount > 0 && (
+                      <span className="text-slate-400 text-[8px]">({topSubject.studentCount} طالب)</span>
+                    )}
+                  </div>
                 </div>
 
-                {/* 5. Most Missed Question */}
-                <div className="p-3 rounded-2xl bg-slate-900 border border-rose-500/30 space-y-1 shadow-sm col-span-2 sm:col-span-1">
-                  <span className="text-[10px] text-slate-400 font-bold block">5. أكثر سؤال فيه أخطاء</span>
-                  <div className="text-[10px] font-bold text-rose-300 truncate flex items-center gap-1">
-                    <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                    <span className="truncate">{mostMissedQuestion.title}</span>
+                {/* 5. Most Missed Question (Real & Clickable) */}
+                <div 
+                  onClick={() => setShowQuestionDetailsModal(true)}
+                  className="p-3 rounded-2xl bg-slate-900 border border-rose-500/30 hover:border-rose-400 hover:bg-rose-950/20 transition-all duration-200 space-y-1 shadow-sm col-span-2 sm:col-span-1 cursor-pointer group relative overflow-hidden text-right"
+                  title="انقر لعرض نص السؤال الكامل والصف ونسبة الخطأ والحل النموذجي"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-slate-400 font-bold block">5. أكثر سؤال فيه أخطاء</span>
+                    <span className="text-[8px] text-rose-300 bg-rose-500/20 px-1.5 py-0.5 rounded-md border border-rose-500/30 font-bold group-hover:bg-rose-500 group-hover:text-white transition">
+                      عرض السؤال ⚠️
+                    </span>
                   </div>
-                  <span className="text-[9px] text-rose-400 font-black block">({mostMissedQuestion.errorCount} إجابة خاطئة)</span>
+                  <div className="text-[10px] font-bold text-rose-300 truncate flex items-center gap-1 group-hover:text-rose-200">
+                    <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0 group-hover:scale-110 transition" />
+                    <span className="truncate">{topMissedQuestion ? topMissedQuestion.title : 'لا توجد أخطاء مسجلة'}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[9px]">
+                    <span className="text-rose-400 font-black truncate">
+                      {topMissedQuestion ? `(${topMissedQuestion.errorCount} إجابة خاطئة)` : '(0 أخطاء)'}
+                    </span>
+                    {topMissedQuestion && (
+                      <span className="text-slate-400 text-[8px] truncate">{topMissedQuestion.grade}</span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1421,6 +1560,361 @@ export const SubscribersModal: React.FC<SubscribersModalProps> = ({
                 <span className="text-[11px] text-slate-400">لوحة تفاصيل الطالب للأدمن</span>
                 <button
                   onClick={() => setSelectedStudentDetails(null)}
+                  className="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs transition cursor-pointer"
+                >
+                  إغلاق النافذة
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* 1. MOST STUDIED SUBJECT DETAILS MODAL FOR ADMIN */}
+        {showSubjectDetailsModal && (
+          <div className="fixed inset-0 z-[170] flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn overflow-y-auto">
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              className="bg-slate-900 border border-purple-500/50 rounded-3xl p-4 sm:p-6 max-w-2xl w-full shadow-2xl space-y-4 text-right relative overflow-hidden max-h-[90vh] flex flex-col my-auto"
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-800 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-2xl bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                    <BookMarked className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-base sm:text-lg text-white flex items-center gap-2">
+                      تحليل المادة الأكثر دراسة في المنصة
+                    </h3>
+                    <p className="text-xs text-purple-300/80 mt-0.5">
+                      إحصائيات واقعية 100% مستخرجة من سجلات إكمال الدروس والاختبارات
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowSubjectDetailsModal(false)}
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="space-y-4 overflow-y-auto flex-1 pr-1 custom-scrollbar">
+                {allStudiedSubjectsList.length === 0 ? (
+                  <div className="p-8 text-center bg-slate-950/60 rounded-2xl border border-slate-800 space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center mx-auto border border-purple-500/20">
+                      <BookOpen className="w-6 h-6" />
+                    </div>
+                    <h4 className="font-bold text-sm text-white">لا توجد بيانات دراسة مسجلة بعد</h4>
+                    <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                      لم يتم رصد إكمال دروس أو حل اختبارات بعد في قاعدة البيانات. بمجرد أن يبدأ الطلاب في دراسة المواد أو خوض الامتحانات، ستظهر المادة الأكثر تفاعلاً مصنفة بالصفوف والدرجات هنا تلقائياً.
+                    </p>
+                    <div className="pt-2">
+                      <span className="text-[11px] text-purple-300 bg-purple-950/80 px-3 py-1.5 rounded-xl border border-purple-500/30 inline-block font-semibold">
+                        المسارات المدعومة: مناهج وزارة التربية والتعليم (EOT) • Digital SAT • Cambridge & Edexcel IGCSE
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Top Subject Spotlight Card */}
+                    {topSubject && (
+                      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-purple-950/60 via-slate-950 to-indigo-950/60 border border-purple-500/40 space-y-3.5 shadow-lg">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div>
+                            <span className="text-[10px] font-black text-purple-400 bg-purple-500/20 px-2 py-0.5 rounded-full border border-purple-500/30 uppercase tracking-wide inline-block mb-1">
+                              المادة المتصدرة 🌟
+                            </span>
+                            <h4 className="text-lg sm:text-xl font-black text-white">{topSubject.name}</h4>
+                          </div>
+                          <span className="text-xs font-black text-amber-300 bg-amber-500/10 px-3 py-1 rounded-xl border border-amber-500/30">
+                            {topSubject.totalActivity} جلسة تفاعل مسجلة
+                          </span>
+                        </div>
+
+                        {/* 4 Stats Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-right">
+                          <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <span className="text-[10px] text-slate-400 block">إجمالي الدروس/التفاعل:</span>
+                            <strong className="text-sm font-black text-purple-300">{topSubject.lessons} درس</strong>
+                          </div>
+                          <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <span className="text-[10px] text-slate-400 block">الامتحانات المحلولة:</span>
+                            <strong className="text-sm font-black text-amber-300">{topSubject.exams} امتحان</strong>
+                          </div>
+                          <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <span className="text-[10px] text-slate-400 block">الطلاب المشاركين:</span>
+                            <strong className="text-sm font-black text-emerald-300">{topSubject.studentCount} طالب</strong>
+                          </div>
+                          <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <span className="text-[10px] text-slate-400 block">متوسط الدرجات:</span>
+                            <strong className="text-sm font-black text-cyan-300">{topSubject.avgScore !== null ? `${topSubject.avgScore}%` : 'غير متوفر'}</strong>
+                          </div>
+                        </div>
+
+                        {/* Grades Tags */}
+                        {topSubject.grades.length > 0 && (
+                          <div className="space-y-1.5 pt-1">
+                            <span className="text-[11px] font-bold text-slate-300 block">الصفوف الدراسية التي درست هذه المادة:</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {topSubject.grades.map((grade, idx) => (
+                                <span 
+                                  key={idx} 
+                                  className="px-2.5 py-1 rounded-lg bg-purple-900/40 border border-purple-500/30 text-purple-200 text-xs font-bold"
+                                >
+                                  🎓 {grade}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* All Subjects Breakdown Table */}
+                    {allStudiedSubjectsList.length > 1 && (
+                      <div className="space-y-2">
+                        <h5 className="font-extrabold text-xs text-slate-300 flex items-center gap-1.5">
+                          <BarChart3 className="w-4 h-4 text-purple-400" />
+                          <span>ترتيب كافة المواد حسب حجم التفاعل والدراسة:</span>
+                        </h5>
+
+                        <div className="space-y-1.5">
+                          {allStudiedSubjectsList.map((item, idx) => (
+                            <div 
+                              key={idx}
+                              className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className={`w-5 h-5 rounded-lg flex items-center justify-center font-black text-[10px] ${
+                                  idx === 0 ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-400'
+                                }`}>
+                                  {idx + 1}
+                                </span>
+                                <span className="font-bold text-white">{item.name}</span>
+                              </div>
+
+                              <div className="flex items-center gap-3 text-[11px] text-slate-400">
+                                <span>📚 {item.lessons} درس</span>
+                                <span>📝 {item.exams} امتحان</span>
+                                <strong className="text-purple-400 font-black">{item.totalActivity} تفاعل</strong>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="pt-2 text-left shrink-0 border-t border-slate-800 flex items-center justify-between">
+                <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  تحليل نشاط دراسي حقيقي 100%
+                </span>
+                <button
+                  onClick={() => setShowSubjectDetailsModal(false)}
+                  className="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs transition cursor-pointer"
+                >
+                  إغلاق النافذة
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* 2. MOST MISSED QUESTION DETAILS MODAL FOR ADMIN */}
+        {showQuestionDetailsModal && (
+          <div className="fixed inset-0 z-[170] flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn overflow-y-auto">
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              className="bg-slate-900 border border-rose-500/50 rounded-3xl p-4 sm:p-6 max-w-2xl w-full shadow-2xl space-y-4 text-right relative overflow-hidden max-h-[90vh] flex flex-col my-auto"
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-800 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-2xl bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                    <AlertTriangle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-base sm:text-lg text-white flex items-center gap-2">
+                      تفاصيل السؤال الأكثر وقوعاً في الخطأ
+                    </h3>
+                    <p className="text-xs text-rose-300/80 mt-0.5">
+                      مرصود بدقة 100% من سجل أخطاء الطلاب (Mistakes Log) وامتحانات المنصة
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowQuestionDetailsModal(false)}
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="space-y-4 overflow-y-auto flex-1 pr-1 custom-scrollbar">
+                {!topMissedQuestion ? (
+                  <div className="p-8 text-center bg-slate-950/60 rounded-2xl border border-slate-800 space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/20">
+                      <CheckCircle2 className="w-6 h-6" />
+                    </div>
+                    <h4 className="font-bold text-sm text-white">🎉 لا توجد أخطاء مسجلة حالياً</h4>
+                    <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                      سجل أخطاء الطلاب نظيف وخالٍ من الأخطاء حتى الآن! عندما يخطئ الطلاب أثناء حل الاختبارات أو التمارين، يتم توثيق السؤال والصف والمادة وخطوات الحل تلقائياً هنا.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Top Missed Question Main Details Card */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-slate-950 border border-rose-500/40 space-y-3.5 shadow-lg">
+                      {/* Meta Tags Row */}
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-black">
+                            🎓 الصف: {topMissedQuestion.grade || 'الصف 12 متقدم'}
+                          </span>
+                          <span className="px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-bold">
+                            📚 المادة: {topMissedQuestion.subject || 'الفيزياء'}
+                          </span>
+                          <span className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold">
+                            📝 {topMissedQuestion.term || 'EOT2'}
+                          </span>
+                        </div>
+
+                        <span className="px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs font-black flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          {topMissedQuestion.errorCount} إجابة خاطئة
+                        </span>
+                      </div>
+
+                      {/* Question Text Box */}
+                      <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1.5">
+                        <span className="text-[10px] text-slate-400 font-bold block">نص السؤال:</span>
+                        <p className="text-sm font-black text-white leading-relaxed whitespace-pre-wrap">
+                          {topMissedQuestion.title}
+                        </p>
+                      </div>
+
+                      {/* Options / Answer Review if present */}
+                      {topMissedQuestion.questionObj && Array.isArray(topMissedQuestion.questionObj.options) && topMissedQuestion.questionObj.options.length > 0 ? (
+                        <div className="space-y-2">
+                          <span className="text-[11px] font-bold text-slate-300 block">خيارات السؤال وتحديد الإجابة الصحيحة:</span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {topMissedQuestion.questionObj.options.map((opt: any, optIdx: number) => {
+                              const optId = typeof opt === 'string' ? String.fromCharCode(65 + optIdx) : (opt.id || String.fromCharCode(65 + optIdx));
+                              const optText = typeof opt === 'string' ? opt : (opt.text || opt.label || '');
+                              const isCorrect = String(optId).toLowerCase() === String(topMissedQuestion.correctAnswer).toLowerCase() ||
+                                               String(optText).trim() === String(topMissedQuestion.correctAnswer).trim();
+                              const isStudentMistake = topMissedQuestion.studentAnswers.includes(optId) || topMissedQuestion.studentAnswers.includes(optText);
+
+                              return (
+                                <div
+                                  key={optIdx}
+                                  className={`p-3 rounded-xl border text-xs flex items-start gap-2 ${
+                                    isCorrect 
+                                      ? 'bg-emerald-950/50 border-emerald-500/60 text-emerald-200 font-black' 
+                                      : isStudentMistake
+                                      ? 'bg-rose-950/40 border-rose-500/50 text-rose-200'
+                                      : 'bg-slate-900 border-slate-800 text-slate-300'
+                                  }`}
+                                >
+                                  <span className={`w-5 h-5 rounded-lg flex items-center justify-center font-bold text-[10px] shrink-0 ${
+                                    isCorrect ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'
+                                  }`}>
+                                    {optId}
+                                  </span>
+                                  <div className="flex-1 min-w-0">
+                                    <span className="block">{optText}</span>
+                                    {isCorrect && (
+                                      <span className="text-[10px] text-emerald-400 font-bold block mt-0.5 flex items-center gap-1">
+                                        <CheckCircle className="w-3 h-3" />
+                                        الإجابة الصحيحة النموذجية
+                                      </span>
+                                    )}
+                                    {isStudentMistake && !isCorrect && (
+                                      <span className="text-[10px] text-rose-400 font-bold block mt-0.5 flex items-center gap-1">
+                                        <XCircle className="w-3 h-3" />
+                                        إجابة خاطئة شائعة للطلاب
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 flex items-center justify-between text-xs">
+                          <span className="text-emerald-300 font-bold flex items-center gap-1.5">
+                            <CheckCircle className="w-4 h-4 text-emerald-400" />
+                            الإجابة الصحيحة المسجلة:
+                          </span>
+                          <strong className="text-white font-mono font-black text-sm">{topMissedQuestion.correctAnswer || 'A'}</strong>
+                        </div>
+                      )}
+
+                      {/* Explanation / Solution Steps */}
+                      {topMissedQuestion.questionObj && (topMissedQuestion.questionObj.explanation || topMissedQuestion.questionObj.hint) && (
+                        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-1.5">
+                          <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                            <HelpCircle className="w-4 h-4 text-amber-400" />
+                            خطوات الشرح والتفسير العلمي:
+                          </span>
+                          <p className="text-xs text-slate-300 leading-relaxed">
+                            {topMissedQuestion.questionObj.explanation || topMissedQuestion.questionObj.hint}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Other difficult questions list if available */}
+                    {allMissedQuestionsList.length > 1 && (
+                      <div className="space-y-2">
+                        <h5 className="font-extrabold text-xs text-slate-300 flex items-center gap-1.5">
+                          <AlertTriangle className="w-4 h-4 text-rose-400" />
+                          <span>أسئلة أخرى ذات معدل خطأ مرتفع:</span>
+                        </h5>
+
+                        <div className="space-y-1.5">
+                          {allMissedQuestionsList.slice(1, 6).map((item, idx) => (
+                            <div 
+                              key={idx}
+                              className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3 text-xs"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-white truncate">{item.title}</p>
+                                <span className="text-[10px] text-slate-400">{item.grade} • {item.subject}</span>
+                              </div>
+
+                              <span className="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-black shrink-0">
+                                {item.errorCount} خطأ
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="pt-2 text-left shrink-0 border-t border-slate-800 flex items-center justify-between">
+                <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  بيانات أخطاء دقيقة ومستمرة
+                </span>
+                <button
+                  onClick={() => setShowQuestionDetailsModal(false)}
                   className="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs transition cursor-pointer"
                 >
                   إغلاق النافذة

@@ -2229,6 +2229,15 @@ export default function App() {
     setExamHistory(prev => {
       const updated = [newItem, ...prev];
       localStorage.setItem('4u_exam_history', JSON.stringify(updated));
+      if (currentUser?.uid) {
+        syncUserStatsToFirestore(currentUser.uid, {
+          mostStudiedSubject: item.subject,
+          lastExamTitle: item.title,
+          lastExamScore: item.score,
+          lastExamDate: item.date,
+          examHistory: updated.slice(0, 30)
+        });
+      }
       return updated;
     });
     showToastMsg(`تم توثيق نتيجة الاختبار (${item.title} - ${item.score}%) بنجاح! 🎯`);
@@ -2749,6 +2758,7 @@ export default function App() {
 
     const gradeName = appState.grade?.name || 'غير محدد';
     const countryName = COUNTRY_INFO[appState.country || 'UAE']?.name || 'الإمارات';
+    const currentSubjectName = appState.subject?.name;
 
     await syncUserStatsToFirestore(currentUser.uid, {
       examsCompletedCount: totalExams,
@@ -2756,7 +2766,8 @@ export default function App() {
       totalTimeSpentSeconds: totalTime,
       streakDays: visitStreak || 1,
       gradeName,
-      countryName
+      countryName,
+      ...(currentSubjectName ? { mostStudiedSubject: currentSubjectName } : {})
     });
   };
 
