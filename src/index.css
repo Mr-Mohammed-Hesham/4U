@@ -478,3 +478,55 @@ mark {
   color: inherit !important;
 }
 
+/* ========================================================= */
+/* 🌙 GLOBAL DARK MODE SELECT & OPTION CONTRAST FIXES        */
+/* ========================================================= */
+select {
+  color-scheme: light dark;
+}
+
+select option,
+select optgroup {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.dark select {
+  color-scheme: dark !important;
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+.dark select option,
+.dark select optgroup,
+html.dark select option,
+html.dark select optgroup,
+body.dark select option,
+body.dark select optgroup {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+.dark select option:checked,
+.dark select option:hover {
+  background-color: #1e293b !important;
+  color: #38bdf8 !important;
+}
+
+/* Dark mode inputs and textareas consistency */
+.dark input[type="text"],
+.dark input[type="search"],
+.dark input[type="email"],
+.dark input[type="number"],
+.dark input[type="time"],
+.dark input[type="date"],
+.dark input[type="password"],
+.dark textarea {
+  color-scheme: dark !important;
+}
+
+/* Range input sliders in dark mode */
+.dark input[type="range"] {
+  color-scheme: dark;
+}
+

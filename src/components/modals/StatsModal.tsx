@@ -746,7 +746,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                       <select 
                         value={examSubject}
                         onChange={(e) => setExamSubject(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2 rounded-xl text-xs"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-bold"
                       >
                         <option value="الفيزياء">الفيزياء</option>
                         <option value="الكيمياء">الكيمياء</option>

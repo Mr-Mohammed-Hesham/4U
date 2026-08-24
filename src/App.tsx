@@ -5228,25 +5228,35 @@ export default function App() {
 
             {/* Reciter Selector */}
             <div className="mb-4 text-right">
-              <label className="block text-[11px] font-extrabold text-gray-600 dark:text-slate-300 mb-1.5">
-                اختر القارئ أو إذاعة الشيخ: 🎙️
+              <label className="block text-[11px] font-extrabold text-slate-700 dark:text-emerald-300 mb-1.5 flex items-center justify-between">
+                <span>اختر القارئ أو إذاعة الشيخ: 🎙️</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">
+                  {QURAN_RECITERS.length} إذاعة وقارئ
+                </span>
               </label>
-              <select
-                value={activeReciterId}
-                onChange={(e) => handleReciterChange(e.target.value)}
-                className="w-full bg-slate-100 dark:bg-slate-900 border-2 border-emerald-500/10 dark:border-emerald-500/20 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500 transition cursor-pointer"
-              >
-                {QURAN_RECITERS.map((reciter) => (
-                  <option 
-                    key={reciter.id} 
-                    value={reciter.id} 
-                    className="font-bold text-slate-900 bg-white"
-                    style={{ color: '#0f172a', backgroundColor: '#ffffff' }}
-                  >
-                    {reciter.name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={activeReciterId}
+                  onChange={(e) => handleReciterChange(e.target.value)}
+                  style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
+                  className="w-full bg-slate-100 dark:bg-slate-900 border-2 border-emerald-500/20 dark:border-emerald-500/40 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 dark:text-emerald-200 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition cursor-pointer appearance-none shadow-sm"
+                >
+                  {QURAN_RECITERS.map((reciter) => (
+                    <option 
+                      key={reciter.id} 
+                      value={reciter.id} 
+                      className="font-bold py-1 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+                    >
+                      {reciter.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-600 dark:text-emerald-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
             </div>
 
             {/* Visualizer & Playing Status */}
