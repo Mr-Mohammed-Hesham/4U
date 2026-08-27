@@ -4728,32 +4728,34 @@ export default function App() {
                             </div>
                           </button>
 
-                          {/* 2. PowerPoint Presentation */}
-                          <button
-                            onClick={() => setActivePresentationLesson({
-                              isOpen: true,
-                              lesson: appState.lesson,
-                              unit: appState.unit
-                            })}
-                            className="bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-md border-2 border-slate-100 dark:border-slate-800 hover:border-orange-500 dark:hover:border-orange-500 transition group text-right flex flex-col justify-between cursor-pointer"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center text-xl font-bold group-hover:scale-110 transition">
-                                <Presentation className="w-5 h-5" />
-                              </span>
-                              <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/60 px-2 py-0.5 rounded-full">
-                                PPT
-                              </span>
-                            </div>
-                            <div>
-                              <h4 className="font-extrabold text-sm text-gray-800 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition">
-                                {isEnglish ? 'PowerPoint Slides' : 'باور بوينت الحصة'}
-                              </h4>
-                              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                                {isEnglish ? 'Interactive presentation' : 'عرض شرائح تفاعلي'}
-                              </p>
-                            </div>
-                          </button>
+                            {/* 2. PowerPoint Presentation */}
+                            <button
+                              onClick={() => setActivePresentationLesson({
+                                isOpen: true,
+                                lesson: appState.lesson,
+                                unit: appState.unit
+                              })}
+                              className="bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-md border-2 border-slate-100 dark:border-slate-800 hover:border-orange-500 dark:hover:border-orange-500 transition group text-right flex flex-col justify-between cursor-pointer"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center text-xl font-bold group-hover:scale-110 transition">
+                                  <Presentation className="w-5 h-5" />
+                                </span>
+                                <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/60 px-2 py-0.5 rounded-full">
+                                  PPT
+                                </span>
+                              </div>
+                              <div>
+                                <h4 className="font-extrabold text-sm text-gray-800 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition">
+                                  {isEnglish ? 'PowerPoint Slides' : 'باور بوينت الحصة'}
+                                </h4>
+                                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                  {appState.lesson.pptUrl 
+                                    ? (isEnglish ? 'Open presentation' : 'استعراض ملف العرض') 
+                                    : (isEnglish ? 'Coming soon Insha\'Allah' : 'قريباً إن شاء الله سيتم رفع الملفات')}
+                                </p>
+                              </div>
+                            </button>
 
                           {/* 3. Video Explanation */}
                           <button
@@ -5022,7 +5024,11 @@ export default function App() {
                                 className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white py-4 rounded-2xl font-black transition transform hover:scale-[1.02] shadow-md flex items-center justify-center gap-2 cursor-pointer"
                               >
                                 <Presentation className="w-5 h-5" />
-                                <span>{isEnglish ? 'Open PowerPoint Presentation' : 'استعراض باور بوينت الحصة'}</span>
+                                <span>
+                                  {appState.lesson.pptUrl 
+                                    ? (isEnglish ? 'Open PowerPoint Presentation' : 'استعراض باور بوينت الحصة') 
+                                    : (isEnglish ? 'PowerPoint (Coming Soon Insha\'Allah)' : 'باور بوينت (قريباً إن شاء الله)')}
+                                </span>
                                 <span className="text-sm">↗</span>
                               </button>
                             </div>
@@ -5945,6 +5951,13 @@ export default function App() {
         subjectName={appState.subject?.name}
         gradeName={appState.grade?.name}
         isEnglish={!!(DB.curriculum[getCurriculumKey() || '']?.isEnglish || appState.program?.id === 'inspire' || appState.program?.isEnglish || language === 'en')}
+        onOpenNotes={() => openLesson()}
+        onOpenVideo={() => {
+          if (activePresentationLesson.lesson) {
+            setActiveVideoLesson(activePresentationLesson.lesson);
+          }
+        }}
+        onOpenQuiz={() => openExam()}
       />
         </>
       )}
