@@ -52,8 +52,10 @@ export interface Lesson {
   lessonUrl: string;
   examUrl: string;
   videoUrl?: string;
+  pptUrl?: string;
   lessonTitle?: string;
   examTitle?: string;
+  pptTitle?: string;
   content?: LessonContent;
 }
 

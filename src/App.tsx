@@ -4,7 +4,8 @@ import {
   BookOpen, Search, RotateCcw, Heart, BarChart2, Sun, Moon, 
   Home, ChevronRight, Share2, Clipboard, Copy, Award, Printer, CheckCircle, Clock,
   Download, Mic, Sparkles, Megaphone, Radio, Pause, Play, Volume2, VolumeX,
-  MessageSquare, Send, X, Flame, Sliders, Settings, LogIn, LogOut, Users, User, Mail, ShieldCheck, Crown, Lock, Key, Bell, BellOff, RefreshCw, Calculator, BookMarked, Globe
+  MessageSquare, Send, X, Flame, Sliders, Settings, LogIn, LogOut, Users, User, Mail, ShieldCheck, Crown, Lock, Key, Bell, BellOff, RefreshCw, Calculator, BookMarked, Globe,
+  Presentation
 } from 'lucide-react';
 import { DB, countries } from './data';
 import { Term, Stream, Program, Grade, Subject, Unit, Lesson, AppState } from './types';
@@ -12,7 +13,7 @@ import {
   FavoritesModal, StatsModal, CertificateModal, ShareModal, 
   PlannerModal, SummaryNotesModal, ReminderSettingModal, AlarmTriggeredModal,
   VideoPlayerModal, ExamCodesModal, SubscribersModal, EmbeddedLessonViewerModal, GeneralChatModal,
-  FlashcardsModal, ScientificCalculatorModal, MistakesLogModal
+  FlashcardsModal, ScientificCalculatorModal, MistakesLogModal, LessonPresentationModal
 } from './components/modals';
 import { mistakesService } from './services/mistakes/mistakesService';
 import { attendanceService } from './services/attendance/attendanceService';
@@ -303,6 +304,15 @@ export default function App() {
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [showExitConfirmModal, setShowExitConfirmModal] = useState(false);
   const [activeVideoLesson, setActiveVideoLesson] = useState<Lesson | null>(null);
+  const [activePresentationLesson, setActivePresentationLesson] = useState<{
+    isOpen: boolean;
+    lesson: Lesson | null;
+    unit?: Unit | null;
+  }>({
+    isOpen: false,
+    lesson: null,
+    unit: null
+  });
   const [activeEmbeddedViewer, setActiveEmbeddedViewer] = useState<{
     isOpen: boolean;
     title: string;
@@ -4438,18 +4448,6 @@ export default function App() {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setActiveVideoLesson(l);
-                                  }}
-                                  className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/60 text-rose-600 dark:text-rose-400 py-2 px-3.5 rounded-xl text-xs font-black transition-colors shrink-0 cursor-pointer"
-                                  title="فيديو الشرح"
-                                >
-                                  <span className="text-sm">🎥</span>
-                                  <span>فيديو الشرح</span>
-                                </button>
-
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
                                     toggleFavorite(l, appState.unit!);
                                   }}
                                   className="favorite-btn text-2xl p-2 focus:outline-none hover:scale-110 active:scale-95 transition cursor-pointer"
@@ -4705,6 +4703,105 @@ export default function App() {
                           </div>
                         </div>
 
+                        {/* 4 CORE LESSON PILLARS: EXPLANATION, PRESENTATION, VIDEO, EXAM */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
+                          {/* 1. Lesson Explanation */}
+                          <button
+                            onClick={() => openLesson()}
+                            className="bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-md border-2 border-slate-100 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 transition group text-right flex flex-col justify-between cursor-pointer"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl font-bold group-hover:scale-110 transition">
+                                📖
+                              </span>
+                              <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-full">
+                                {isEnglish ? 'Notes' : 'المستند'}
+                              </span>
+                            </div>
+                            <div>
+                              <h4 className="font-extrabold text-sm text-gray-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                                {isEnglish ? 'Lesson Notes' : 'شرح الدرس'}
+                              </h4>
+                              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                {isEnglish ? 'Read text & laws' : 'قراءة وتلخيص'}
+                              </p>
+                            </div>
+                          </button>
+
+                          {/* 2. PowerPoint Presentation */}
+                          <button
+                            onClick={() => setActivePresentationLesson({
+                              isOpen: true,
+                              lesson: appState.lesson,
+                              unit: appState.unit
+                            })}
+                            className="bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-md border-2 border-slate-100 dark:border-slate-800 hover:border-orange-500 dark:hover:border-orange-500 transition group text-right flex flex-col justify-between cursor-pointer"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center text-xl font-bold group-hover:scale-110 transition">
+                                <Presentation className="w-5 h-5" />
+                              </span>
+                              <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/60 px-2 py-0.5 rounded-full">
+                                PPT
+                              </span>
+                            </div>
+                            <div>
+                              <h4 className="font-extrabold text-sm text-gray-800 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition">
+                                {isEnglish ? 'PowerPoint Slides' : 'باور بوينت الحصة'}
+                              </h4>
+                              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                {isEnglish ? 'Interactive presentation' : 'عرض شرائح تفاعلي'}
+                              </p>
+                            </div>
+                          </button>
+
+                          {/* 3. Video Explanation */}
+                          <button
+                            onClick={() => setActiveVideoLesson(appState.lesson)}
+                            className="bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-md border-2 border-slate-100 dark:border-slate-800 hover:border-rose-500 dark:hover:border-rose-500 transition group text-right flex flex-col justify-between cursor-pointer"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xl font-bold group-hover:scale-110 transition">
+                                🎥
+                              </span>
+                              <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded-full">
+                                Video
+                              </span>
+                            </div>
+                            <div>
+                              <h4 className="font-extrabold text-sm text-gray-800 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-400 transition">
+                                {isEnglish ? 'Video Lecture' : 'فيديو الشرح'}
+                              </h4>
+                              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                {isEnglish ? 'Watch tutor video' : 'شرح مرئي مصور'}
+                              </p>
+                            </div>
+                          </button>
+
+                          {/* 4. Lesson Exam / Quiz */}
+                          <button
+                            onClick={() => openExam()}
+                            className="bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-md border-2 border-slate-100 dark:border-slate-800 hover:border-amber-500 dark:hover:border-amber-500 transition group text-right flex flex-col justify-between cursor-pointer"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl font-bold group-hover:scale-110 transition">
+                                📝
+                              </span>
+                              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
+                                Quiz
+                              </span>
+                            </div>
+                            <div>
+                              <h4 className="font-extrabold text-sm text-gray-800 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">
+                                {isEnglish ? 'Lesson Quiz' : 'اختبار الحصة'}
+                              </h4>
+                              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                {isEnglish ? 'Self evaluation' : 'تقييم ذاتي فوري'}
+                              </p>
+                            </div>
+                          </button>
+                        </div>
+
                         {/* Content sections */}
                         {c ? (
                           <div className="space-y-6">
@@ -4910,6 +5007,24 @@ export default function App() {
                                 </div>
                                 <span className="font-bold">سرعة القراءة:</span>
                               </div>
+                            </div>
+
+                            {/* PowerPoint Presentation Button */}
+                            <div>
+                              <button
+                                onClick={() => {
+                                  setActivePresentationLesson({
+                                    isOpen: true,
+                                    lesson: appState.lesson,
+                                    unit: appState.unit
+                                  });
+                                }}
+                                className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white py-4 rounded-2xl font-black transition transform hover:scale-[1.02] shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                              >
+                                <Presentation className="w-5 h-5" />
+                                <span>{isEnglish ? 'Open PowerPoint Presentation' : 'استعراض باور بوينت الحصة'}</span>
+                                <span className="text-sm">↗</span>
+                              </button>
                             </div>
 
                             {/* Video Explanation Button */}
@@ -5819,6 +5934,17 @@ export default function App() {
         onRewardPoints={(pts) => {
           showToastMsg(`🎉 كسبت +${pts} نقطة لتفوقك في مراجعة البطاقات!`);
         }}
+      />
+
+      {/* 25. POWERPOINT LESSON PRESENTATION MODAL */}
+      <LessonPresentationModal
+        isOpen={activePresentationLesson.isOpen}
+        onClose={() => setActivePresentationLesson(prev => ({ ...prev, isOpen: false }))}
+        lesson={activePresentationLesson.lesson}
+        unit={activePresentationLesson.unit || appState.unit}
+        subjectName={appState.subject?.name}
+        gradeName={appState.grade?.name}
+        isEnglish={!!(DB.curriculum[getCurriculumKey() || '']?.isEnglish || appState.program?.id === 'inspire' || appState.program?.isEnglish || language === 'en')}
       />
         </>
       )}
