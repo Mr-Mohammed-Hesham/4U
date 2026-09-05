@@ -177,6 +177,7 @@ export const WeeklyStudyPlanner: React.FC<WeeklyStudyPlannerProps> = ({
                                           program: pr as Program,
                                           grade: gr,
                                           subject: sub,
+                                          academicYear: '2025',
                                           unit,
                                           lesson
                                         });

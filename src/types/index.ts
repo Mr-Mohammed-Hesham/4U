@@ -90,6 +90,7 @@ export interface AppState {
   program: Program | null;
   grade: Grade | null;
   subject: Subject | null;
+  academicYear?: string | null;
   unit: Unit | null;
   lesson: Lesson | null;
 }

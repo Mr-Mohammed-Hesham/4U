@@ -85,6 +85,7 @@ export const FavoritesModal: React.FC<FavoritesModalProps> = ({
                         program: targetProgram as Program,
                         grade: targetGrade,
                         subject: targetSubject,
+                        academicYear: '2025',
                         unit: targetUnit,
                         lesson: targetLesson
                       });

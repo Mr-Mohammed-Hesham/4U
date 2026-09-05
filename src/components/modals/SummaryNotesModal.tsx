@@ -153,6 +153,7 @@ export const SummaryNotesModal: React.FC<SummaryNotesModalProps> = ({
                                 program: pr as Program,
                                 grade: gr,
                                 subject: sub,
+                                academicYear: '2025',
                                 unit: matched.unit,
                                 lesson: matched.lesson
                               });

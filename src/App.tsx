@@ -166,6 +166,7 @@ export default function App() {
     program: null,
     grade: null,
     subject: null,
+    academicYear: null,
     unit: null,
     lesson: null,
   });
@@ -2352,16 +2353,18 @@ export default function App() {
       const next = { ...prev, ...updater };
       // Clear lower selections if higher selection changes
       if (updater.country !== undefined) {
-        next.term = null; next.stream = null; next.program = null; next.grade = null; next.subject = null; next.unit = null; next.lesson = null;
+        next.term = null; next.stream = null; next.program = null; next.grade = null; next.subject = null; next.academicYear = null; next.unit = null; next.lesson = null;
       } else if (updater.term !== undefined) {
-        next.stream = null; next.program = null; next.grade = null; next.subject = null; next.unit = null; next.lesson = null;
+        next.stream = null; next.program = null; next.grade = null; next.subject = null; next.academicYear = null; next.unit = null; next.lesson = null;
       } else if (updater.stream !== undefined) {
-        next.program = null; next.grade = null; next.subject = null; next.unit = null; next.lesson = null;
+        next.program = null; next.grade = null; next.subject = null; next.academicYear = null; next.unit = null; next.lesson = null;
       } else if (updater.program !== undefined) {
-        next.grade = null; next.subject = null; next.unit = null; next.lesson = null;
+        next.grade = null; next.subject = null; next.academicYear = null; next.unit = null; next.lesson = null;
       } else if (updater.grade !== undefined) {
-        next.subject = null; next.unit = null; next.lesson = null;
+        next.subject = null; next.academicYear = null; next.unit = null; next.lesson = null;
       } else if (updater.subject !== undefined) {
+        next.academicYear = null; next.unit = null; next.lesson = null;
+      } else if (updater.academicYear !== undefined) {
         next.unit = null; next.lesson = null;
       } else if (updater.unit !== undefined) {
         next.lesson = null;
@@ -2393,6 +2396,7 @@ export default function App() {
       program: null,
       grade: null,
       subject: null,
+      academicYear: null,
       unit: null,
       lesson: null,
     });
@@ -2404,16 +2408,18 @@ export default function App() {
     setAppState(prev => {
       const next = { ...prev };
       if (level === 'country') {
-        next.term = null; next.stream = null; next.program = null; next.grade = null; next.subject = null; next.unit = null; next.lesson = null;
+        next.term = null; next.stream = null; next.program = null; next.grade = null; next.subject = null; next.academicYear = null; next.unit = null; next.lesson = null;
       } else if (level === 'term') {
-        next.stream = null; next.program = null; next.grade = null; next.subject = null; next.unit = null; next.lesson = null;
+        next.stream = null; next.program = null; next.grade = null; next.subject = null; next.academicYear = null; next.unit = null; next.lesson = null;
       } else if (level === 'stream') {
-        next.program = null; next.grade = null; next.subject = null; next.unit = null; next.lesson = null;
+        next.program = null; next.grade = null; next.subject = null; next.academicYear = null; next.unit = null; next.lesson = null;
       } else if (level === 'program') {
-        next.grade = null; next.subject = null; next.unit = null; next.lesson = null;
+        next.grade = null; next.subject = null; next.academicYear = null; next.unit = null; next.lesson = null;
       } else if (level === 'grade') {
-        next.subject = null; next.unit = null; next.lesson = null;
+        next.subject = null; next.academicYear = null; next.unit = null; next.lesson = null;
       } else if (level === 'subject') {
+        next.academicYear = null; next.unit = null; next.lesson = null;
+      } else if (level === 'academicYear') {
         next.unit = null; next.lesson = null;
       } else if (level === 'unit') {
         next.lesson = null;
@@ -3476,7 +3482,7 @@ export default function App() {
       </div>
 
       {/* Breadcrumbs & Section Selector */}
-      {(appState.country || appState.term || appState.stream || appState.grade || appState.subject || appState.unit || appState.lesson) && (
+      {(appState.country || appState.term || appState.stream || appState.grade || appState.subject || appState.academicYear || appState.unit || appState.lesson) && (
         <div id="breadcrumbs" className="max-w-7xl mx-auto px-4 md:px-6 py-4 w-full max-w-full overflow-hidden">
           <div className="flex items-center justify-between flex-wrap gap-3 max-w-full">
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 flex-wrap max-w-full">
@@ -3544,6 +3550,15 @@ export default function App() {
                 <span className="text-gray-400">‹</span>
                 <button onClick={() => jumpToBreadcrumb('subject')} className="hover:text-indigo-600 dark:hover:text-indigo-400 font-medium cursor-pointer">
                   {(appState.program?.id === 'inspire' || appState.program?.isEnglish) ? getEnglishSubjectName(appState.subject.name, appState.subject.id) : appState.subject.name}
+                </button>
+              </>
+            )}
+
+            {appState.academicYear && (
+              <>
+                <span className="text-gray-400">‹</span>
+                <button onClick={() => jumpToBreadcrumb('academicYear')} className="hover:text-indigo-600 dark:hover:text-indigo-400 font-medium cursor-pointer flex items-center gap-1 bg-amber-500/10 dark:bg-amber-400/10 text-amber-700 dark:text-amber-300 px-2.5 py-0.5 rounded-lg border border-amber-500/30 text-xs font-black">
+                  <span>📅</span> {appState.academicYear === '2025' ? 'منهج 2025' : 'منهج 2026'}
                 </button>
               </>
             )}
@@ -3670,11 +3685,13 @@ export default function App() {
                       onClick={() => {
                         setHistory(prev => [...prev, { ...appState }]);
                         setAppState({
+                          country: appState.country || 'UAE',
                           term: result.term,
                           stream: result.stream,
                           program: result.program,
                           grade: result.grade,
                           subject: result.subject,
+                          academicYear: '2025',
                           unit: result.unit,
                           lesson: result.lesson
                         });
@@ -4247,8 +4264,174 @@ export default function App() {
               </div>
             )}
 
-            {/* VIEW 6: UNITS LIST */}
-            {appState.term && appState.stream && appState.grade && appState.subject && !appState.unit && (
+            {/* VIEW 5.5: SELECT ACADEMIC YEAR (تحديد السنة الدراسية للمنهج) */}
+            {appState.term && appState.stream && (appState.stream.id !== 'advanced' || appState.program) && appState.grade && appState.subject && !appState.academicYear && (
+              <div className="fade-in">
+                {(() => {
+                  const isEnglish = appState.program?.id === 'inspire' || appState.program?.isEnglish;
+                  const subjectDisplayName = isEnglish ? getEnglishSubjectName(appState.subject.name, appState.subject.id) : appState.subject.name;
+                  const gradeDisplayName = isEnglish ? getEnglishGradeName(appState.grade.name, appState.grade.id) : appState.grade.name;
+                  const termDisplayName = isEnglish ? getEnglishTermName(appState.term.name, appState.term.id) : appState.term.name;
+                  const streamDisplayName = isEnglish ? getEnglishStreamName(appState.stream.name, appState.stream.id) : appState.stream.name;
+
+                  return (
+                    <div className="max-w-4xl mx-auto">
+                      {/* Heading */}
+                      <div className="text-center mb-8">
+                        <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 px-4 py-1.5 rounded-full text-xs font-black mb-3 border border-indigo-200 dark:border-indigo-800/60 shadow-sm">
+                          <span>{appState.subject.icon}</span>
+                          <span>{subjectDisplayName}</span>
+                          <span>•</span>
+                          <span>{gradeDisplayName}</span>
+                          <span>•</span>
+                          <span>{termDisplayName}</span>
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-3">
+                          {isEnglish ? 'Select Academic Year' : 'تحديد السنة الدراسية للمنهج'}
+                        </h2>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base max-w-xl mx-auto">
+                          {isEnglish 
+                            ? 'Please select the curriculum academic year before proceeding to units and lessons.' 
+                            : 'نظراً لتحديث المناهج، يرجى تحديد السنة الدراسية للمنهج قبل الدخول لصفحة الدروس والوحدات.'}
+                        </p>
+                      </div>
+
+                      {/* Notice Banner */}
+                      <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-4 mb-8 flex items-start gap-3 shadow-sm">
+                        <span className="text-2xl shrink-0 mt-0.5">💡</span>
+                        <div className="text-xs md:text-sm text-amber-900 dark:text-amber-200 leading-relaxed">
+                          <p className="font-bold mb-1">
+                            {isEnglish ? 'Curriculum Availability Notice:' : 'تنويه بخصوص توفر المناهج:'}
+                          </p>
+                          <p>
+                            {isEnglish
+                              ? 'The currently active and complete curriculum on the platform is the 2025 curriculum. The 2026 curriculum will be imported soon Insha\'Allah.'
+                              : 'المنهج المعتمد والمتاح حالياً بكامل وحداته ودروسه واختباراته على المنصة هو منهج 2025. أما منهج 2026 فسيتم استيراده ورفع ملفاته لاحقاً فور اعتماده.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Academic Year Selection Cards */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        {/* 2025 Curriculum Card */}
+                        <div 
+                          onClick={() => navigateTo({ academicYear: '2025' })}
+                          className="card-hover bg-white dark:bg-slate-900 border-2 border-emerald-500/40 hover:border-emerald-500 rounded-3xl p-7 shadow-lg cursor-pointer flex flex-col justify-between relative overflow-hidden group transition-all"
+                        >
+                          <div className="absolute top-0 right-0 left-0 h-2 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+                          
+                          <div>
+                            <div className="flex items-center justify-between gap-2 mb-4">
+                              <span className="text-4xl p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200 dark:border-emerald-800/40 shadow-sm">
+                                🎓
+                              </span>
+                              <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-xs font-black px-3 py-1 rounded-full border border-emerald-300 dark:border-emerald-700">
+                                {isEnglish ? '✅ Available Now' : '✅ متاح حالياً بالكامل'}
+                              </span>
+                            </div>
+
+                            <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+                              <span>{isEnglish ? '2025 Curriculum' : 'منهج 2025'}</span>
+                            </h3>
+                            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold mb-4">
+                              {isEnglish ? 'Academic Year 2024 - 2025' : 'العام الدراسي 2024 - 2025'}
+                            </p>
+
+                            <ul className="space-y-2 text-xs text-gray-600 dark:text-gray-300 mb-6">
+                              <li className="flex items-center gap-2">
+                                <span className="text-emerald-500 font-black">✓</span>
+                                <span>{isEnglish ? 'All units and interactive lessons' : 'جميع الوحدات والدروس التفاعلية'}</span>
+                              </li>
+                              <li className="flex items-center gap-2">
+                                <span className="text-emerald-500 font-black">✓</span>
+                                <span>{isEnglish ? 'PowerPoint presentations & explanations' : 'عروض الباور بوينت وشروحات الدروس'}</span>
+                              </li>
+                              <li className="flex items-center gap-2">
+                                <span className="text-emerald-500 font-black">✓</span>
+                                <span>{isEnglish ? 'Official textbook & self-assessment quizzes' : 'كتاب الطالب الوزاري واختبارات الفهم'}</span>
+                              </li>
+                            </ul>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => navigateTo({ academicYear: '2025' })}
+                            className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm rounded-2xl shadow-md transition cursor-pointer flex items-center justify-center gap-2 group-hover:scale-[1.02] active:scale-95"
+                          >
+                            <span>{isEnglish ? 'Enter 2025 Curriculum' : 'دخول منهج 2025'}</span>
+                            <span>←</span>
+                          </button>
+                        </div>
+
+                        {/* 2026 Curriculum Card */}
+                        <div 
+                          onClick={() => navigateTo({ academicYear: '2026' })}
+                          className="card-hover bg-white dark:bg-slate-900 border-2 border-amber-400/40 hover:border-amber-500 rounded-3xl p-7 shadow-lg cursor-pointer flex flex-col justify-between relative overflow-hidden group transition-all"
+                        >
+                          <div className="absolute top-0 right-0 left-0 h-2 bg-gradient-to-r from-amber-400 to-orange-500"></div>
+                          
+                          <div>
+                            <div className="flex items-center justify-between gap-2 mb-4">
+                              <span className="text-4xl p-3 bg-amber-50 dark:bg-amber-950/40 rounded-2xl border border-amber-200 dark:border-amber-800/40 shadow-sm">
+                                ⏳
+                              </span>
+                              <span className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-xs font-black px-3 py-1 rounded-full border border-amber-300 dark:border-amber-700">
+                                {isEnglish ? '⏳ To Be Imported' : '⏳ سيتم استيراده لاحقاً'}
+                              </span>
+                            </div>
+
+                            <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+                              <span>{isEnglish ? '2026 Curriculum' : 'منهج 2026'}</span>
+                            </h3>
+                            <p className="text-xs text-amber-600 dark:text-amber-400 font-bold mb-4">
+                              {isEnglish ? 'Academic Year 2025 - 2026' : 'العام الدراسي 2025 - 2026'}
+                            </p>
+
+                            <ul className="space-y-2 text-xs text-gray-600 dark:text-gray-300 mb-6">
+                              <li className="flex items-center gap-2">
+                                <span className="text-amber-500 font-black">•</span>
+                                <span>{isEnglish ? 'New curriculum updates & modern textbooks' : 'المناهج المطورة والتحديثات الجديدة'}</span>
+                              </li>
+                              <li className="flex items-center gap-2">
+                                <span className="text-amber-500 font-black">•</span>
+                                <span>{isEnglish ? 'Files will be imported soon Insha\'Allah' : 'سيتم استيراد الملفات قريباً إن شاء الله'}</span>
+                              </li>
+                              <li className="flex items-center gap-2">
+                                <span className="text-amber-500 font-black">•</span>
+                                <span>{isEnglish ? 'View status and track import updates' : 'متابعة حالة استيراد وتحديث المنهج'}</span>
+                              </li>
+                            </ul>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => navigateTo({ academicYear: '2026' })}
+                            className="w-full py-3.5 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-amber-500 hover:text-white text-slate-800 dark:text-slate-200 font-black text-sm rounded-2xl border border-slate-200 dark:border-slate-700 transition cursor-pointer flex items-center justify-center gap-2 group-hover:scale-[1.02] active:scale-95"
+                          >
+                            <span>{isEnglish ? 'Check 2026 Curriculum Status' : 'معاينة حالة منهج 2026'}</span>
+                            <span>←</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Back button */}
+                      <div className="flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => jumpToBreadcrumb('grade')}
+                          className="text-xs text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 font-bold flex items-center gap-1.5 py-2 px-4 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
+                        >
+                          <span>← {isEnglish ? 'Change Subject or Grade' : 'تغيير المادة أو الصف الدراسي'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* VIEW 6: UNITS LIST (صفحة المنهج) */}
+            {appState.term && appState.stream && appState.grade && appState.subject && appState.academicYear && !appState.unit && (
               <div className="fade-in">
                 {(() => {
                   const key = getCurriculumKey();
@@ -4260,13 +4443,96 @@ export default function App() {
                   const termDisplayName = isEnglish ? getEnglishTermName(appState.term.name, appState.term.id) : appState.term.name;
                   const streamDisplayName = isEnglish ? getEnglishStreamName(appState.stream.name, appState.stream.id) : appState.stream.name;
 
+                  // 2026 Academic Year View (To be imported later)
+                  if (appState.academicYear === '2026') {
+                    return (
+                      <div className="space-y-6">
+                        {/* Top Banner */}
+                        <div className="gradient-primary text-white rounded-3xl p-6 md:p-8 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-amber-300">
+                                {appState.subject.icon} {subjectDisplayName}
+                              </span>
+                              <span className="bg-amber-400 text-slate-950 font-black px-3 py-1 rounded-full text-xs shadow-sm">
+                                📅 {isEnglish ? '2026 Curriculum' : 'منهج 2026'}
+                              </span>
+                            </div>
+                            <h2 className="text-3xl font-black mb-1">{appState.subject.icon} {subjectDisplayName}</h2>
+                            <p className="opacity-90 text-sm font-medium">
+                              {gradeDisplayName} • {termDisplayName} • {streamDisplayName} {appState.program ? `• ${appState.program.name}` : ''}
+                            </p>
+                          </div>
+
+                          {/* Year Switcher Pills */}
+                          <div className="bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/20 flex items-center gap-2 text-xs">
+                            <span className="font-bold text-amber-300">{isEnglish ? 'Year:' : 'السنة الدراسية:'}</span>
+                            <div className="flex items-center bg-black/30 rounded-xl p-1 gap-1">
+                              <button
+                                type="button"
+                                onClick={() => setAppState(prev => ({ ...prev, academicYear: '2025' }))}
+                                className="px-3 py-1.5 rounded-lg font-black transition cursor-pointer text-white/80 hover:text-white"
+                                title={isEnglish ? 'Switch to available 2025 curriculum' : 'التبديل إلى منهج 2025 المتاح'}
+                              >
+                                {isEnglish ? '2025 ✅' : 'منهج 2025 ✅'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setAppState(prev => ({ ...prev, academicYear: '2026' }))}
+                                className="px-3 py-1.5 rounded-lg font-black transition cursor-pointer bg-amber-400 text-slate-950 shadow-sm"
+                              >
+                                {isEnglish ? '2026 ⏳' : 'منهج 2026 ⏳'}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 2026 Coming Soon Box */}
+                        <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-amber-400/60 dark:border-amber-500/40 rounded-3xl p-8 md:p-12 text-center shadow-lg my-6">
+                          <div className="w-20 h-20 bg-amber-500/15 dark:bg-amber-500/25 text-amber-500 rounded-3xl mx-auto flex items-center justify-center text-4xl mb-5 shadow-inner">
+                            ⏳
+                          </div>
+                          <div className="inline-flex items-center gap-2 bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-4 py-1.5 rounded-full text-xs font-black mb-3 border border-amber-300/40">
+                            <span>📅 {isEnglish ? 'Academic Year 2025 - 2026' : 'العام الدراسي 2025 - 2026'}</span>
+                            <span>•</span>
+                            <span>{isEnglish ? 'Import in progress' : 'قيد التجهيز والاستيراد'}</span>
+                          </div>
+                          <h3 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-3">
+                            {isEnglish ? 'Coming Soon Insha\'Allah — 2026 Curriculum Files Will Be Imported' : 'قريباً إن شاء الله — سيتم استيراد ورفع ملفات منهج 2026'}
+                          </h3>
+                          <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base max-w-xl mx-auto leading-relaxed mb-6">
+                            {isEnglish 
+                              ? 'The 2026 curriculum files are currently prepared and will be imported soon Insha\'Allah. The active and complete curriculum currently available on the platform is the 2025 curriculum.'
+                              : 'نعمل على تجهيز ملفات المنهج المطور لعام 2026 ورفعها لاحقاً فور اكتمالها. المنهج الفعال والمعتمد المتاح حالياً بكامل وحداته، دروسه، اختباراته، وكتاب الطالب على المنصة هو منهج 2025.'}
+                          </p>
+                          <div className="flex flex-wrap items-center justify-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setAppState(prev => ({ ...prev, academicYear: '2025' }))}
+                              className="px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm rounded-2xl shadow-lg hover:shadow-emerald-500/25 transition cursor-pointer flex items-center gap-2 active:scale-95"
+                            >
+                              <span>{isEnglish ? '✅ Browse Available 2025 Curriculum' : '✅ الانتقال إلى تصفح منهج 2025 المتاح حالياً'}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => navigateTo({ academicYear: null })}
+                              className="px-5 py-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-sm rounded-2xl transition cursor-pointer flex items-center gap-1.5"
+                            >
+                              <span>← {isEnglish ? 'Change Academic Year' : 'تغيير السنة الدراسية'}</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
                   if (!curriculum || !curriculum.units || curriculum.units.length === 0) {
                     return (
                       <div>
                         <div className="bg-gradient-to-br from-slate-600 to-slate-800 rounded-3xl p-8 text-white mb-8 shadow-md">
                           <h2 className="text-3xl font-black mb-1">{appState.subject.icon} {subjectDisplayName}</h2>
                           <p className="opacity-95 text-sm font-medium">
-                            {gradeDisplayName} • {termDisplayName} • {streamDisplayName}
+                            {gradeDisplayName} • {termDisplayName} • {streamDisplayName} • 📅 {appState.academicYear === '2025' ? 'منهج 2025' : 'منهج 2026'}
                           </p>
                         </div>
                         <div className="bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-200 dark:border-slate-800 rounded-2xl p-8 text-center shadow-sm">
@@ -4286,34 +4552,75 @@ export default function App() {
                     <div>
                       <div className="gradient-primary text-white rounded-3xl p-6 md:p-8 mb-8 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-amber-300">
+                              {appState.subject.icon} {subjectDisplayName}
+                            </span>
+                            <span className="bg-emerald-400 text-slate-950 font-black px-3 py-1 rounded-full text-xs shadow-sm">
+                              📅 {isEnglish ? '2025 Curriculum' : 'منهج 2025'}
+                            </span>
+                          </div>
                           <h2 className="text-3xl font-black mb-1">{appState.subject.icon} {subjectDisplayName}</h2>
                           <p className="opacity-90 text-sm font-medium">
                             {gradeDisplayName} • {termDisplayName} • {streamDisplayName} {appState.program ? `• ${appState.program.name}` : ''}
                           </p>
                         </div>
                         
-                        {/* Student Book Button - Opens embedded inside the platform */}
-                        <button 
-                          type="button"
-                          onClick={() => {
-                            const bookUrl = getStudentBookUrl();
-                            const targetUrl = bookUrl || `https://www.google.com/search?q=${encodeURIComponent(`كتاب الطالب ${appState.subject.name} الصف ${appState.grade.name} ${appState.term.name} منهج ${appState.stream.name} pdf`)}`;
-                            setActiveEmbeddedViewer({
-                              isOpen: true,
-                              title: isEnglish ? `Student Textbook - ${subjectDisplayName}` : `كتاب الطالب المنهجي - ${subjectDisplayName}`,
-                              contentType: 'lesson',
-                              url: targetUrl,
-                              unitName: `${gradeDisplayName} • ${termDisplayName}`,
-                              subjectName: subjectDisplayName
-                            });
-                          }}
-                          className="bg-white/10 hover:bg-white/20 p-3 rounded-2xl border border-white/20 backdrop-blur-md transition flex items-center gap-2 text-xs font-black cursor-pointer shadow-md select-none w-full md:w-auto text-center justify-center shrink-0 active:scale-95"
-                          title={isEnglish ? "Open Student Textbook (In-App)" : "فتح كتاب الطالب المنهجي داخل المنصة"}
-                        >
-                          <span className="text-lg">📖</span>
-                          <span>{isEnglish ? "Student Book (PDF)" : "كتاب الطالب المنهجي (PDF)"}</span>
-                          <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">4U Viewer</span>
-                        </button>
+                        <div className="flex flex-wrap items-center gap-3">
+                          {/* Academic Year Switcher */}
+                          <div className="bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white/20 flex items-center gap-2 text-xs">
+                            <span className="font-bold text-amber-300">{isEnglish ? 'Year:' : 'السنة:'}</span>
+                            <div className="flex items-center bg-black/30 rounded-xl p-1 gap-1">
+                              <button
+                                type="button"
+                                onClick={() => setAppState(prev => ({ ...prev, academicYear: '2025' }))}
+                                className="px-2.5 py-1 rounded-lg font-black transition cursor-pointer bg-amber-400 text-slate-950 shadow-sm"
+                                title={isEnglish ? 'Currently Active 2025 Curriculum' : 'منهج 2025 المتاح حالياً'}
+                              >
+                                2025 ✅
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setAppState(prev => ({ ...prev, academicYear: '2026' }))}
+                                className="px-2.5 py-1 rounded-lg font-black transition cursor-pointer text-white/80 hover:text-white"
+                                title={isEnglish ? 'Switch to 2026 curriculum status' : 'الانتقال إلى منهج 2026'}
+                              >
+                                2026 ⏳
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => navigateTo({ academicYear: null })}
+                              className="text-white/70 hover:text-white text-[11px] underline ml-1 cursor-pointer"
+                              title={isEnglish ? 'Change Year' : 'تغيير السنة'}
+                            >
+                              {isEnglish ? 'Change' : 'تغيير'}
+                            </button>
+                          </div>
+
+                          {/* Student Book Button - Opens embedded inside the platform */}
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const bookUrl = getStudentBookUrl();
+                              const targetUrl = bookUrl || `https://www.google.com/search?q=${encodeURIComponent(`كتاب الطالب ${appState.subject.name} الصف ${appState.grade.name} ${appState.term.name} منهج ${appState.stream.name} pdf`)}`;
+                              setActiveEmbeddedViewer({
+                                isOpen: true,
+                                title: isEnglish ? `Student Textbook - ${subjectDisplayName}` : `كتاب الطالب المنهجي - ${subjectDisplayName}`,
+                                contentType: 'lesson',
+                                url: targetUrl,
+                                unitName: `${gradeDisplayName} • ${termDisplayName}`,
+                                subjectName: subjectDisplayName
+                              });
+                            }}
+                            className="bg-white/10 hover:bg-white/20 p-3 rounded-2xl border border-white/20 backdrop-blur-md transition flex items-center gap-2 text-xs font-black cursor-pointer shadow-md select-none w-full md:w-auto text-center justify-center shrink-0 active:scale-95"
+                            title={isEnglish ? "Open Student Textbook (In-App)" : "فتح كتاب الطالب المنهجي داخل المنصة"}
+                          >
+                            <span className="text-lg">📖</span>
+                            <span>{isEnglish ? "Student Book (PDF)" : "كتاب الطالب المنهجي (PDF)"}</span>
+                            <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">4U Viewer</span>
+                          </button>
+                        </div>
                       </div>
 
                       <h3 className="text-2xl font-black mb-6 text-gray-800 dark:text-white flex items-center gap-2">
@@ -4381,9 +4688,17 @@ export default function App() {
                     <div>
                       <div className="gradient-violet rounded-3xl p-6 md:p-8 text-white mb-8 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-amber-300">
+                              {appState.subject.icon} {subjectDisplayName}
+                            </span>
+                            <span className="bg-emerald-400 text-slate-950 font-black px-2.5 py-0.5 rounded-full text-xs shadow-sm">
+                              📅 {appState.academicYear === '2025' ? 'منهج 2025' : 'منهج 2026'}
+                            </span>
+                          </div>
                           <h2 className="text-3xl font-black mb-1">{appState.unit.icon} {appState.unit.name}</h2>
                           <p className="opacity-90 text-sm font-medium">
-                            {subjectDisplayName} • {gradeDisplayName} • {termDisplayName}
+                            {subjectDisplayName} • {gradeDisplayName} • {termDisplayName} • 📅 {appState.academicYear === '2025' ? 'منهج 2025' : 'منهج 2026'}
                           </p>
                         </div>
 
@@ -4649,7 +4964,7 @@ export default function App() {
                                 {isDone && <span className="bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">🏆 مكتمل</span>}
                               </div>
                               <p className="opacity-90 text-xs">
-                                {appState.subject.name} • {appState.grade.name} • {appState.unit.name}
+                                {appState.subject.name} • {appState.grade.name} • {appState.unit.name} • 📅 منهج {appState.academicYear || '2025'}
                               </p>
                               {timeSpent > 0 && (
                                 <p className="opacity-80 text-[10px] mt-1 flex items-center gap-1">
