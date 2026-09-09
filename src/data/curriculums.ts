@@ -43,6 +43,20 @@ export const curriculums: Record<string, Curriculum> = {
   ...physics12Curriculum,
   ...physicsOthersCurriculum,
 
+  // Explicit Grade 12 Math & Physics Aliases with UAE- prefix
+  'UAE-math-12-bridge-1': math12Curriculum['math-12-bridge-1'],
+  'UAE-math-12-inspire-1': math12Curriculum['math-12-inspire-1'],
+  'UAE-math-12-bridge-3': math12Curriculum['math-12-bridge-3'],
+  'UAE-math-12-inspire-3': math12Curriculum['math-12-inspire-3'],
+  'UAE-math-12-adv-bridge-1': math12Curriculum['math-12-bridge-1'],
+  'UAE-math-12-adv-inspire-1': math12Curriculum['math-12-inspire-1'],
+  'UAE-physics-12-bridge-1': physics12Curriculum['physics-12-bridge-1'],
+  'UAE-physics-12-bridge-3': physics12Curriculum['physics-12-bridge-3'],
+  'UAE-physics-12-adv-bridge-1': physics12Curriculum['physics-12-bridge-1'],
+  'UAE-physics-12-adv-inspire-1': phy12Inspire1,
+  'physics-12-adv-inspire-1': phy12Inspire1,
+  'physics-12-adv-bridge-1': physics12Curriculum['physics-12-bridge-1'],
+
   // --- Grade 5 Curriculums (General & Advanced) ---
   // Grade 5 Math General Term 1
   'math-5-general-1': math5General1,
