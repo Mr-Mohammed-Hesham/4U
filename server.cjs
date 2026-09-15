@@ -337,6 +337,95 @@ app.get("/api/fetch-lesson-text", async (req, res) => {
     });
   }
 });
+var examsDataDir = import_path.default.join(process.cwd(), "data");
+var examsDataFile = import_path.default.join(examsDataDir, "lesson_exams.json");
+function ensureExamsFile() {
+  try {
+    if (!import_fs.default.existsSync(examsDataDir)) {
+      import_fs.default.mkdirSync(examsDataDir, { recursive: true });
+    }
+    if (!import_fs.default.existsSync(examsDataFile)) {
+      import_fs.default.writeFileSync(examsDataFile, JSON.stringify({}, null, 2), "utf8");
+    }
+  } catch (err) {
+    console.warn("Notice initializing exams data file:", err);
+  }
+}
+function readAllLessonExams() {
+  ensureExamsFile();
+  try {
+    if (import_fs.default.existsSync(examsDataFile)) {
+      const content = import_fs.default.readFileSync(examsDataFile, "utf8");
+      return content ? JSON.parse(content) : {};
+    }
+  } catch (err) {
+    console.error("Error reading lesson exams file:", err);
+  }
+  return {};
+}
+function writeAllLessonExams(data) {
+  ensureExamsFile();
+  try {
+    import_fs.default.writeFileSync(examsDataFile, JSON.stringify(data, null, 2), "utf8");
+    return true;
+  } catch (err) {
+    console.error("Error writing lesson exams file:", err);
+    return false;
+  }
+}
+app.get("/api/lesson-exams", (req, res) => {
+  try {
+    const lessonKey = req.query.lessonKey || "";
+    const allExams = readAllLessonExams();
+    if (!lessonKey) {
+      return res.json({ success: true, examsMap: allExams });
+    }
+    const exams = allExams[lessonKey] || [];
+    return res.json({ success: true, lessonKey, exams });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message || "Failed to fetch lesson exams" });
+  }
+});
+app.post("/api/lesson-exams", (req, res) => {
+  try {
+    const { lessonKey, exams, exam } = req.body;
+    if (!lessonKey) {
+      return res.status(400).json({ success: false, error: "lessonKey is required" });
+    }
+    const allExams = readAllLessonExams();
+    let currentList = allExams[lessonKey] || [];
+    if (Array.isArray(exams)) {
+      allExams[lessonKey] = exams;
+    } else if (exam && exam.id) {
+      const idx = currentList.findIndex((item) => item.id === exam.id);
+      if (idx >= 0) {
+        currentList[idx] = exam;
+      } else {
+        currentList.push(exam);
+      }
+      allExams[lessonKey] = currentList;
+    }
+    writeAllLessonExams(allExams);
+    return res.json({ success: true, lessonKey, exams: allExams[lessonKey] || [] });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message || "Failed to save lesson exam" });
+  }
+});
+app.delete("/api/lesson-exams/:lessonKey/:examId", (req, res) => {
+  try {
+    const { lessonKey, examId } = req.params;
+    if (!lessonKey || !examId) {
+      return res.status(400).json({ success: false, error: "lessonKey and examId are required" });
+    }
+    const allExams = readAllLessonExams();
+    const currentList = allExams[lessonKey] || [];
+    allExams[lessonKey] = currentList.filter((item) => item.id !== examId);
+    writeAllLessonExams(allExams);
+    return res.json({ success: true, lessonKey, exams: allExams[lessonKey] || [] });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message || "Failed to delete lesson exam" });
+  }
+});
 function transformHtmlForSocialPreviews(rawHtml, req) {
   const forwardedProto = req.headers["x-forwarded-proto"] || "";
   const protocol = forwardedProto.split(",")[0].trim() || (req.secure ? "https" : "http");
