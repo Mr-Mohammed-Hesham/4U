@@ -15,3 +15,4 @@ export { FlashcardsModal } from './FlashcardsModal';
 export { ScientificCalculatorModal } from './ScientificCalculatorModal';
 export { MistakesLogModal } from './MistakesLogModal';
 export { LessonPresentationModal } from './LessonPresentationModal';
+export { LessonExamsModal } from './LessonExamsModal';

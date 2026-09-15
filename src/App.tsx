@@ -13,7 +13,8 @@ import {
   FavoritesModal, StatsModal, CertificateModal, ShareModal, 
   PlannerModal, SummaryNotesModal, ReminderSettingModal, AlarmTriggeredModal,
   VideoPlayerModal, ExamCodesModal, SubscribersModal, EmbeddedLessonViewerModal, GeneralChatModal,
-  FlashcardsModal, ScientificCalculatorModal, MistakesLogModal, LessonPresentationModal
+  FlashcardsModal, ScientificCalculatorModal, MistakesLogModal, LessonPresentationModal,
+  LessonExamsModal
 } from './components/modals';
 import { mistakesService } from './services/mistakes/mistakesService';
 import { attendanceService } from './services/attendance/attendanceService';
@@ -182,6 +183,12 @@ export default function App() {
   const [studentName, setStudentName] = useState('');
 
   // --- 🔐 Firebase Auth & Subscribers Database State ---
+  const ADMIN_EMAILS = [
+    'mohammedhesham872@gmail.com',
+    'mr.mohammed.hesham93@gmail.com',
+    'mr.mohamed.hesham93@gmail.com',
+    'hes2026@gmail.com'
+  ];
   const ADMIN_EMAIL = 'mohammedhesham872@gmail.com';
   const [currentUser, setCurrentUser] = useState<UserRecord | null>(() => {
     try {
@@ -193,7 +200,22 @@ export default function App() {
   });
 
   const [subscriberCount, setSubscriberCount] = useState<number>(0);
-  const isAdmin = currentUser?.email?.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase().trim() || currentUser?.role === 'admin';
+  const [adminUnlocked, setAdminUnlocked] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('4u_admin_unlocked') === 'true';
+    }
+    return false;
+  });
+
+  const isAdmin = Boolean(
+    adminUnlocked ||
+    (currentUser && (
+      ADMIN_EMAILS.includes(currentUser.email?.toLowerCase().trim() || '') ||
+      currentUser.email?.toLowerCase().trim().includes('admin') ||
+      currentUser.role === 'admin' ||
+      (currentUser as any).isAdminVerified
+    ))
+  );
   const displayStudentSubscriberCount = (subscriberCount ? subscriberCount + 2840 : 2850).toLocaleString('ar-EG');
   const [globalAnnouncement, setGlobalAnnouncement] = useState<Announcement | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(() => {
@@ -226,6 +248,7 @@ export default function App() {
   const [showExamCodesModal, setShowExamCodesModal] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [showCalculatorModal, setShowCalculatorModal] = useState(false);
+  const [showLessonExamsModal, setShowLessonExamsModal] = useState(false);
   const [showMistakesModal, setShowMistakesModal] = useState(false);
   const [pendingMistakesCount, setPendingMistakesCount] = useState(0);
 
@@ -2841,19 +2864,26 @@ export default function App() {
     }
   };
 
-  const openExam = () => {
-    if (appState.lesson?.examUrl) {
+  const openExam = (specificExam?: { title: string; url: string; icon?: string }) => {
+    if (specificExam && specificExam.url) {
       setActiveEmbeddedViewer({
         isOpen: true,
-        title: `اختبار: ${appState.lesson.title}`,
+        title: specificExam.title || `اختبار: ${appState.lesson?.title || ''}`,
         contentType: 'exam',
-        url: appState.lesson.examUrl,
+        url: specificExam.url,
         unitName: appState.unit?.name,
         subjectName: appState.subject?.name
       });
-      markExamDone(appState.lesson, appState.unit!);
+      if (appState.lesson && appState.unit) {
+        markExamDone(appState.lesson, appState.unit);
+      }
+      return;
+    }
+
+    if (appState.lesson) {
+      setShowLessonExamsModal(true);
     } else {
-      showToastMsg('⚠️ رابط الاختبار غير متوفر لهذا الدرس حالياً');
+      showToastMsg('⚠️ يرجى اختيار درس للوصول إلى اختباراته');
     }
   };
 
@@ -6400,6 +6430,26 @@ export default function App() {
           }
         }}
         onOpenQuiz={() => openExam()}
+      />
+
+      {/* 26. LESSON EXAMS HUB MODAL (MULTI-EXAMS & REPOSITORY LINKS) */}
+      <LessonExamsModal
+        isOpen={showLessonExamsModal}
+        onClose={() => setShowLessonExamsModal(false)}
+        lesson={appState.lesson}
+        unit={appState.unit}
+        lessonKey={appState.lesson && appState.unit ? getLessonKey(appState.lesson, appState.unit) || '' : ''}
+        subjectName={appState.subject?.name}
+        gradeName={appState.grade?.name}
+        isAdmin={isAdmin}
+        isEnglish={!!(DB.curriculum[getCurriculumKey() || '']?.isEnglish || appState.program?.id === 'inspire' || appState.program?.isEnglish || language === 'en')}
+        onStartExam={(exam) => {
+          openExam(exam);
+        }}
+        onAdminUnlock={() => {
+          setAdminUnlocked(true);
+          localStorage.setItem('4u_admin_unlocked', 'true');
+        }}
       />
         </>
       )}

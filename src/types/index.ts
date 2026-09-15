@@ -56,6 +56,14 @@ export interface Lesson {
   lessonTitle?: string;
   examTitle?: string;
   pptTitle?: string;
+  exams?: Array<{
+    id: string;
+    title: string;
+    url: string;
+    icon?: string;
+    iconName?: string;
+    description?: string;
+  }>;
   content?: LessonContent;
 }
 
