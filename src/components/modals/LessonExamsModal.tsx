@@ -12,7 +12,8 @@ import {
   updateLessonExam, 
   deleteLessonExam,
   fetchRemoteLessonExams,
-  subscribeToLessonExams
+  subscribeToLessonExams,
+  checkFirestorePermissionStatus
 } from '../../services/lessonExamsService';
 
 interface LessonExamsModalProps {
@@ -71,6 +72,9 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [firestoreWarning, setFirestoreWarning] = useState<string | null>(null);
+  const [rulesCopied, setRulesCopied] = useState(false);
+  const [checkingRules, setCheckingRules] = useState(false);
 
   // Admin PIN Quick Unlock Modal
   const [showPinUnlock, setShowPinUnlock] = useState(false);
@@ -79,6 +83,20 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
   const [localAdminUnlocked, setLocalAdminUnlocked] = useState(false);
 
   const effectiveIsAdmin = isAdmin || localAdminUnlocked;
+
+  // Check Firestore permissions for Admin
+  const handleCheckRulesAgain = async () => {
+    setCheckingRules(true);
+    const st = await checkFirestorePermissionStatus();
+    setCheckingRules(false);
+    if (st.allowed) {
+      setFirestoreWarning(null);
+      setSuccessToast('✅ تم الاتصال بـ Firestore ومجموعة lesson_exams مفتوحة للكتابة والقراءة لجميع الأعضاء!');
+      setTimeout(() => setSuccessToast(null), 4000);
+    } else {
+      setFirestoreWarning('⚠️ قواعد Firestore الحالية ما زالت تمنع الكتابة (PERMISSION_DENIED). يرجى نشر القواعد في Firebase Console.');
+    }
+  };
 
   // Load exams when modal opens and subscribe to real-time updates
   useEffect(() => {
@@ -98,9 +116,20 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
     setCustomExams(cached);
     setLoading(false);
 
+    // Check permissions if admin
+    if (effectiveIsAdmin) {
+      checkFirestorePermissionStatus().then(st => {
+        if (!st.allowed) {
+          setFirestoreWarning('⚠️ قواعد أمان Firestore في Firebase Console تمنع الكتابة المباشرة إلى collection (lesson_exams). يرجى تفعيل القواعد لظهور الامتحانات للأعضاء.');
+        } else {
+          setFirestoreWarning(null);
+        }
+      });
+    }
+
     // 2. Refresh from Server API & Firestore in background
     fetchRemoteLessonExams(activeKey).then(remote => {
-      if (Array.isArray(remote)) {
+      if (Array.isArray(remote) && remote.length > 0) {
         setCustomExams(remote);
       }
     });
@@ -115,7 +144,7 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
     return () => {
       unsubscribe();
     };
-  }, [isOpen, lessonKey, lesson]);
+  }, [isOpen, lessonKey, lesson, effectiveIsAdmin]);
 
   // Sync examIconName automatically when examTitle changes (if not manually detached)
   const handleTitleChange = (val: string) => {
@@ -193,7 +222,12 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
           description: examDescription.trim() || undefined,
         });
         setCustomExams(res.updated);
-        setSuccessToast(res.status.message || (isEnglish ? 'Exam updated successfully' : '✅ تم حفظ التعديل في فايربيز وسيرفر المنصة بنجاح!'));
+        if (res.status.firestoreOk) {
+          setFirestoreWarning(null);
+          setSuccessToast(res.status.message);
+        } else {
+          setFirestoreWarning(res.status.message);
+        }
       } else {
         const newExamItem: LessonExamItem = {
           id: `exam_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -209,11 +243,16 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
 
         const res = await addLessonExam(newExamItem);
         setCustomExams(res.updated);
-        setSuccessToast(res.status.message || (isEnglish ? 'New exam added to lesson successfully!' : '🎉 تم حفظ الاختبار في الفايربيز وسيرفر المنصة بنجاح!'));
+        if (res.status.firestoreOk) {
+          setFirestoreWarning(null);
+          setSuccessToast(res.status.message);
+        } else {
+          setFirestoreWarning(res.status.message);
+        }
       }
 
       resetForm();
-      setTimeout(() => setSuccessToast(null), 4000);
+      setTimeout(() => setSuccessToast(null), 5000);
     } catch (err: any) {
       setFormError(err?.message || (isEnglish ? 'Failed to save exam' : 'حدث خطأ أثناء حفظ الاختبار'));
     } finally {
@@ -368,6 +407,67 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
 
           {/* MODAL BODY (SCROLLABLE) */}
           <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1">
+
+            {/* ADMIN FIRESTORE RULES WARNING (DISCREET & HELPFUL) */}
+            {effectiveIsAdmin && firestoreWarning && (
+              <div className="bg-amber-500/10 dark:bg-amber-950/40 border-2 border-amber-400/60 rounded-2xl p-4 text-xs space-y-3 animate-fadeIn">
+                <div className="flex items-start gap-3">
+                  <span className="p-2 rounded-xl bg-amber-500 text-white font-black text-sm shrink-0">⚠️</span>
+                  <div className="flex-1">
+                    <h4 className="font-black text-amber-900 dark:text-amber-200 text-sm">
+                      تنبيه هام للأدمن: مطلوب تفعيل قواعد Firestore في Firebase Console
+                    </h4>
+                    <p className="text-amber-800 dark:text-amber-300/90 text-xs mt-1 leading-relaxed">
+                      {firestoreWarning}
+                    </p>
+                    <p className="text-slate-600 dark:text-slate-400 text-[11px] mt-1.5 leading-normal">
+                      لكي تظهر الامتحانات لجميع الطلاب وأعضاء المنصة، افتح <strong>Firebase Console</strong> لمشروعك <code>mr-mohammed-hesham</code> ← ثم <strong>Firestore Database</strong> ← تبويب <strong>Rules</strong> ← الصق القواعد التالية واضغط <strong>Publish (نشر)</strong>:
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 text-amber-300 font-mono text-[11px] p-3 rounded-xl border border-slate-700 overflow-x-auto select-all dir-ltr text-left">
+{`rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}`}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-amber-300/30">
+                  <span className="text-[11px] text-amber-700 dark:text-amber-400">
+                    بمجرد الضغط على Publish في فايربيز، اضغط الزر التالي للتحقق:
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const code = "rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if true;\n    }\n  }\n}";
+                        navigator.clipboard.writeText(code);
+                        setRulesCopied(true);
+                        setTimeout(() => setRulesCopied(false), 3000);
+                      }}
+                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+                    >
+                      {rulesCopied ? <Check className="w-3.5 h-3.5" /> : <Layers className="w-3.5 h-3.5" />}
+                      <span>{rulesCopied ? 'تم نسخ كود القواعد! ✓' : 'نسخ كود القواعد'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCheckRulesAgain}
+                      disabled={checkingRules}
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs transition cursor-pointer flex items-center gap-1.5 border border-slate-600"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{checkingRules ? 'جارٍ الفحص...' : 'فحص الاتصال الآن'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* ADMIN FORM: ADD / EDIT EXAM */}
             {effectiveIsAdmin && showAddForm && (

@@ -1,4 +1,15 @@
-import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  getDocs, 
+  query, 
+  where, 
+  deleteDoc, 
+  onSnapshot, 
+  Unsubscribe 
+} from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 export interface LessonExamItem {
@@ -15,8 +26,10 @@ export interface LessonExamItem {
 }
 
 export interface SyncStatusResult {
-  serverOk: boolean;
   firestoreOk: boolean;
+  serverOk: boolean;
+  errorCode?: string;
+  errorMessage?: string;
   message: string;
 }
 
@@ -31,46 +44,63 @@ export function sanitizeKey(key: string): string {
 }
 
 /**
- * Get all custom exams stored locally across all lessons
+ * Read local cache for instant initial render while Firestore loads
  */
-export function getAllStoredLessonExamsMap(): Record<string, LessonExamItem[]> {
-  if (typeof window === 'undefined') return {};
+export function getStoredLessonExams(lessonKey: string): LessonExamItem[] {
+  if (typeof window === 'undefined' || !lessonKey) return [];
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
+    if (!raw) return [];
+    const map = JSON.parse(raw);
+    return Array.isArray(map[lessonKey]) ? map[lessonKey] : [];
   } catch (err) {
-    console.warn('Error reading lesson custom exams from localStorage:', err);
-    return {};
+    console.warn('Error reading local cache:', err);
+    return [];
   }
 }
 
 /**
- * Get custom exams for a specific lesson from local cache
- */
-export function getStoredLessonExams(lessonKey: string): LessonExamItem[] {
-  if (!lessonKey) return [];
-  const map = getAllStoredLessonExamsMap();
-  return map[lessonKey] || [];
-}
-
-/**
- * Save all custom exams for a specific lesson to local storage and broadcast event
+ * Cache exams locally for offline resilience
  */
 export function saveStoredLessonExams(lessonKey: string, exams: LessonExamItem[]): void {
   if (typeof window === 'undefined' || !lessonKey) return;
   try {
-    const map = getAllStoredLessonExamsMap();
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    const map = raw ? JSON.parse(raw) : {};
     map[lessonKey] = exams;
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(map));
     window.dispatchEvent(new CustomEvent('4u_lesson_exams_updated', { detail: { lessonKey, exams } }));
   } catch (err) {
-    console.warn('Error writing lesson custom exams to localStorage:', err);
+    console.warn('Error saving local cache:', err);
   }
 }
 
 /**
- * Sync exams to Server API (/api/lesson-exams)
- * Ensures all members on the platform share the exact same exams instantly.
+ * Check if current Firestore security rules permit read/write to `lesson_exams`
+ */
+export async function checkFirestorePermissionStatus(): Promise<{
+  allowed: boolean;
+  code?: string;
+  message?: string;
+}> {
+  if (!db) {
+    return { allowed: false, message: 'Firebase DB client is not initialized' };
+  }
+
+  try {
+    const pingRef = doc(db, 'lesson_exams', '_rules_check_ping');
+    // Try a test write
+    await setDoc(pingRef, { ping: true, checkedAt: new Date().toISOString() }, { merge: true });
+    return { allowed: true };
+  } catch (err: any) {
+    const code = err?.code || 'unknown';
+    const message = err?.message || String(err);
+    return { allowed: false, code, message };
+  }
+}
+
+/**
+ * Sync exams to Server API (/api/lesson-exams) if running with node backend
  */
 async function syncExamsToServer(lessonKey: string, exams: LessonExamItem[]): Promise<boolean> {
   if (!lessonKey) return false;
@@ -84,101 +114,137 @@ async function syncExamsToServer(lessonKey: string, exams: LessonExamItem[]): Pr
       const data = await res.json();
       return Boolean(data.success);
     }
-  } catch (err) {
-    console.warn('Notice syncing exams to platform server:', err);
+  } catch {
+    // Expected on static hosting (GitHub Pages)
   }
   return false;
 }
 
 /**
- * Fetch exams from Server API (/api/lesson-exams)
+ * Write exam directly to Firestore in collection `lesson_exams`:
+ * 1. Writes document to `lesson_exams/${exam.id}`
+ * 2. Writes aggregate document to `lesson_exams/${sanitizeKey(lessonKey)}`
  */
-async function fetchExamsFromServer(lessonKey: string): Promise<LessonExamItem[]> {
-  if (!lessonKey) return [];
-  try {
-    const res = await fetch(`/api/lesson-exams?lessonKey=${encodeURIComponent(lessonKey)}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-cache',
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && Array.isArray(data.exams)) {
-        return data.exams;
-      }
-    }
-  } catch (err) {
-    console.warn('Notice fetching exams from platform server:', err);
+async function writeExamToFirestore(exam: LessonExamItem, allExamsForLesson: LessonExamItem[]): Promise<{ ok: boolean; error?: any }> {
+  if (!db) {
+    return { ok: false, error: new Error('Firebase DB is not initialized') };
   }
-  return [];
+
+  const docId = sanitizeKey(exam.lessonKey);
+  const examDocRef = doc(db, 'lesson_exams', exam.id);
+  const aggregateDocRef = doc(db, 'lesson_exams', docId);
+
+  const cleanExamData = {
+    id: exam.id,
+    lessonKey: exam.lessonKey,
+    title: exam.title,
+    icon: exam.icon || '🎯',
+    iconName: exam.iconName || exam.title,
+    url: exam.url,
+    description: exam.description || '',
+    isOfficial: Boolean(exam.isOfficial),
+    createdAt: exam.createdAt || new Date().toISOString(),
+    createdBy: exam.createdBy || 'Admin',
+    timestamp: Date.now()
+  };
+
+  try {
+    // 1. Write individual exam document in collection 'lesson_exams'
+    await setDoc(examDocRef, cleanExamData, { merge: true });
+
+    // 2. Write aggregate document in collection 'lesson_exams'
+    await setDoc(aggregateDocRef, {
+      lessonKey: exam.lessonKey,
+      exams: allExamsForLesson,
+      updatedAt: new Date().toISOString(),
+      count: allExamsForLesson.length,
+      lastExamId: exam.id,
+      lastExamTitle: exam.title
+    }, { merge: true });
+
+    return { ok: true };
+  } catch (err: any) {
+    console.error('Firestore write error for lesson_exams:', err);
+    return { ok: false, error: err };
+  }
 }
 
 /**
- * Push exams array to Firestore collections:
- * 1. Primary: 'lesson_exams/{docId}'
- * 2. Secondary fallback: 'settings/exams_{docId}'
+ * Delete exam from Firestore in collection `lesson_exams`
  */
-async function syncExamsToFirestore(lessonKey: string, exams: LessonExamItem[]): Promise<boolean> {
-  if (!db || !lessonKey) return false;
-  const docId = sanitizeKey(lessonKey);
-  const payload = {
-    lessonKey,
-    exams,
-    updatedAt: new Date().toISOString(),
-    count: exams.length,
-  };
+async function deleteExamFromFirestore(lessonKey: string, examId: string, remainingExams: LessonExamItem[]): Promise<{ ok: boolean; error?: any }> {
+  if (!db) return { ok: false };
 
-  let atLeastOneSuccess = false;
-
-  // 1. Primary write to lesson_exams
   try {
-    const primaryRef = doc(db, 'lesson_exams', docId);
-    await setDoc(primaryRef, payload, { merge: true });
-    atLeastOneSuccess = true;
-  } catch (err: any) {
-    console.warn('Firestore primary sync notice (lesson_exams):', err?.message || err);
-  }
+    // 1. Delete individual exam document
+    const examDocRef = doc(db, 'lesson_exams', examId);
+    await deleteDoc(examDocRef).catch(() => {});
 
-  // 2. Secondary write to settings
-  try {
-    const secondaryRef = doc(db, 'settings', `exams_${docId}`);
-    await setDoc(secondaryRef, payload, { merge: true });
-    atLeastOneSuccess = true;
-  } catch (err: any) {
-    console.warn('Firestore secondary sync notice (settings):', err?.message || err);
-  }
+    // 2. Update aggregate document
+    const docId = sanitizeKey(lessonKey);
+    const aggregateDocRef = doc(db, 'lesson_exams', docId);
+    await setDoc(aggregateDocRef, {
+      lessonKey,
+      exams: remainingExams,
+      updatedAt: new Date().toISOString(),
+      count: remainingExams.length
+    }, { merge: true });
 
-  return atLeastOneSuccess;
+    return { ok: true };
+  } catch (err) {
+    console.error('Firestore delete error for lesson_exams:', err);
+    return { ok: false, error: err };
+  }
 }
 
 /**
  * Add a new custom exam for a lesson:
- * - Immediately updates localStorage
- * - Awaits Server API write (instant for all members)
- * - Awaits Firestore sync
+ * - Writes directly to Firestore `lesson_exams`
+ * - Also updates Server API if available
+ * - Throws/returns detailed error if Firestore security rules reject write
  */
 export async function addLessonExam(exam: LessonExamItem): Promise<{ updated: LessonExamItem[]; status: SyncStatusResult }> {
   const current = getStoredLessonExams(exam.lessonKey);
   const updated = [...current.filter(item => item.id !== exam.id), exam];
+
+  // 1. Write to Firestore `lesson_exams`
+  const firestoreRes = await writeExamToFirestore(exam, updated);
+  
+  // 2. Secondary sync to server API
+  const serverOk = await syncExamsToServer(exam.lessonKey, updated);
+
+  // 3. Cache locally
   saveStoredLessonExams(exam.lessonKey, updated);
 
-  const [serverOk, firestoreOk] = await Promise.all([
-    syncExamsToServer(exam.lessonKey, updated),
-    syncExamsToFirestore(exam.lessonKey, updated),
-  ]);
-
-  let message = '✅ تم الحفظ بنجاح ونشر الاختبار!';
-  if (firestoreOk && serverOk) {
-    message = '✅ تم حفظ الاختبار في الفايربيز وسيرفر المنصة بنجاح!';
-  } else if (serverOk) {
-    message = '✅ تم حفظ الاختبار ونشره للأعضاء عبر سيرفر المنصة بنجاح!';
+  if (firestoreRes.ok) {
+    return {
+      updated,
+      status: {
+        firestoreOk: true,
+        serverOk,
+        message: '🎉 تم حفظ الامتحان بنجاح في Firebase Firestore (مجموعة lesson_exams) وسيظهر لجميع الأعضاء!'
+      }
+    };
   }
 
-  return { updated, status: { serverOk, firestoreOk, message } };
+  // Handle Firestore Failure (e.g. Permission Denied)
+  const errCode = firestoreRes.error?.code || 'PERMISSION_DENIED';
+  const errMsg = firestoreRes.error?.message || 'Missing or insufficient permissions.';
+
+  return {
+    updated,
+    status: {
+      firestoreOk: false,
+      serverOk,
+      errorCode: errCode,
+      errorMessage: errMsg,
+      message: '⚠️ تعذر حفظ الامتحان في Firestore بسبب قيود الصلاحيات (PERMISSION_DENIED). يرجى تفعيل قواعد Firestore في Firebase Console.'
+    }
+  };
 }
 
 /**
- * Update an existing custom exam for a lesson
+ * Update an existing custom exam
  */
 export async function updateLessonExam(
   lessonKey: string, 
@@ -186,25 +252,46 @@ export async function updateLessonExam(
   updates: Partial<Omit<LessonExamItem, 'id' | 'lessonKey'>>
 ): Promise<{ updated: LessonExamItem[]; status: SyncStatusResult }> {
   const current = getStoredLessonExams(lessonKey);
+  let updatedExam: LessonExamItem | null = null;
   const updated = current.map(item => {
     if (item.id === examId) {
-      return { ...item, ...updates };
+      updatedExam = { ...item, ...updates };
+      return updatedExam;
     }
     return item;
   });
-  saveStoredLessonExams(lessonKey, updated);
 
-  const [serverOk, firestoreOk] = await Promise.all([
-    syncExamsToServer(lessonKey, updated),
-    syncExamsToFirestore(lessonKey, updated),
-  ]);
-
-  let message = '✅ تم تعديل الاختبار بنجاح!';
-  if (firestoreOk && serverOk) {
-    message = '✅ تم حفظ التعديلات في الفايربيز وسيرفر المنصة!';
+  if (!updatedExam) {
+    return {
+      updated,
+      status: { firestoreOk: false, serverOk: false, message: 'الامتحان غير موجود' }
+    };
   }
 
-  return { updated, status: { serverOk, firestoreOk, message } };
+  const firestoreRes = await writeExamToFirestore(updatedExam, updated);
+  const serverOk = await syncExamsToServer(lessonKey, updated);
+  saveStoredLessonExams(lessonKey, updated);
+
+  if (firestoreRes.ok) {
+    return {
+      updated,
+      status: {
+        firestoreOk: true,
+        serverOk,
+        message: '✅ تم حفظ التعديلات في Firebase Firestore بنجاح!'
+      }
+    };
+  }
+
+  return {
+    updated,
+    status: {
+      firestoreOk: false,
+      serverOk,
+      errorCode: firestoreRes.error?.code || 'PERMISSION_DENIED',
+      message: '⚠️ تعذر تحديث الامتحان في Firestore بسبب قيود الصلاحيات في فايربيز.'
+    }
+  };
 }
 
 /**
@@ -216,99 +303,105 @@ export async function deleteLessonExam(
 ): Promise<{ updated: LessonExamItem[]; status: SyncStatusResult }> {
   const current = getStoredLessonExams(lessonKey);
   const updated = current.filter(item => item.id !== examId);
-  saveStoredLessonExams(lessonKey, updated);
 
-  // Also call Server DELETE endpoint
+  const firestoreRes = await deleteExamFromFirestore(lessonKey, examId, updated);
+  
   try {
     fetch(`/api/lesson-exams/${encodeURIComponent(lessonKey)}/${encodeURIComponent(examId)}`, {
       method: 'DELETE',
     }).catch(() => {});
   } catch {}
 
-  const [serverOk, firestoreOk] = await Promise.all([
-    syncExamsToServer(lessonKey, updated),
-    syncExamsToFirestore(lessonKey, updated),
-  ]);
+  saveStoredLessonExams(lessonKey, updated);
 
-  return { 
-    updated, 
-    status: { 
-      serverOk, 
-      firestoreOk, 
-      message: '🗑️ تم حذف الاختبار بنجاح من فايربيز والمنصة.' 
-    } 
+  return {
+    updated,
+    status: {
+      firestoreOk: firestoreRes.ok,
+      serverOk: false,
+      message: firestoreRes.ok ? '🗑️ تم حذف الامتحان بنجاح من Firestore.' : 'تم حذف الامتحان محلياً فقط.'
+    }
   };
 }
 
 /**
- * Fetch remote exams from both Server API and Firestore,
- * and merge cleanly without duplicating.
+ * Fetch remote exams directly from Firestore `lesson_exams` collection
+ * Supports both individual document queries and aggregate lesson document.
  */
 export async function fetchRemoteLessonExams(lessonKey: string): Promise<LessonExamItem[]> {
-  if (!lessonKey) return [];
-  const local = getStoredLessonExams(lessonKey);
-  const mergedMap = new Map<string, LessonExamItem>();
+  if (!lessonKey || !db) return getStoredLessonExams(lessonKey);
 
-  // 1. Seed with local
-  local.forEach(e => mergedMap.set(e.id, e));
+  const docId = sanitizeKey(lessonKey);
+  const map = new Map<string, LessonExamItem>();
 
-  // 2. Fetch from Server API
   try {
-    const serverExams = await fetchExamsFromServer(lessonKey);
-    if (serverExams && serverExams.length > 0) {
-      serverExams.forEach(e => mergedMap.set(e.id, e));
-    }
-  } catch (err) {
-    console.warn('Server fetch error:', err);
-  }
+    // Strategy A: Read aggregate document in collection 'lesson_exams'
+    const aggregateDocRef = doc(db, 'lesson_exams', docId);
+    const aggregateSnap = await getDoc(aggregateDocRef);
 
-  // 3. Fetch from Firestore (primary & secondary)
-  if (db) {
-    const docId = sanitizeKey(lessonKey);
-    try {
-      const primaryRef = doc(db, 'lesson_exams', docId);
-      const snap = await Promise.race([
-        getDoc(primaryRef),
-        new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500))
-      ]);
-
-      if (snap && (snap as any).exists && (snap as any).exists()) {
-        const data = (snap as any).data();
-        if (Array.isArray(data.exams)) {
-          data.exams.forEach((e: LessonExamItem) => mergedMap.set(e.id, e));
-        }
-      } else {
-        // Try secondary
-        const secRef = doc(db, 'settings', `exams_${docId}`);
-        const secSnap = await Promise.race([
-          getDoc(secRef),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000))
-        ]);
-        if (secSnap && (secSnap as any).exists && (secSnap as any).exists()) {
-          const data = (secSnap as any).data();
-          if (Array.isArray(data.exams)) {
-            data.exams.forEach((e: LessonExamItem) => mergedMap.set(e.id, e));
-          }
-        }
+    if (aggregateSnap.exists()) {
+      const data = aggregateSnap.data();
+      if (Array.isArray(data.exams)) {
+        data.exams.forEach((e: LessonExamItem) => {
+          if (e && e.id) map.set(e.id, e);
+        });
       }
-    } catch (err) {
-      console.warn('Firestore fetch notice:', err);
     }
+
+    // Strategy B: Query individual documents in collection 'lesson_exams' where lessonKey == lessonKey
+    try {
+      const q = query(collection(db, 'lesson_exams'), where('lessonKey', '==', lessonKey));
+      const querySnap = await getDocs(q);
+      querySnap.forEach((docSnap) => {
+        const item = docSnap.data() as LessonExamItem;
+        if (item && item.id && item.title) {
+          map.set(item.id, item);
+        }
+      });
+    } catch (queryErr) {
+      console.warn('Notice querying individual lesson_exams documents:', queryErr);
+    }
+
+    // If Firestore returned exams, update local storage and return them
+    if (map.size > 0) {
+      const exams = Array.from(map.values());
+      saveStoredLessonExams(lessonKey, exams);
+      return exams;
+    }
+  } catch (err: any) {
+    console.warn('Firestore fetch remote exams notice:', err?.message || err);
   }
 
-  const finalExams = Array.from(mergedMap.values());
-  saveStoredLessonExams(lessonKey, finalExams);
-  return finalExams;
+  // Fallback: If running on node server, try server API
+  try {
+    const res = await fetch(`/api/lesson-exams?lessonKey=${encodeURIComponent(lessonKey)}`, { cache: 'no-cache' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && Array.isArray(data.exams) && data.exams.length > 0) {
+        data.exams.forEach((e: LessonExamItem) => map.set(e.id, e));
+        const exams = Array.from(map.values());
+        saveStoredLessonExams(lessonKey, exams);
+        return exams;
+      }
+    }
+  } catch {}
+
+  return getStoredLessonExams(lessonKey);
 }
 
 /**
- * Subscribe to real-time updates for a lesson's exams
+ * Subscribe to real-time updates for a lesson's exams directly from Firestore:
+ * - Listens to aggregate doc: `lesson_exams/${docId}`
+ * - Listens to collection query: `lesson_exams where lessonKey == lessonKey`
+ * Any new exam added by Admin will instantly appear on all students' screens without refresh.
  */
 export function subscribeToLessonExams(
   lessonKey: string, 
   callback: (exams: LessonExamItem[]) => void
 ): () => void {
   if (!lessonKey) return () => {};
+
+  const unsubs: Unsubscribe[] = [];
 
   // Local window event listener
   const handleLocalUpdate = (e: any) => {
@@ -318,13 +411,13 @@ export function subscribeToLessonExams(
   };
   window.addEventListener('4u_lesson_exams_updated', handleLocalUpdate);
 
-  // Firestore snapshot listener
-  let unsubFirestore: (() => void) | null = null;
   if (db) {
+    const docId = sanitizeKey(lessonKey);
+
+    // 1. Real-time onSnapshot for aggregate document
     try {
-      const docId = sanitizeKey(lessonKey);
-      const primaryRef = doc(db, 'lesson_exams', docId);
-      unsubFirestore = onSnapshot(primaryRef, (snap) => {
+      const aggregateRef = doc(db, 'lesson_exams', docId);
+      const unsub1 = onSnapshot(aggregateRef, (snap) => {
         if (snap.exists()) {
           const data = snap.data();
           if (Array.isArray(data.exams)) {
@@ -333,17 +426,43 @@ export function subscribeToLessonExams(
           }
         }
       }, (err) => {
-        console.warn('Notice onSnapshot for lesson_exams:', err);
+        console.warn('Firestore onSnapshot aggregate notice:', err?.message || err);
       });
+      unsubs.push(unsub1);
     } catch (err) {
-      console.warn('Firestore subscribe error:', err);
+      console.warn('Aggregate onSnapshot setup notice:', err);
+    }
+
+    // 2. Real-time onSnapshot for individual documents in collection 'lesson_exams'
+    try {
+      const q = query(collection(db, 'lesson_exams'), where('lessonKey', '==', lessonKey));
+      const unsub2 = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+          const items: LessonExamItem[] = [];
+          snapshot.forEach((d) => {
+            const val = d.data() as LessonExamItem;
+            if (val && val.id && val.title) {
+              items.push(val);
+            }
+          });
+          if (items.length > 0) {
+            callback(items);
+            saveStoredLessonExams(lessonKey, items);
+          }
+        }
+      }, (err) => {
+        console.warn('Firestore onSnapshot query notice:', err?.message || err);
+      });
+      unsubs.push(unsub2);
+    } catch (err) {
+      console.warn('Query onSnapshot setup notice:', err);
     }
   }
 
   return () => {
     window.removeEventListener('4u_lesson_exams_updated', handleLocalUpdate);
-    if (unsubFirestore) {
-      try { unsubFirestore(); } catch {}
-    }
+    unsubs.forEach(unsub => {
+      try { unsub(); } catch {}
+    });
   };
 }
