@@ -6438,7 +6438,10 @@ export default function App() {
         onClose={() => setShowLessonExamsModal(false)}
         lesson={appState.lesson}
         unit={appState.unit}
-        lessonKey={appState.lesson && appState.unit ? getLessonKey(appState.lesson, appState.unit) || '' : ''}
+        lessonKey={
+          (appState.lesson && appState.unit ? getLessonKey(appState.lesson, appState.unit) : null) ||
+          (appState.lesson ? `lesson_${appState.subject?.id || 'subj'}_${appState.grade?.id || 'grade'}_U${appState.unit?.id || 1}_L${appState.lesson.id}` : '')
+        }
         subjectName={appState.subject?.name}
         gradeName={appState.grade?.name}
         isAdmin={isAdmin}

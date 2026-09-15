@@ -109,6 +109,23 @@
         }
       },
       "required": ["senderUid", "senderName", "createdAt"]
+    },
+    "lessonExams": {
+      "title": "Lesson Exams",
+      "description": "Custom interactive exams, quizzes, and repository links for curriculum lessons",
+      "type": "object",
+      "properties": {
+        "lessonKey": {
+          "type": "string"
+        },
+        "exams": {
+          "type": "array"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "required": ["lessonKey", "exams"]
     }
   }
 }

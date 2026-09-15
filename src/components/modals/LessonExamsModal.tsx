@@ -11,7 +11,8 @@ import {
   addLessonExam, 
   updateLessonExam, 
   deleteLessonExam,
-  fetchRemoteLessonExams
+  fetchRemoteLessonExams,
+  subscribeToLessonExams
 } from '../../services/lessonExamsService';
 
 interface LessonExamsModalProps {
@@ -79,28 +80,42 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
 
   const effectiveIsAdmin = isAdmin || localAdminUnlocked;
 
-  // Load exams when modal opens
+  // Load exams when modal opens and subscribe to real-time updates
   useEffect(() => {
-    if (isOpen && lessonKey) {
-      setLoading(true);
-      setShowAddForm(false);
-      setEditingExamId(null);
-      setFormError(null);
-      setSuccessToast(null);
+    if (!isOpen) return;
 
-      // 1. Load instantly from cache
-      const cached = getStoredLessonExams(lessonKey);
-      setCustomExams(cached);
-      setLoading(false);
+    const activeKey = lessonKey || (lesson ? `lesson_${lesson.id}` : '');
+    if (!activeKey) return;
 
-      // 2. Refresh from Firestore in background
-      fetchRemoteLessonExams(lessonKey).then(remote => {
-        if (remote && remote.length > 0) {
-          setCustomExams(remote);
-        }
-      });
-    }
-  }, [isOpen, lessonKey]);
+    setLoading(true);
+    setShowAddForm(false);
+    setEditingExamId(null);
+    setFormError(null);
+    setSuccessToast(null);
+
+    // 1. Load instantly from cache
+    const cached = getStoredLessonExams(activeKey);
+    setCustomExams(cached);
+    setLoading(false);
+
+    // 2. Refresh from Server API & Firestore in background
+    fetchRemoteLessonExams(activeKey).then(remote => {
+      if (Array.isArray(remote)) {
+        setCustomExams(remote);
+      }
+    });
+
+    // 3. Real-time subscription to updates (server events & firestore snapshots)
+    const unsubscribe = subscribeToLessonExams(activeKey, (liveExams) => {
+      if (Array.isArray(liveExams)) {
+        setCustomExams(liveExams);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [isOpen, lessonKey, lesson]);
 
   // Sync examIconName automatically when examTitle changes (if not manually detached)
   const handleTitleChange = (val: string) => {
@@ -136,9 +151,10 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
     if (!window.confirm(isEnglish ? 'Are you sure you want to delete this exam?' : 'هل أنت متأكد من حذف هذا الاختبار من هذا الدرس؟')) {
       return;
     }
-    const updated = await deleteLessonExam(lessonKey, examId);
-    setCustomExams(updated);
-    setSuccessToast(isEnglish ? 'Exam deleted successfully' : 'تم حذف الاختبار بنجاح');
+    const activeKey = lessonKey || (lesson ? `lesson_${lesson.id}` : '');
+    const res = await deleteLessonExam(activeKey, examId);
+    setCustomExams(res.updated);
+    setSuccessToast(res.status.message || (isEnglish ? 'Exam deleted successfully' : 'تم حذف الاختبار بنجاح'));
     setTimeout(() => setSuccessToast(null), 3000);
   };
 
@@ -149,6 +165,7 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
     const trimmedTitle = examTitle.trim();
     const trimmedUrl = examRepoUrl.trim();
     const trimmedIconName = examIconName.trim() || trimmedTitle;
+    const activeKey = lessonKey || (lesson ? `lesson_${lesson.id}` : '');
 
     if (!trimmedTitle) {
       setFormError(isEnglish ? 'Please enter the exam title' : 'يرجى كتابة اسم أو عنوان الاختبار');
@@ -168,19 +185,19 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
     setIsSubmitting(true);
     try {
       if (editingExamId) {
-        const updated = await updateLessonExam(lessonKey, editingExamId, {
+        const res = await updateLessonExam(activeKey, editingExamId, {
           title: trimmedTitle,
           icon: examIcon,
           iconName: trimmedIconName,
           url: trimmedUrl,
           description: examDescription.trim() || undefined,
         });
-        setCustomExams(updated);
-        setSuccessToast(isEnglish ? 'Exam updated successfully' : '✅ تم تعديل الاختبار وتسمية الأيقونة بنجاح!');
+        setCustomExams(res.updated);
+        setSuccessToast(res.status.message || (isEnglish ? 'Exam updated successfully' : '✅ تم حفظ التعديل في فايربيز وسيرفر المنصة بنجاح!'));
       } else {
         const newExamItem: LessonExamItem = {
           id: `exam_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-          lessonKey,
+          lessonKey: activeKey,
           title: trimmedTitle,
           icon: examIcon || '🎯',
           iconName: trimmedIconName,
@@ -190,13 +207,13 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
           createdAt: new Date().toISOString(),
         };
 
-        const updated = await addLessonExam(newExamItem);
-        setCustomExams(updated);
-        setSuccessToast(isEnglish ? 'New exam added to lesson successfully!' : '🎉 تم إضافة الاختبار الجديد بنجاح مع تسمية الأيقونة!');
+        const res = await addLessonExam(newExamItem);
+        setCustomExams(res.updated);
+        setSuccessToast(res.status.message || (isEnglish ? 'New exam added to lesson successfully!' : '🎉 تم حفظ الاختبار في الفايربيز وسيرفر المنصة بنجاح!'));
       }
 
       resetForm();
-      setTimeout(() => setSuccessToast(null), 3500);
+      setTimeout(() => setSuccessToast(null), 4000);
     } catch (err: any) {
       setFormError(err?.message || (isEnglish ? 'Failed to save exam' : 'حدث خطأ أثناء حفظ الاختبار'));
     } finally {
@@ -204,6 +221,7 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
     }
   };
 
+  // Discreet Admin Unlock (Triggered only by secret shortcut, never displaying questions or banners to students)
   const handleAdminPinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPinError(null);
@@ -220,6 +238,9 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
         setLocalAdminUnlocked(true);
         setShowPinUnlock(false);
         setAdminPinInput('');
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('4u_admin_unlocked', 'true');
+        }
         if (onAdminUnlock) onAdminUnlock();
         setSuccessToast('👑 تم التحقق بنجاح! تم تفعيل صلاحيات الأدمن');
         setTimeout(() => setSuccessToast(null), 3000);
@@ -316,7 +337,7 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
                 )}
               </div>
 
-              {effectiveIsAdmin ? (
+              {effectiveIsAdmin && (
                 <button
                   type="button"
                   id="admin-toggle-add-exam-btn"
@@ -333,17 +354,6 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
                   {showAddForm ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
                   <span>{showAddForm ? (isEnglish ? 'Cancel' : 'إلغاء الإضافة') : (isEnglish ? '+ Add New Exam (Repo Link)' : '+ إضافة اختبار جديد (مستودع جديد)')}</span>
                 </button>
-              ) : (
-                <button
-                  type="button"
-                  id="admin-quick-unlock-btn"
-                  onClick={() => setShowPinUnlock(true)}
-                  className="text-amber-100 hover:text-white underline font-bold text-[11px] flex items-center gap-1 transition"
-                  title="تسجيل الدخول كأدمن لإضافة اختبارات"
-                >
-                  <Lock className="w-3 h-3" />
-                  <span>{isEnglish ? 'Admin? Add Exams' : 'هل أنت الأدمن؟ أضف اختبارات'}</span>
-                </button>
               )}
             </div>
           </div>
@@ -353,44 +363,6 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
             <div className="bg-emerald-500 text-white py-2.5 px-4 text-xs font-black text-center flex items-center justify-center gap-2 animate-fadeIn shrink-0 shadow">
               <Check className="w-4 h-4" />
               <span>{successToast}</span>
-            </div>
-          )}
-
-          {/* ADMIN QUICK PIN UNLOCK POPUP */}
-          {showPinUnlock && !effectiveIsAdmin && (
-            <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800/40 shrink-0">
-              <form onSubmit={handleAdminPinSubmit} className="max-w-md mx-auto space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-black text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5 text-amber-600" />
-                    <span>تأكيد صلاحية الأدمن لإضافة اختبارات جديدة لهذا الدرس</span>
-                  </h4>
-                  <button
-                    type="button"
-                    onClick={() => setShowPinUnlock(false)}
-                    className="text-gray-400 hover:text-gray-600 text-xs"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    type="password"
-                    value={adminPinInput}
-                    onChange={(e) => setAdminPinInput(e.target.value)}
-                    placeholder="أدخل رمز PIN للأدمن..."
-                    autoFocus
-                    className="flex-1 px-3 py-2 text-xs rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl transition cursor-pointer shrink-0"
-                  >
-                    تأكيد
-                  </button>
-                </div>
-                {pinError && <p className="text-[11px] font-bold text-rose-500">{pinError}</p>}
-              </form>
             </div>
           )}
 

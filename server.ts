@@ -417,6 +417,115 @@ app.get("/api/fetch-lesson-text", async (req, res) => {
   }
 });
 
+// -------------------------------------------------------------
+// 📚 Lesson Exams Persistent Hub API (Shared across all members)
+// -------------------------------------------------------------
+const examsDataDir = path.join(process.cwd(), "data");
+const examsDataFile = path.join(examsDataDir, "lesson_exams.json");
+
+function ensureExamsFile(): void {
+  try {
+    if (!fs.existsSync(examsDataDir)) {
+      fs.mkdirSync(examsDataDir, { recursive: true });
+    }
+    if (!fs.existsSync(examsDataFile)) {
+      fs.writeFileSync(examsDataFile, JSON.stringify({}, null, 2), "utf8");
+    }
+  } catch (err) {
+    console.warn("Notice initializing exams data file:", err);
+  }
+}
+
+function readAllLessonExams(): Record<string, any[]> {
+  ensureExamsFile();
+  try {
+    if (fs.existsSync(examsDataFile)) {
+      const content = fs.readFileSync(examsDataFile, "utf8");
+      return content ? JSON.parse(content) : {};
+    }
+  } catch (err) {
+    console.error("Error reading lesson exams file:", err);
+  }
+  return {};
+}
+
+function writeAllLessonExams(data: Record<string, any[]>): boolean {
+  ensureExamsFile();
+  try {
+    fs.writeFileSync(examsDataFile, JSON.stringify(data, null, 2), "utf8");
+    return true;
+  } catch (err) {
+    console.error("Error writing lesson exams file:", err);
+    return false;
+  }
+}
+
+// 1. Get exams for a specific lessonKey or all lessons
+app.get("/api/lesson-exams", (req, res) => {
+  try {
+    const lessonKey = (req.query.lessonKey as string) || "";
+    const allExams = readAllLessonExams();
+
+    if (!lessonKey) {
+      return res.json({ success: true, examsMap: allExams });
+    }
+
+    const exams = allExams[lessonKey] || [];
+    return res.json({ success: true, lessonKey, exams });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message || "Failed to fetch lesson exams" });
+  }
+});
+
+// 2. Save or update exams for a lesson
+app.post("/api/lesson-exams", (req, res) => {
+  try {
+    const { lessonKey, exams, exam } = req.body;
+    if (!lessonKey) {
+      return res.status(400).json({ success: false, error: "lessonKey is required" });
+    }
+
+    const allExams = readAllLessonExams();
+    let currentList = allExams[lessonKey] || [];
+
+    if (Array.isArray(exams)) {
+      allExams[lessonKey] = exams;
+    } else if (exam && exam.id) {
+      const idx = currentList.findIndex((item) => item.id === exam.id);
+      if (idx >= 0) {
+        currentList[idx] = exam;
+      } else {
+        currentList.push(exam);
+      }
+      allExams[lessonKey] = currentList;
+    }
+
+    writeAllLessonExams(allExams);
+    return res.json({ success: true, lessonKey, exams: allExams[lessonKey] || [] });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message || "Failed to save lesson exam" });
+  }
+});
+
+// 3. Delete an exam by ID
+app.delete("/api/lesson-exams/:lessonKey/:examId", (req, res) => {
+  try {
+    const { lessonKey, examId } = req.params;
+    if (!lessonKey || !examId) {
+      return res.status(400).json({ success: false, error: "lessonKey and examId are required" });
+    }
+
+    const allExams = readAllLessonExams();
+    const currentList = allExams[lessonKey] || [];
+    allExams[lessonKey] = currentList.filter((item) => item.id !== examId);
+
+    writeAllLessonExams(allExams);
+    return res.json({ success: true, lessonKey, exams: allExams[lessonKey] || [] });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message || "Failed to delete lesson exam" });
+  }
+});
+
 // Helper function to inject the dynamic host URL for WhatsApp and social media bots
 function transformHtmlForSocialPreviews(rawHtml: string, req: express.Request): string {
   const forwardedProto = (req.headers['x-forwarded-proto'] as string) || '';
