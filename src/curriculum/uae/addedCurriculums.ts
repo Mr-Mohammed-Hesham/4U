@@ -206,7 +206,146 @@ export const phy12General1: Curriculum = {
   ]
 };
 
-export const phy12Inspire1: Curriculum = {
+export const phy12Inspire2026: Curriculum = {
+  isEnglish: true,
+  units: [
+    {
+      id: 1,
+      name: 'Unit 1: Work and Energy',
+      icon: '⚡',
+      color: 'from-amber-500 to-orange-600',
+      description: 'Comprehensive study of work, power, kinetic and potential energy, the work-energy theorem, conservation of mechanical energy, and simple and compound machines.',
+      lessons: [
+        {
+          id: 1,
+          title: 'Lesson 1 - Work and Energy',
+          focusQuestion: 'What is energy?',
+          icon: '⚡',
+          duration: '50 min',
+          lessonUrl: 'https://mr-mohammed-hesham.github.io/12Adv-Ins-phy-T1-2026-1.1/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/12Adv-Ins-phy-T1-2026-1.1-exam/',
+          lessonTitle: '📖 Lesson Explanation',
+          examTitle: '📝 Take the Quiz',
+          content: {
+            intro: 'Energy is the ability of an object to produce a change in itself or in the world around it. Work is the process of transferring energy by mechanical means when a force acts through a displacement.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'What is energy? Energy is the capacity to do work or cause change. It is scalar and measured in Joules (J).' },
+              { title: 'Work Definition & Formula', type: 'formula', content: 'W = F d \\cos\\theta' },
+              { title: 'Conditions for Doing Work', type: 'bullets', content: [
+                'A force must be exerted on the object',
+                'The object must move through a displacement',
+                'The force (or a component of it) must act in the direction of the displacement',
+                'If the force is perpendicular to displacement (θ = 90°), W = 0'
+              ]},
+              { title: 'Signs of Work', type: 'bullets', content: [
+                'Positive Work (0° ≤ θ < 90°): Force adds energy to the system',
+                'Negative Work (90° < θ ≤ 180°): Force removes energy from the system (e.g. friction)',
+                'Zero Work (θ = 90° or d = 0): No energy is transferred mechanically'
+              ]},
+              { title: 'Power', type: 'formula', content: 'P = \\frac{W}{\\Delta t} = F v \\quad (1\\text{ Watt} = 1\\text{ J/s}, \\quad 1\\text{ hp} = 746\\text{ W})' }
+            ]
+          }
+        },
+        {
+          id: 2,
+          title: 'Lesson 2 - The Many Forms of Energy',
+          focusQuestion: 'What are some forms of energy?',
+          icon: '🔋',
+          duration: '50 min',
+          lessonUrl: 'https://mr-mohammed-hesham.github.io/12Adv-Ins-phy-T1-2026-1.2/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/12Adv-Ins-phy-T1-2026-1.2-exam/',
+          lessonTitle: '📖 Lesson Explanation',
+          examTitle: '📝 Take the Quiz',
+          content: {
+            intro: 'Energy exists in multiple interconnected forms throughout the universe, categorized broadly into kinetic energy (energy of motion) and potential energy (stored energy).',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'What are some forms of energy? Energy takes kinetic, gravitational potential, elastic potential, thermal, chemical, and nuclear forms.' },
+              { title: 'Translational Kinetic Energy', type: 'formula', content: 'KE = \\frac{1}{2}mv^2' },
+              { title: 'Gravitational Potential Energy', type: 'formula', content: 'PE_g = mgh' },
+              { title: 'Elastic Potential Energy', type: 'formula', content: 'PE_{elastic} = \\frac{1}{2}kx^2 \\quad (k = \\text{spring constant})' },
+              { title: 'Forms of Energy Breakdown', type: 'bullets', content: [
+                'Mechanical Energy: Sum of kinetic and potential energy (E = KE + PE)',
+                'Thermal Energy: Microscopic internal energy related to temperature',
+                'Chemical Energy: Energy stored in chemical molecular bonds',
+                'Nuclear Energy: Mass-energy conversion governed by Einstein\'s relation E = mc²'
+              ]}
+            ]
+          }
+        },
+        {
+          id: 3,
+          title: 'Lesson 3 - Conservation of Energy',
+          focusQuestion: 'Can energy be lost?',
+          icon: '🔄',
+          duration: '55 min',
+          lessonUrl: 'https://mr-mohammed-hesham.github.io/12Adv-Ins-phy-T1-2026-1.3/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/12Adv-Ins-phy-T1-2026-1.3-exam/',
+          lessonTitle: '📖 Lesson Explanation',
+          examTitle: '📝 Take the Quiz',
+          content: {
+            intro: 'Energy cannot be created or destroyed; it can only change form. In an isolated, closed system, the total energy is strictly conserved.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'Can energy be lost? No, energy cannot be lost or destroyed; in non-ideal systems, mechanical energy is dissipated into thermal energy or sound by friction.' },
+              { title: 'Law of Conservation of Mechanical Energy', type: 'formula', content: 'E_i = E_f \\implies KE_i + PE_i = KE_f + PE_f' },
+              { title: 'Work-Energy Theorem', type: 'formula', content: 'W_{net} = \\Delta KE = \\frac{1}{2}m v_f^2 - \\frac{1}{2}m v_i^2' },
+              { title: 'Conservative vs Non-Conservative Forces', type: 'bullets', content: [
+                'Conservative Forces (Gravity, Spring): Work is path-independent; total mechanical energy is conserved',
+                'Non-Conservative Forces (Friction, Drag): Work depends on path and converts mechanical energy to thermal energy (W_{nc} = \\Delta E_{mech})'
+              ]},
+              { title: 'Energy Dissipation', type: 'bullets', content: [
+                'Energy is never truly lost from the universe',
+                'Frictional forces convert mechanical work into microscopic thermal energy',
+                'The total energy of an isolated system is always constant'
+              ]}
+            ]
+          }
+        },
+        {
+          id: 4,
+          title: 'Lesson 4 - Machines',
+          focusQuestion: 'How do machines make tasks easier?',
+          icon: '⚙️',
+          duration: '50 min',
+          lessonUrl: 'https://mr-mohammed-hesham.github.io/12Adv-Ins-phy-T1-2026-1.4/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/12Adv-Ins-phy-T1-2026-1.4-exam/',
+          lessonTitle: '📖 Lesson Explanation',
+          examTitle: '📝 Take the Quiz',
+          content: {
+            intro: 'Machines make tasks easier by transferring energy, multiplying force, changing the direction of force, or increasing the speed and distance through which a force acts.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'How do machines make tasks easier? Machines make tasks easier by changing the magnitude, direction, or distance of the applied force. They do not decrease the work required.' },
+              { title: 'Mechanical Advantage Formulas', type: 'formula', content: 'MA = \\frac{F_r}{F_e} \\quad , \\quad IMA = \\frac{d_e}{d_r}' },
+              { title: 'Efficiency', type: 'formula', content: 'e = \\frac{W_o}{W_i} \\times 100\\% = \\frac{MA}{IMA} \\times 100\\%' },
+              { title: 'The Six Simple Machines', type: 'bullets', content: [
+                'Lever: Rigid bar pivoting on a fulcrum',
+                'Pulley: Grooved wheel with rope; changes force direction or multiplies force',
+                'Wheel and Axle: Two concentric rotating cylinders',
+                'Inclined Plane: Sloped ramp reducing required effort force',
+                'Wedge: Movable inclined plane used for cutting or splitting',
+                'Screw: Inclined plane wrapped around a cylinder'
+              ]},
+              { title: 'Compound Machines', type: 'bullets', content: [
+                'Consist of two or more linked simple machines',
+                'Total MA is the product of component MAs: MA_{total} = MA_1 \\times MA_2 \\times \\dots',
+                'Efficiency is always less than 100% due to friction'
+              ]}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      id: 2,
+      name: 'Unit 2: قريباً إن شاء الله (Coming Soon)',
+      icon: '⏳',
+      color: 'from-indigo-600 to-purple-700',
+      description: 'سيتم إضافة دروس ومحتوى واختبارات الوحدة الثانية لمنهج فيزياء انسباير 2026 فور اعتمادها قريباً إن شاء الله.',
+      lessons: []
+    }
+  ]
+};
+
+export const phy12Inspire2025: Curriculum = {
   isEnglish: true,
   units: [
     {
@@ -392,6 +531,8 @@ export const phy12Inspire1: Curriculum = {
     }
   ]
 };
+
+export const phy12Inspire1: Curriculum = phy12Inspire2026;
 
 export const math11AdvBridge1: Curriculum = {
   isEnglish: false,

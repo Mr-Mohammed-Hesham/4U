@@ -6,6 +6,8 @@ import { physicsOthersCurriculum } from '../curriculum/physicsOthers';
 import {
   phy12General1,
   phy12Inspire1,
+  phy12Inspire2026,
+  phy12Inspire2025,
   math11AdvBridge1,
   math12General1,
   phy11AdvBridge1,
@@ -53,8 +55,12 @@ export const curriculums: Record<string, Curriculum> = {
   'UAE-physics-12-bridge-1': physics12Curriculum['physics-12-bridge-1'],
   'UAE-physics-12-bridge-3': physics12Curriculum['physics-12-bridge-3'],
   'UAE-physics-12-adv-bridge-1': physics12Curriculum['physics-12-bridge-1'],
-  'UAE-physics-12-adv-inspire-1': phy12Inspire1,
-  'physics-12-adv-inspire-1': phy12Inspire1,
+  'UAE-physics-12-adv-inspire-1': phy12Inspire2026,
+  'physics-12-adv-inspire-1': phy12Inspire2026,
+  'UAE-physics-12-adv-inspire-1-2026': phy12Inspire2026,
+  'physics-12-adv-inspire-1-2026': phy12Inspire2026,
+  'UAE-physics-12-adv-inspire-1-2025': phy12Inspire2025,
+  'physics-12-adv-inspire-1-2025': phy12Inspire2025,
   'physics-12-adv-bridge-1': physics12Curriculum['physics-12-bridge-1'],
 
   // --- Grade 5 Curriculums (General & Advanced) ---
@@ -228,10 +234,20 @@ export const curriculums: Record<string, Curriculum> = {
   'phy-12-general-1': phy12General1,
   'UAE-phy-12-general-1': phy12General1,
 
-  'physics-12-inspire-1': phy12Inspire1,
-  'UAE-physics-12-inspire-1': phy12Inspire1,
-  'phy-12-inspire-1': phy12Inspire1,
-  'UAE-phy-12-inspire-1': phy12Inspire1,
+  'physics-12-inspire-1': phy12Inspire2026,
+  'UAE-physics-12-inspire-1': phy12Inspire2026,
+  'phy-12-inspire-1': phy12Inspire2026,
+  'UAE-phy-12-inspire-1': phy12Inspire2026,
+
+  'physics-12-inspire-1-2026': phy12Inspire2026,
+  'UAE-physics-12-inspire-1-2026': phy12Inspire2026,
+  'phy-12-inspire-1-2026': phy12Inspire2026,
+  'UAE-phy-12-inspire-1-2026': phy12Inspire2026,
+
+  'physics-12-inspire-1-2025': phy12Inspire2025,
+  'UAE-physics-12-inspire-1-2025': phy12Inspire2025,
+  'phy-12-inspire-1-2025': phy12Inspire2025,
+  'UAE-phy-12-inspire-1-2025': phy12Inspire2025,
 
   // Grade 11 Inspire Physics is same as Grade 12 Inspire Physics Term 1
   'physics-11-inspire-1': phy12Inspire1,

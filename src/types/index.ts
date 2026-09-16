@@ -47,6 +47,7 @@ export interface LessonContent {
 export interface Lesson {
   id: number;
   title: string;
+  focusQuestion?: string;
   icon: string;
   duration: string;
   lessonUrl: string;

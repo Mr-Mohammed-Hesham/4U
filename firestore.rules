@@ -23,7 +23,7 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
-    match /lesson_exams/{docId} {
+    match /lesson_exams/{document=**} {
       allow read, write: if true;
     }
 

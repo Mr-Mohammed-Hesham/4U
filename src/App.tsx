@@ -1889,11 +1889,18 @@ export default function App() {
       streamPart = stateVal.program ? stateVal.program.id : 'advanced';
     }
     const countryPart = stateVal.country || 'UAE';
-    return `${countryPart}-${stateVal.subject.id}-${stateVal.grade.id}-${streamPart}-${stateVal.term.id}`;
+    const baseKey = `${countryPart}-${stateVal.subject.id}-${stateVal.grade.id}-${streamPart}-${stateVal.term.id}`;
+    if (stateVal.academicYear) {
+      const yearKey = `${baseKey}-${stateVal.academicYear}`;
+      if (DB.curriculum[yearKey] || DB.curriculum[yearKey.replace('UAE-', '')]) {
+        return yearKey;
+      }
+    }
+    return baseKey;
   };
 
   // Helper to dynamically build the Student Book URL as requested:
-  // e.g., https://hesham-afandi.github.io/12Jen-math-T1-0/
+  // e.g., https://mr-mohammed-hesham.github.io/12Adv-Ins-phy-T1-2026-0/
   const getStudentBookUrl = () => {
     if (!appState.grade || !appState.stream || !appState.subject || !appState.term) {
       return '';
@@ -1924,7 +1931,9 @@ export default function App() {
     const termCode = `T${appState.term.id}`;
     
     // Construct full URL
-    return `https://hesham-afandi.github.io/${gradeNum}${streamCode}${programCode}-${subjectCode}-${termCode}-0/`;
+    const host = appState.academicYear === '2026' ? 'mr-mohammed-hesham.github.io' : 'hesham-afandi.github.io';
+    const yearPart = appState.academicYear === '2026' ? '-2026' : '';
+    return `https://${host}/${gradeNum}${streamCode}${programCode}-${subjectCode}-${termCode}${yearPart}-0/`;
   };
 
   const getCurriculum = (key: string | null, stateVal: AppState = appState) => {
@@ -1934,6 +1943,18 @@ export default function App() {
       if (DB.curriculum[key]) return DB.curriculum[key];
       const strippedKey = key.startsWith('UAE-') ? key.substring(4) : key;
       if (DB.curriculum[strippedKey]) return DB.curriculum[strippedKey];
+      // Check year-specific fallback
+      if (stateVal.academicYear) {
+        const yearKey = `${key}-${stateVal.academicYear}`;
+        if (DB.curriculum[yearKey]) return DB.curriculum[yearKey];
+        const strippedYearKey = yearKey.startsWith('UAE-') ? yearKey.substring(4) : yearKey;
+        if (DB.curriculum[strippedYearKey]) return DB.curriculum[strippedYearKey];
+      }
+      // Check baseKey fallback if key has year suffix
+      const baseKey = key.replace(/-(2025|2026)$/, '');
+      if (DB.curriculum[baseKey]) return DB.curriculum[baseKey];
+      const strippedBaseKey = baseKey.startsWith('UAE-') ? baseKey.substring(4) : baseKey;
+      if (DB.curriculum[strippedBaseKey]) return DB.curriculum[strippedBaseKey];
     }
     // For other countries or subjects, we do not generate mock content. Show as "🚧 قريباً" / "قيد التحضير"
     return null;
@@ -4912,6 +4933,14 @@ export default function App() {
                                     </h4>
                                     {isDone && <span className="completed-badge">🏆 تم الاختبار</span>}
                                   </div>
+                                  {l.focusQuestion && (
+                                    <div className="text-xs text-amber-700 dark:text-amber-400 font-semibold mb-1 flex items-center gap-1.5 flex-wrap">
+                                      <span className="bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-md font-bold text-[11px]">
+                                        🎯 Focus Question
+                                      </span>
+                                      <span>{l.focusQuestion}</span>
+                                    </div>
+                                  )}
                                   <p className="text-xs text-gray-500 dark:text-gray-400">⏱️ {l.duration}</p>
                                 </div>
                               </div>
@@ -4932,6 +4961,20 @@ export default function App() {
                             </div>
                           );
                         })}
+
+                        {appState.unit.lessons.length === 0 && (
+                          <div className="text-center py-14 px-6 bg-white dark:bg-gray-900 rounded-3xl border-2 border-dashed border-amber-300 dark:border-amber-800 shadow-sm space-y-3">
+                            <span className="text-5xl block animate-bounce">⏳</span>
+                            <h4 className="font-black text-lg text-gray-800 dark:text-white">
+                              {isEnglish ? 'Unit 2 Content Coming Soon' : 'الوحدة الثانية: قريباً إن شاء الله'}
+                            </h4>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs max-w-md mx-auto leading-relaxed">
+                              {isEnglish 
+                                ? 'Lessons, interactive presentations, and exams for this unit will be added as soon as they are finalized.' 
+                                : 'سيتم إضافة الدروس والشروحات التفاعلية واختبارات قياس الفهم الخاصة بالوحدة الثانية فور اكتمالها واعتمادها قريباً إن شاء الله.'}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -5123,6 +5166,12 @@ export default function App() {
                               <p className="opacity-90 text-xs">
                                 {appState.subject.name} • {appState.grade.name} • {appState.unit.name} • 📅 {appState.academicYear === '2025' ? 'منهج 2025' : (isCurriculumImportedFor2026(appState) ? 'منهج 2026 (مستورد)' : 'منهج 2026')}
                               </p>
+                              {appState.lesson.focusQuestion && (
+                                <div className="mt-2.5 inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/25 text-xs font-bold text-amber-200">
+                                  <span>🎯 Focus Question:</span>
+                                  <span className="text-white font-semibold">{appState.lesson.focusQuestion}</span>
+                                </div>
+                              )}
                               {timeSpent > 0 && (
                                 <p className="opacity-80 text-[10px] mt-1 flex items-center gap-1">
                                   <Clock className="w-3.5 h-3.5" />
