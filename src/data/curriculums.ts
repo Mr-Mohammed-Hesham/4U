@@ -10,6 +10,8 @@ import {
   phy12Inspire2025,
   math11AdvBridge1,
   math12General1,
+  math12General2026,
+  math12General2025,
   phy11AdvBridge1,
   math11General1
 } from '../curriculum/uae/addedCurriculums';
@@ -260,8 +262,22 @@ export const curriculums: Record<string, Curriculum> = {
   'math-11-adv-bridge-1': math11AdvBridge1,
   'UAE-math-11-adv-bridge-1': math11AdvBridge1,
 
-  'math-12-general-1': math12General1,
-  'UAE-math-12-general-1': math12General1,
+  'math-12-general-1': math12General2026,
+  'UAE-math-12-general-1': math12General2026,
+  'math-12-gen-1': math12General2026,
+  'UAE-math-12-gen-1': math12General2026,
+
+  // Grade 12 General Math 2026 Term 1
+  'math-12-general-1-2026': math12General2026,
+  'UAE-math-12-general-1-2026': math12General2026,
+  'math-12-gen-1-2026': math12General2026,
+  'UAE-math-12-gen-1-2026': math12General2026,
+
+  // Grade 12 General Math 2025 Term 1
+  'math-12-general-1-2025': math12General2025,
+  'UAE-math-12-general-1-2025': math12General2025,
+  'math-12-gen-1-2025': math12General2025,
+  'UAE-math-12-gen-1-2025': math12General2025,
 
   // Grade 11 Advanced Physics Bridge Term 1
   'physics-11-bridge-1': phy11AdvBridge1,

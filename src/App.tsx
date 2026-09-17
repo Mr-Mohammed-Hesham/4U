@@ -1978,9 +1978,11 @@ export default function App() {
       }
     }
 
-    // 2. Grade 12 General Physics
-    if (gradeId === 12 && streamId === 'general' && subjectId === 'physics') {
-      return true;
+    // 2. Grade 12 General Physics & Math
+    if (gradeId === 12 && streamId === 'general') {
+      if (subjectId === 'physics' || subjectId === 'math') {
+        return true;
+      }
     }
 
     // 3. Grade 10 General Math
@@ -3647,7 +3649,7 @@ export default function App() {
               <>
                 <span className="text-gray-400">‹</span>
                 <button onClick={() => jumpToBreadcrumb('academicYear')} className="hover:text-indigo-600 dark:hover:text-indigo-400 font-medium cursor-pointer flex items-center gap-1 bg-amber-500/10 dark:bg-amber-400/10 text-amber-700 dark:text-amber-300 px-2.5 py-0.5 rounded-lg border border-amber-500/30 text-xs font-black">
-                  <span>📅</span> {appState.academicYear === '2025' ? 'منهج 2025' : (isCurriculumImportedFor2026(appState) ? 'منهج 2026 (مستورد)' : 'منهج 2026')}
+                  <span>📅</span> {appState.academicYear === '2025' ? 'منهج 2025' : 'منهج 2026'}
                 </button>
               </>
             )}
@@ -4709,7 +4711,7 @@ export default function App() {
                               {appState.subject.icon} {subjectDisplayName}
                             </span>
                             <span className={`${appState.academicYear === '2026' ? 'bg-indigo-400 text-slate-950' : 'bg-emerald-400 text-slate-950'} font-black px-3 py-1 rounded-full text-xs shadow-sm`}>
-                              📅 {appState.academicYear === '2025' ? (isEnglish ? '2025 Curriculum' : 'منهج 2025') : (isEnglish ? '2026 Curriculum (Imported)' : 'منهج 2026 (مستورد)')}
+                              📅 {appState.academicYear === '2025' ? (isEnglish ? '2025 Curriculum' : 'منهج 2025') : (isEnglish ? '2026 Curriculum' : 'منهج 2026')}
                             </span>
                           </div>
                           <h2 className="text-3xl font-black mb-1">{appState.subject.icon} {subjectDisplayName}</h2>
@@ -4871,12 +4873,12 @@ export default function App() {
                               {appState.subject.icon} {subjectDisplayName}
                             </span>
                             <span className="bg-emerald-400 text-slate-950 font-black px-2.5 py-0.5 rounded-full text-xs shadow-sm">
-                              📅 {appState.academicYear === '2025' ? 'منهج 2025' : (isCurriculumImportedFor2026(appState) ? 'منهج 2026 (مستورد)' : 'منهج 2026')}
+                              📅 {appState.academicYear === '2025' ? 'منهج 2025' : 'منهج 2026'}
                             </span>
                           </div>
                           <h2 className="text-3xl font-black mb-1">{appState.unit.icon} {appState.unit.name}</h2>
                           <p className="opacity-90 text-sm font-medium">
-                            {subjectDisplayName} • {gradeDisplayName} • {termDisplayName} • 📅 {appState.academicYear === '2025' ? 'منهج 2025' : (isCurriculumImportedFor2026(appState) ? 'منهج 2026 (مستورد)' : 'منهج 2026')}
+                            {subjectDisplayName} • {gradeDisplayName} • {termDisplayName} • 📅 {appState.academicYear === '2025' ? 'منهج 2025' : 'منهج 2026'}
                           </p>
                         </div>
 
@@ -5164,7 +5166,7 @@ export default function App() {
                                 {isDone && <span className="bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">🏆 مكتمل</span>}
                               </div>
                               <p className="opacity-90 text-xs">
-                                {appState.subject.name} • {appState.grade.name} • {appState.unit.name} • 📅 {appState.academicYear === '2025' ? 'منهج 2025' : (isCurriculumImportedFor2026(appState) ? 'منهج 2026 (مستورد)' : 'منهج 2026')}
+                                {appState.subject.name} • {appState.grade.name} • {appState.unit.name} • 📅 {appState.academicYear === '2025' ? 'منهج 2025' : 'منهج 2026'}
                               </p>
                               {appState.lesson.focusQuestion && (
                                 <div className="mt-2.5 inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/25 text-xs font-bold text-amber-200">
