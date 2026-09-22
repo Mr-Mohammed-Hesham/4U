@@ -127,5 +127,23 @@
       },
       "required": ["lessonKey", "exams"]
     }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "users",
+      "description": "Registered students and teachers profile documents"
+    },
+    "/announcements/{announcementId}": {
+      "schema": "announcements",
+      "description": "Global admin announcements"
+    },
+    "/community_chats/{roomId}/messages/{messageId}": {
+      "schema": "chatMessages",
+      "description": "Messages sent in community chat rooms"
+    },
+    "/lesson_exams/{docId}": {
+      "schema": "lessonExams",
+      "description": "Lesson exam collections and custom exams added for lessons"
+    }
   }
 }

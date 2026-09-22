@@ -9,10 +9,14 @@ import {
   phy12Inspire2026,
   phy12Inspire2025,
   math11AdvBridge1,
+  math11AdvBridge2026,
+  math11AdvBridge2025,
   math12General1,
   math12General2026,
   math12General2025,
   phy11AdvBridge1,
+  phy11AdvBridge2026,
+  phy11AdvBridge2025,
   math11General1
 } from '../curriculum/uae/addedCurriculums';
 
@@ -257,10 +261,31 @@ export const curriculums: Record<string, Curriculum> = {
   'phy-11-inspire-1': phy12Inspire1,
   'UAE-phy-11-inspire-1': phy12Inspire1,
 
-  'math-11-bridge-1': math11AdvBridge1,
-  'UAE-math-11-bridge-1': math11AdvBridge1,
-  'math-11-adv-bridge-1': math11AdvBridge1,
-  'UAE-math-11-adv-bridge-1': math11AdvBridge1,
+  // Grade 11 Advanced Math Bridge Term 1 (Default / 2026)
+  'math-11-bridge-1': math11AdvBridge2026,
+  'UAE-math-11-bridge-1': math11AdvBridge2026,
+  'math-11-adv-bridge-1': math11AdvBridge2026,
+  'UAE-math-11-adv-bridge-1': math11AdvBridge2026,
+  'math-11-advanced-1': math11AdvBridge2026,
+  'UAE-math-11-advanced-1': math11AdvBridge2026,
+  'math-11-adv-1': math11AdvBridge2026,
+  'UAE-math-11-adv-1': math11AdvBridge2026,
+
+  // Grade 11 Advanced Math Bridge 2026
+  'math-11-bridge-1-2026': math11AdvBridge2026,
+  'UAE-math-11-bridge-1-2026': math11AdvBridge2026,
+  'math-11-adv-bridge-1-2026': math11AdvBridge2026,
+  'UAE-math-11-adv-bridge-1-2026': math11AdvBridge2026,
+  'math-11-advanced-1-2026': math11AdvBridge2026,
+  'UAE-math-11-advanced-1-2026': math11AdvBridge2026,
+  'math-11-adv-1-2026': math11AdvBridge2026,
+  'UAE-math-11-adv-1-2026': math11AdvBridge2026,
+
+  // Grade 11 Advanced Math Bridge 2025
+  'math-11-bridge-1-2025': math11AdvBridge2025,
+  'UAE-math-11-bridge-1-2025': math11AdvBridge2025,
+  'math-11-adv-bridge-1-2025': math11AdvBridge2025,
+  'UAE-math-11-adv-bridge-1-2025': math11AdvBridge2025,
 
   'math-12-general-1': math12General2026,
   'UAE-math-12-general-1': math12General2026,
@@ -279,15 +304,51 @@ export const curriculums: Record<string, Curriculum> = {
   'math-12-gen-1-2025': math12General2025,
   'UAE-math-12-gen-1-2025': math12General2025,
 
-  // Grade 11 Advanced Physics Bridge Term 1
-  'physics-11-bridge-1': phy11AdvBridge1,
-  'UAE-physics-11-bridge-1': phy11AdvBridge1,
-  'phy-11-bridge-1': phy11AdvBridge1,
-  'UAE-phy-11-bridge-1': phy11AdvBridge1,
-  'physics-11-adv-bridge-1': phy11AdvBridge1,
-  'UAE-physics-11-adv-bridge-1': phy11AdvBridge1,
-  'phy-11-adv-bridge-1': phy11AdvBridge1,
-  'UAE-phy-11-adv-bridge-1': phy11AdvBridge1,
+  // Grade 11 Advanced Physics Bridge Term 1 (Default / 2026)
+  'physics-11-bridge-1': phy11AdvBridge2026,
+  'UAE-physics-11-bridge-1': phy11AdvBridge2026,
+  'phy-11-bridge-1': phy11AdvBridge2026,
+  'UAE-phy-11-bridge-1': phy11AdvBridge2026,
+  'physics-11-adv-bridge-1': phy11AdvBridge2026,
+  'UAE-physics-11-adv-bridge-1': phy11AdvBridge2026,
+  'phy-11-adv-bridge-1': phy11AdvBridge2026,
+  'UAE-phy-11-adv-bridge-1': phy11AdvBridge2026,
+  'physics-11-advanced-1': phy11AdvBridge2026,
+  'UAE-physics-11-advanced-1': phy11AdvBridge2026,
+  'phy-11-advanced-1': phy11AdvBridge2026,
+  'UAE-phy-11-advanced-1': phy11AdvBridge2026,
+  'physics-11-adv-1': phy11AdvBridge2026,
+  'UAE-physics-11-adv-1': phy11AdvBridge2026,
+  'phy-11-adv-1': phy11AdvBridge2026,
+  'UAE-phy-11-adv-1': phy11AdvBridge2026,
+
+  // Grade 11 Advanced Physics Bridge 2026
+  'physics-11-bridge-1-2026': phy11AdvBridge2026,
+  'UAE-physics-11-bridge-1-2026': phy11AdvBridge2026,
+  'phy-11-bridge-1-2026': phy11AdvBridge2026,
+  'UAE-phy-11-bridge-1-2026': phy11AdvBridge2026,
+  'physics-11-adv-bridge-1-2026': phy11AdvBridge2026,
+  'UAE-physics-11-adv-bridge-1-2026': phy11AdvBridge2026,
+  'phy-11-adv-bridge-1-2026': phy11AdvBridge2026,
+  'UAE-phy-11-adv-bridge-1-2026': phy11AdvBridge2026,
+  'physics-11-advanced-1-2026': phy11AdvBridge2026,
+  'UAE-physics-11-advanced-1-2026': phy11AdvBridge2026,
+  'phy-11-advanced-1-2026': phy11AdvBridge2026,
+  'UAE-phy-11-advanced-1-2026': phy11AdvBridge2026,
+  'physics-11-adv-1-2026': phy11AdvBridge2026,
+  'UAE-physics-11-adv-1-2026': phy11AdvBridge2026,
+  'phy-11-adv-1-2026': phy11AdvBridge2026,
+  'UAE-phy-11-adv-1-2026': phy11AdvBridge2026,
+
+  // Grade 11 Advanced Physics Bridge 2025
+  'physics-11-bridge-1-2025': phy11AdvBridge2025,
+  'UAE-physics-11-bridge-1-2025': phy11AdvBridge2025,
+  'phy-11-bridge-1-2025': phy11AdvBridge2025,
+  'UAE-phy-11-bridge-1-2025': phy11AdvBridge2025,
+  'physics-11-adv-bridge-1-2025': phy11AdvBridge2025,
+  'UAE-physics-11-adv-bridge-1-2025': phy11AdvBridge2025,
+  'phy-11-adv-bridge-1-2025': phy11AdvBridge2025,
+  'UAE-phy-11-adv-bridge-1-2025': phy11AdvBridge2025,
 
   // Grade 11 General Math Term 1
   'math-11-general-1': math11General1,

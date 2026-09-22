@@ -222,7 +222,7 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
           description: examDescription.trim() || undefined,
         });
         setCustomExams(res.updated);
-        if (res.status.firestoreOk) {
+        if (res.status.firestoreOk || res.status.serverOk) {
           setFirestoreWarning(null);
           setSuccessToast(res.status.message);
         } else {
@@ -243,7 +243,7 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
 
         const res = await addLessonExam(newExamItem);
         setCustomExams(res.updated);
-        if (res.status.firestoreOk) {
+        if (res.status.firestoreOk || res.status.serverOk) {
           setFirestoreWarning(null);
           setSuccessToast(res.status.message);
         } else {

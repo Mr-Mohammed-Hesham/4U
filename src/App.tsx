@@ -1997,6 +1997,13 @@ export default function App() {
       }
     }
 
+    // 5. Grade 11 Advanced (Bridge) Physics & Math
+    if (gradeId === 11 && streamId === 'advanced') {
+      if ((subjectId === 'physics' || subjectId === 'math') && (programId === 'bridge' || !programId)) {
+        return true;
+      }
+    }
+
     return false;
   };
 

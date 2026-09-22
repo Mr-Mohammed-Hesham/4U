@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clipboard, Check, Download, Code } from 'lucide-react';
+import { Clipboard, Check, Download, Code, ExternalLink } from 'lucide-react';
 
 interface ExamCodesModalProps {
   isOpen: boolean;
@@ -8,6 +8,112 @@ interface ExamCodesModalProps {
 }
 
 const EXAMS_LIST = [
+  // Grade 11 Advanced Bridge Physics 2026
+  {
+    id: '11Adv-Bri-phy-T1-2026-1.1-exam',
+    title: 'امتحان الفيزياء 11 متقدم 2026 - الوحدة 1 الدرس 1 (وصف الحركة الدورانية)',
+    path: '/11Adv-Bri-phy-T1-2026-1.1-exam/index.html',
+    description: 'اختبار تقييمي تفاعلي شامل لمادة الفيزياء - 11 متقدم 2026، يغطي الإزاحة الزاوية والسرعة والتسارع الزاوي ومعادلات الحركة الدورانية.'
+  },
+  {
+    id: '11Adv-Bri-phy-T1-2026-1.2-exam',
+    title: 'امتحان الفيزياء 11 متقدم 2026 - الوحدة 1 الدرس 2 (ديناميكا الحركة الدورانية)',
+    path: '/11Adv-Bri-phy-T1-2026-1.2-exam/index.html',
+    description: 'اختبار تفاعلي شامل لمادة الفيزياء - 11 متقدم 2026، يغطي عزم القوة وعزم القصور الذاتي وقانون نيوتن الثاني في الحركة الدورانية.'
+  },
+  {
+    id: '11Adv-Bri-phy-T1-2026-1.3-exam',
+    title: 'امتحان الفيزياء 11 متقدم 2026 - الوحدة 1 الدرس 3 (الاتزان)',
+    path: '/11Adv-Bri-phy-T1-2026-1.3-exam/index.html',
+    description: 'اختبار تفاعلي لمادة الفيزياء - 11 متقدم 2026، يغطي شروط الاتزان الميكانيكي والانتقالي والدوراني ومركز الكتلة والاستقرار.'
+  },
+  {
+    id: '11Adv-Bri-phy-T1-2026-1.4-exam',
+    title: 'امتحان الفيزياء 11 متقدم 2026 - الوحدة 1 الدرس 4 (أجهزة الطرف المركزي - عمل)',
+    path: '/11Adv-Bri-phy-T1-2026-1.4-exam/index.html',
+    description: 'اختبار عملي لمادة الفيزياء - 11 متقدم 2026، يغطي مبدأ عمل أجهزة الطرد المركزي وتطبيقاتها المعملية والصناعية وإجراءات السلامة.'
+  },
+  {
+    id: '11Adv-Bri-phy-T1-2026-2.1-exam',
+    title: 'امتحان الفيزياء 11 متقدم 2026 - الوحدة 2 الدرس 1 (الدفع والزخم)',
+    path: '/11Adv-Bri-phy-T1-2026-2.1-exam/index.html',
+    description: 'اختبار تقييمي لمادة الفيزياء - 11 متقدم 2026، يغطي كمية الحركة الخطية والدفع ومبرهنة الزخم-الدفع وتطبيقات الوسائد الهوائية.'
+  },
+  {
+    id: '11Adv-Bri-phy-T1-2026-2.2-exam',
+    title: 'امتحان الفيزياء 11 متقدم 2026 - الوحدة 2 الدرس 2 (حفظ الزخم)',
+    path: '/11Adv-Bri-phy-T1-2026-2.2-exam/index.html',
+    description: 'اختبار تفاعلي لمادة الفيزياء - 11 متقدم 2026، يغطي قانون حفظ الزخم والتصادمات المرنة وغير المرنة وتامة المرونة والارتداد.'
+  },
+  {
+    id: '11Adv-Bri-phy-T1-2026-2.3-exam',
+    title: 'امتحان الفيزياء 11 متقدم 2026 - الوحدة 2 الدرس 3 (نظرة على... حريق في السماء)',
+    path: '/11Adv-Bri-phy-T1-2026-2.3-exam/index.html',
+    description: 'اختبار تفاعلي لمادة الفيزياء - 11 متقدم 2026، يغطي الفيزياء الفلكية لاختراق النيازك والانفجارات الجوية وزخم الأجرام الفضائية.'
+  },
+  {
+    id: '11Adv-Bri-phy-T1-2026-3.1-exam',
+    title: 'امتحان الفيزياء 11 متقدم 2026 - الوحدة 3 الدرس 1 (الأشكال المتعددة للطاقة)',
+    path: '/11Adv-Bri-phy-T1-2026-3.1-exam/index.html',
+    description: 'اختبار تقييمي لمادة الفيزياء - 11 متقدم 2026، يغطي طاقة الحركة وطاقة الوضع التثاقلية والمرونية ونظرية الشغل-الطاقة.'
+  },
+  {
+    id: '11Adv-Bri-phy-T1-2026-3.2-exam',
+    title: 'امتحان الفيزياء 11 متقدم 2026 - الوحدة 3 الدرس 2 (حفظ الطاقة)',
+    path: '/11Adv-Bri-phy-T1-2026-3.2-exam/index.html',
+    description: 'اختبار تفاعلي لمادة الفيزياء - 11 متقدم 2026، يغطي قانون حفظ الطاقة الميكانيكية والقوى المحافظة وغير المحافظة وحركة البندول.'
+  },
+  {
+    id: '11Adv-Bri-phy-T1-2026-3.3-exam',
+    title: 'امتحان الفيزياء 11 متقدم 2026 - الوحدة 3 الدرس 3 (ما هي الطاقة البديلة؟)',
+    path: '/11Adv-Bri-phy-T1-2026-3.3-exam/index.html',
+    description: 'اختبار تقييمي لمادة الفيزياء - 11 متقدم 2026، يغطي مصادر الطاقة المتجددة (الشمسية، الرياح، النووية، الهيدروجين) ومشاريع الإمارات المستدامة.'
+  },
+
+  // Grade 11 Advanced Bridge Math 2026
+  {
+    id: '11Adv-Bri-math-T1-2026-1.1-exam',
+    title: 'امتحان الرياضيات 11 متقدم 2026 - الدرس 11-1 (الدوال)',
+    path: '/11Adv-Bri-math-T1-2026-1.1-exam/index.html',
+    description: 'اختبار تقييمي لمادة الرياضيات - 11 متقدم 2026، يغطي تحديد الدوال ومجالها ومداها واختبار الخط الرأسي والدوال متعددة التعريف.'
+  },
+  {
+    id: '11Adv-Bri-math-T1-2026-1.2-exam',
+    title: 'امتحان الرياضيات 11 متقدم 2026 - الدرس 11-2 (تحليل التحويلات البيانية للدوال والعلاقات)',
+    path: '/11Adv-Bri-math-T1-2026-1.2-exam/index.html',
+    description: 'اختبار تقييمي لمادة الرياضيات - 11 متقدم 2026، يغطي تقاطعات المحاور واختبارات التناظر الزوجية والفردية وفترات التزايد والتناقص.'
+  },
+  {
+    id: '11Adv-Bri-math-T1-2026-1.3-exam',
+    title: 'امتحان الرياضيات 11 متقدم 2026 - الدرس 11-3 (الاتصال والسلوك الطرفي والنهايات)',
+    path: '/11Adv-Bri-math-T1-2026-1.3-exam/index.html',
+    description: 'اختبار تقييمي لمادة الرياضيات - 11 متقدم 2026، يغطي شروط الاتصال الثلاثة وأنواع عدم الاتصال والسلوك الطرفي وخطوط التقارب.'
+  },
+  {
+    id: '11Adv-Bri-math-T1-2026-1.4-exam',
+    title: 'امتحان الرياضيات 11 متقدم 2026 - الدرس 11-4 (القيم القصوى ومتوسط معدلات التغيير)',
+    path: '/11Adv-Bri-math-T1-2026-1.4-exam/index.html',
+    description: 'اختبار تقييمي لمادة الرياضيات - 11 متقدم 2026، يغطي القيم العظمى والصغرى المحلية والمطلقة ومتوسط معدل التغير وميل القاطع.'
+  },
+  {
+    id: '11Adv-Bri-math-T1-2026-1.5-exam',
+    title: 'امتحان الرياضيات 11 متقدم 2026 - الدرس 11-5 (الدوال الأصلية والتحويلات)',
+    path: '/11Adv-Bri-math-T1-2026-1.5-exam/index.html',
+    description: 'اختبار تقييمي لمادة الرياضيات - 11 متقدم 2026، يغطي الدوال الأم الثمانية والتحويلات الهندسية من إزاحات وتمدد وانعكاس.'
+  },
+  {
+    id: '11Adv-Bri-math-T1-2026-1.6-exam',
+    title: 'امتحان الرياضيات 11 متقدم 2026 - الدرس 11-6 (العمليات على الدوال وتركيب الدوال)',
+    path: '/11Adv-Bri-math-T1-2026-1.6-exam/index.html',
+    description: 'اختبار تقييمي لمادة الرياضيات - 11 متقدم 2026، يغطي العمليات الحسابية ومجالها وتركيب الدوال ومجال دالة التركيب.'
+  },
+  {
+    id: '11Adv-Bri-math-T1-2026-1.7-exam',
+    title: 'امتحان الرياضيات 11 متقدم 2026 - الدرس 11-7 (العلاقات والدوال العكسية)',
+    path: '/11Adv-Bri-math-T1-2026-1.7-exam/index.html',
+    description: 'اختبار تقييمي لمادة الرياضيات - 11 متقدم 2026، يغطي الدالة واحد لواحد واختبار الخط الأفقي وإيجاد الدالة العكسية والتحقق منها.'
+  },
+
   {
     id: '11Adv-Bri-phy-T1-1.1-exam',
     title: 'امتحان الفيزياء 11 متقدم - الوحدة 1 الدرس 1',
@@ -908,11 +1014,43 @@ export const ExamCodesModal: React.FC<ExamCodesModalProps> = ({
           const text = await response.text();
           setExamCode(text);
         } else {
-          setExamCode('<!-- تعذر تحميل ملف الكود. يرجى التأكد من وجود الملف في المسار المخصص له. -->');
+          // Attempt fetching directly from hosted GitHub Pages
+          let foundRemote = false;
+          try {
+            const remoteRes = await fetch(`https://mr-mohammed-hesham.github.io/${selectedExam.id}/index.html`);
+            if (remoteRes.ok) {
+              const text = await remoteRes.text();
+              setExamCode(text);
+              foundRemote = true;
+            }
+          } catch {
+            // fallback
+          }
+          if (!foundRemote) {
+            setExamCode(`<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>${selectedExam.title}</title>
+</head>
+<body style="margin:0;padding:0;overflow:hidden;">
+  <iframe src="https://mr-mohammed-hesham.github.io/${selectedExam.id}/" width="100%" height="100%" style="border:none;min-height:100vh;"></iframe>
+</body>
+</html>`);
+          }
         }
       } catch (err) {
         console.error(err);
-        setExamCode('<!-- حدث خطأ أثناء جلب الكود من الخادم. -->');
+        setExamCode(`<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>${selectedExam.title}</title>
+</head>
+<body style="margin:0;padding:0;overflow:hidden;">
+  <iframe src="https://mr-mohammed-hesham.github.io/${selectedExam.id}/" width="100%" height="100%" style="border:none;min-height:100vh;"></iframe>
+</body>
+</html>`);
       } finally {
         setIsLoading(false);
       }
@@ -1022,6 +1160,17 @@ export const ExamCodesModal: React.FC<ExamCodesModalProps> = ({
               </div>
               
               <div className="flex items-center gap-2">
+                <a
+                  href={`https://mr-mohammed-hesham.github.io/${selectedExam.id}/`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+                  title="فتح الامتحان مباشرة"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>فتح الرابط</span>
+                </a>
+
                 <button
                   onClick={handleDownload}
                   disabled={isLoading || !examCode}
