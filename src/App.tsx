@@ -84,17 +84,16 @@ const QURAN_RECITERS: Reciter[] = [
     name: 'الشيخ عبدالباسط عبدالصمد',
     description: 'تلاوات خاشعة ومجودة 📖',
     urls: [
-      'https://radio.mp3islam.com/listen/abdulbasit/radio.mp3',
-      'https://backup.qurango.net/radio/tarteel_abdulbasit/;stream.mp3',
-      'https://backup.qurango.net/radio/tarteel_abdulbasit',
-      'https://qurango.net/radio/tarteel_abdulbasit/;stream.mp3',
-      'https://qurango.net/radio/tarteel_abdulbasit',
-      'https://live.mp3quran.net/radio/tarteel_abdulbasit',
-      'https://server11.mp3quran.net/basit/055.mp3', // Surah Ar-Rahman (Static Backup 1)
-      'https://server11.mp3quran.net/basit/018.mp3', // Surah Al-Kahf (Static Backup 2)
-      'https://server11.mp3quran.net/basit/036.mp3', // Surah Ya-Sin (Static Backup 3)
-      'https://server11.mp3quran.net/basit/056.mp3', // Surah Al-Waqi'ah (Static Backup 4)
-      'https://server11.mp3quran.net/basit/067.mp3'  // Surah Al-Mulk (Static Backup 5)
+      'https://backup.qurango.net/radio/abdulbasit_abdulsamad_mojawwad',
+      'https://backup.qurango.net/radio/abdulbasit_abdulsamad',
+      'https://cdn.mp3quran.net/audio/abdulbasit-abdulsamad/r1/055.mp3', // سورة الرحمن - مجود
+      'https://cdn.mp3quran.net/audio/abdulbasit-abdulsamad/r1/036.mp3', // سورة يس - مجود
+      'https://cdn.mp3quran.net/audio/abdulbasit-abdulsamad/r1/018.mp3', // سورة الكهف - مجود
+      'https://cdn.mp3quran.net/audio/abdulbasit-abdulsamad/r1/056.mp3', // سورة الواقعة - مجود
+      'https://cdn.mp3quran.net/audio/abdulbasit-abdulsamad/r1/067.mp3', // سورة الملك - مجود
+      'https://cdn.mp3quran.net/audio/abdulbasit-abdulsamad/r3/001.mp3', // سورة الفاتحة - مرتل
+      'https://cdn.mp3quran.net/audio/abdulbasit-abdulsamad/r3/019.mp3', // سورة مريم - مرتل
+      'https://radio.mp3islam.com/listen/abdulbasit/radio.mp3'
     ]
   },
   {
@@ -102,8 +101,13 @@ const QURAN_RECITERS: Reciter[] = [
     name: 'الشيخ محمد صديق المنشاوي',
     description: 'صوت المصحف المرتل والمجود 🎧',
     urls: [
-      'https://serverkw.quran-uni.com:8230/;*.mp3',
-      'https://backup.qurango.net/radio/mohammad_siddiq_alminshawi'
+      'https://backup.qurango.net/radio/mohammed_siddiq_alminshawi_mojawwad',
+      'https://backup.qurango.net/radio/mohammed_siddiq_alminshawi',
+      'https://cdn.mp3quran.net/audio/muhammad-minshawi/r2/055.mp3',
+      'https://cdn.mp3quran.net/audio/muhammad-minshawi/r2/036.mp3',
+      'https://cdn.mp3quran.net/audio/muhammad-minshawi/r2/018.mp3',
+      'https://cdn.mp3quran.net/audio/muhammad-minshawi/r1/056.mp3',
+      'https://cdn.mp3quran.net/audio/muhammad-minshawi/r1/067.mp3'
     ]
   },
   {
@@ -111,7 +115,12 @@ const QURAN_RECITERS: Reciter[] = [
     name: 'الشيخ محمود خليل الحصري',
     description: 'المعلم المتقن بقراءاته العذبة 📜',
     urls: [
-      'https://serverkw.quran-uni.com:8018/;*.mp3',
+      'https://backup.qurango.net/radio/mahmoud_khalil_alhussary_mojawwad',
+      'https://cdn.mp3quran.net/audio/mahmoud-husary/r2/055.mp3',
+      'https://cdn.mp3quran.net/audio/mahmoud-husary/r2/036.mp3',
+      'https://cdn.mp3quran.net/audio/mahmoud-husary/r1/018.mp3',
+      'https://cdn.mp3quran.net/audio/mahmoud-husary/r1/056.mp3',
+      'https://cdn.mp3quran.net/audio/mahmoud-husary/r1/067.mp3',
       'https://backup.qurango.net/radio/mahmoud_khalil_alhussary'
     ]
   },
@@ -120,8 +129,12 @@ const QURAN_RECITERS: Reciter[] = [
     name: 'الشيخ محمد محمود الطبلاوي',
     description: 'قراءة مصرية أصيلة ذات شجن 💡',
     urls: [
-      'https://serverkw.quran-uni.com:8078/;*.mp3',
-      'https://backup.qurango.net/radio/mohammad_al_tablaway'
+      'https://cdn.mp3quran.net/audio/muhammad-tablawi/r2/055.mp3',
+      'https://cdn.mp3quran.net/audio/muhammad-tablawi/r2/036.mp3',
+      'https://cdn.mp3quran.net/audio/muhammad-tablawi/r2/018.mp3',
+      'https://cdn.mp3quran.net/audio/muhammad-tablawi/r1/056.mp3',
+      'https://cdn.mp3quran.net/audio/muhammad-tablawi/r1/067.mp3',
+      'https://backup.qurango.net/radio/mohammad_altablaway'
     ]
   },
   {
@@ -129,8 +142,12 @@ const QURAN_RECITERS: Reciter[] = [
     name: 'الشيخ محمود علي البنا',
     description: 'تلاوة نادرة وخاشعة من قيثارة السماء ✨',
     urls: [
-      'https://serverkw.quran-uni.com:8024/;*.mp3',
-      'https://backup.qurango.net/radio/mahmoud_ali__al_banna'
+      'https://cdn.mp3quran.net/audio/mahmoud-banna/r2/055.mp3',
+      'https://cdn.mp3quran.net/audio/mahmoud-banna/r2/036.mp3',
+      'https://cdn.mp3quran.net/audio/mahmoud-banna/r2/018.mp3',
+      'https://cdn.mp3quran.net/audio/mahmoud-banna/r1/056.mp3',
+      'https://cdn.mp3quran.net/audio/mahmoud-banna/r1/067.mp3',
+      'https://backup.qurango.net/radio/mahmoud_ali__albanna'
     ]
   },
   {
@@ -138,8 +155,12 @@ const QURAN_RECITERS: Reciter[] = [
     name: 'الشيخ مصطفى إسماعيل',
     description: 'عبقري التلاوة والمقامات القرآنية 🌟',
     urls: [
-      'https://serverkw.quran-uni.com:8224/;*.mp3',
-      'https://backup.qurango.net/radio/mustafa_ismail'
+      'https://backup.qurango.net/radio/mustafa_ismail',
+      'https://cdn.mp3quran.net/audio/mustafa-ismail/r2/055.mp3',
+      'https://cdn.mp3quran.net/audio/mustafa-ismail/r2/036.mp3',
+      'https://cdn.mp3quran.net/audio/mustafa-ismail/r2/018.mp3',
+      'https://cdn.mp3quran.net/audio/mustafa-ismail/r1/056.mp3',
+      'https://cdn.mp3quran.net/audio/mustafa-ismail/r1/067.mp3'
     ]
   }
 ];
@@ -1701,14 +1722,20 @@ export default function App() {
   };
 
   const currentRadioUrlIndexRef = useRef(0);
+  const radioAttemptIdRef = useRef(0);
+  const radioStallTimeoutRef = useRef<any>(null);
 
   // Cleanup radio on unmount
   useEffect(() => {
     return () => {
       isRadioIntentPlayingRef.current = false;
+      if (radioStallTimeoutRef.current) {
+        clearTimeout(radioStallTimeoutRef.current);
+      }
       if (radioAudioRef.current) {
         radioAudioRef.current.onended = null;
         radioAudioRef.current.onerror = null;
+        radioAudioRef.current.onplaying = null;
         radioAudioRef.current.pause();
         radioAudioRef.current = null;
       }
@@ -1724,116 +1751,161 @@ export default function App() {
   ) => {
     const reciterId = targetReciterId || activeReciterId;
     const reciter = QURAN_RECITERS.find((r) => r.id === reciterId) || QURAN_RECITERS[0];
-    const reciterUrls = reciter.urls;
 
-    // Clean up existing audio instance
-    if (radioAudioRef.current) {
-      radioAudioRef.current.pause();
-      radioAudioRef.current.onended = null;
-      radioAudioRef.current.onerror = null;
-      radioAudioRef.current.src = "";
-      radioAudioRef.current.load();
+    // Build complete resilient stream list: Direct URLs first, followed by Server Proxy URLs to bypass any firewall/CORS/ORB restrictions
+    const directUrls = reciter.urls;
+    const proxiedUrls = directUrls.map((u) => getApiUrl(`/api/quran-stream?url=${encodeURIComponent(u)}`));
+    const allUrls = [...directUrls, ...proxiedUrls];
+
+    if (radioStallTimeoutRef.current) {
+      clearTimeout(radioStallTimeoutRef.current);
+      radioStallTimeoutRef.current = null;
     }
 
     // Check bounds
-    if (index >= reciterUrls.length) {
+    if (index >= allUrls.length) {
       setIsRadioPlaying(false);
       if (isRadioIntentPlayingRef.current) {
-        showToastMsg("⚠️ تعذر تشغيل الإذاعة حالياً بسبب جدار الحماية بالشبكة أو قيود المتصفح.");
+        showToastMsg("⚠️ تعذر الاتصال بالبث حالياً، يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.");
       }
       return;
     }
 
+    const attemptId = ++radioAttemptIdRef.current;
     currentRadioUrlIndexRef.current = index;
-    const currentUrl = reciterUrls[index];
-    console.log(`[Quran Radio - ${reciter.name}] Loading stream ${index}: ${currentUrl}`);
+    const currentUrl = allUrls[index];
+    console.log(`[Quran Radio - ${reciter.name}] Loading stream ${index}/${allUrls.length - 1}: ${currentUrl}`);
 
     const finalMuted = overrideMuted !== undefined ? overrideMuted : isRadioMuted;
     const finalVolume = overrideVolume !== undefined ? overrideVolume : radioVolume;
 
-    // Create a new Audio object
-    const audio = new Audio();
-    audio.src = currentUrl;
-    audio.volume = finalMuted ? 0 : finalVolume;
-    audio.preload = "auto";
+    // Reuse a single persistent HTMLAudioElement so browser autoplay / user-gesture activation
+    // is preserved across asynchronous stream fallbacks
+    let audio = radioAudioRef.current;
+    if (!audio) {
+      audio = new Audio();
+      radioAudioRef.current = audio;
+    } else {
+      audio.onended = null;
+      audio.onerror = null;
+      audio.onplaying = null;
+      try {
+        audio.pause();
+      } catch {}
+    }
 
-    // Track if this instance has already triggered a fallback to avoid double-handling
+    audio.preload = "auto";
+    audio.volume = finalMuted ? 0 : finalVolume;
+    audio.src = currentUrl;
+    try {
+      audio.load();
+    } catch {}
+
+    // Track if this attempt has already triggered a fallback to avoid double-handling
     let hasFallbackTriggered = false;
+    let hasStartedPlaying = false;
 
     const triggerFallback = () => {
       if (hasFallbackTriggered) return;
+      if (radioAttemptIdRef.current !== attemptId || !isRadioIntentPlayingRef.current) return;
       hasFallbackTriggered = true;
 
-      // Ensure this audio is still the active reference AND the user actually wants to play the radio before triggering fallback
-      if (radioAudioRef.current === audio && isRadioIntentPlayingRef.current) {
-        const nextIndex = index + 1;
-        if (reciterId === 'abdulbasit' && nextIndex === 6) {
-          showToastMsg("📻 تم الانتقال لتشغيل تلاوة مسجلة لضمان جودة الصوت واستقرار البث ✨");
-        } else if (nextIndex < reciterUrls.length) {
-          showToastMsg("📻 جاري الانتقال لموجة بث بديلة لتفادي الانقطاع...");
-        }
-        playStreamAtIndex(nextIndex, forcePlay, finalVolume, finalMuted, reciterId);
+      if (radioStallTimeoutRef.current) {
+        clearTimeout(radioStallTimeoutRef.current);
+        radioStallTimeoutRef.current = null;
       }
+
+      const nextIndex = index + 1;
+      playStreamAtIndex(nextIndex, forcePlay, finalVolume, finalMuted, reciterId);
+    };
+
+    audio.onplaying = () => {
+      if (radioAttemptIdRef.current !== attemptId || !isRadioIntentPlayingRef.current) return;
+      hasStartedPlaying = true;
+      if (radioStallTimeoutRef.current) {
+        clearTimeout(radioStallTimeoutRef.current);
+        radioStallTimeoutRef.current = null;
+      }
+      setIsRadioPlaying(true);
     };
 
     audio.onerror = (e) => {
+      if (radioAttemptIdRef.current !== attemptId || !isRadioIntentPlayingRef.current) return;
       console.warn(`[Quran Radio - ${reciter.name}] Error event on stream ${index}:`, e);
-      if (isRadioIntentPlayingRef.current) {
-        triggerFallback();
-      }
+      triggerFallback();
     };
 
     audio.onended = () => {
-      if (!isRadioIntentPlayingRef.current) return;
-      // Loop or proceed with static recitations
+      if (radioAttemptIdRef.current !== attemptId || !isRadioIntentPlayingRef.current) return;
       let nextIndex = index + 1;
-      if (reciterId === 'abdulbasit' && index >= 6) {
-        if (nextIndex >= reciterUrls.length) {
-          nextIndex = 6; // Loop back to the first static recitation
-        }
-      } else {
-        if (nextIndex >= reciterUrls.length) {
-          nextIndex = 0; // Loop back to live stream
-        }
+      if (nextIndex >= directUrls.length) {
+        nextIndex = 0; // Loop back to beginning of reciter's streams
       }
       playStreamAtIndex(nextIndex, true, finalVolume, finalMuted, reciterId);
     };
 
-    radioAudioRef.current = audio;
-
     if (forcePlay) {
-      audio.play()
-        .then(() => {
-          if (radioAudioRef.current === audio && isRadioIntentPlayingRef.current) {
-            setIsRadioPlaying(true);
-          }
-        })
-        .catch(err => {
-          // Playback failed. Check if it was aborted intentionally or stopped by user
-          if (!isRadioIntentPlayingRef.current || err.name === 'AbortError') {
-            console.log(`[Quran Radio] Playback of stream ${index} was aborted intentionally or stopped by user.`);
-            return;
-          }
-          console.warn(`[Quran Radio - ${reciter.name}] play() promise rejected for stream ${index}:`, err);
+      // Safety stall timer: if a stream neither plays nor errors within 6.5 seconds, switch to next backup stream
+      radioStallTimeoutRef.current = setTimeout(() => {
+        if (!hasStartedPlaying && radioAttemptIdRef.current === attemptId && isRadioIntentPlayingRef.current) {
+          console.warn(`[Quran Radio - ${reciter.name}] Stream ${index} stalled, switching to next stream...`);
           triggerFallback();
-        });
+        }
+      }, 6500);
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            if (radioAttemptIdRef.current === attemptId && isRadioIntentPlayingRef.current) {
+              hasStartedPlaying = true;
+              if (radioStallTimeoutRef.current) {
+                clearTimeout(radioStallTimeoutRef.current);
+                radioStallTimeoutRef.current = null;
+              }
+              setIsRadioPlaying(true);
+            }
+          })
+          .catch((err) => {
+            if (radioAttemptIdRef.current !== attemptId || !isRadioIntentPlayingRef.current) {
+              return;
+            }
+            if (err?.name === 'AbortError') {
+              return;
+            }
+            console.warn(`[Quran Radio - ${reciter.name}] play() promise rejected for stream ${index}:`, err);
+            triggerFallback();
+          });
+      }
     }
   };
 
   const toggleRadioPlay = () => {
     if (isRadioPlaying) {
       isRadioIntentPlayingRef.current = false;
-      // Release live stream bandwidth on stop
+      radioAttemptIdRef.current++;
+      if (radioStallTimeoutRef.current) {
+        clearTimeout(radioStallTimeoutRef.current);
+        radioStallTimeoutRef.current = null;
+      }
+      // Pause and release live stream bandwidth on stop while keeping the unlocked HTMLAudioElement reference
       if (radioAudioRef.current) {
         radioAudioRef.current.onended = null;
         radioAudioRef.current.onerror = null;
+        radioAudioRef.current.onplaying = null;
         radioAudioRef.current.pause();
-        radioAudioRef.current.src = "";
-        radioAudioRef.current.load();
+        radioAudioRef.current.removeAttribute('src');
+        try {
+          radioAudioRef.current.load();
+        } catch {}
       }
       setIsRadioPlaying(false);
     } else {
       isRadioIntentPlayingRef.current = true;
+      // Ensure persistent HTMLAudioElement is created synchronously inside user gesture
+      if (!radioAudioRef.current) {
+        radioAudioRef.current = new Audio();
+      }
       // Unlock AudioContext for sandboxed iframes / modern browser autoplay policy
       try {
         const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -1860,10 +1932,16 @@ export default function App() {
     setActiveReciterId(reciterId);
     const reciter = QURAN_RECITERS.find((r) => r.id === reciterId) || QURAN_RECITERS[0];
     showToastMsg(`📻 تم الانتقال لإذاعة ${reciter.name}`);
-    if (isRadioPlaying || isRadioIntentPlayingRef.current) {
-      isRadioIntentPlayingRef.current = true;
-      playStreamAtIndex(0, true, radioVolume, isRadioMuted, reciterId);
+    // Automatically start or switch playback on user selection (which is a valid user gesture!)
+    isRadioIntentPlayingRef.current = true;
+    if (!radioAudioRef.current) {
+      radioAudioRef.current = new Audio();
     }
+    const newMute = false;
+    const newVol = radioVolume < 0.2 ? 0.8 : radioVolume;
+    setIsRadioMuted(newMute);
+    setRadioVolume(newVol);
+    playStreamAtIndex(0, true, newVol, newMute, reciterId);
   };
 
   const handleVolumeChange = (newVol: number) => {
