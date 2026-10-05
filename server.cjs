@@ -253,6 +253,102 @@ app.post("/api/generate-flashcards", async (req, res) => {
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", service: "4U Educational Platform Backend" });
 });
+app.get("/api/quran-stream", async (req, res) => {
+  const targetUrl = req.query.url || "";
+  if (!targetUrl) {
+    return res.status(400).json({ error: "Stream url parameter is required" });
+  }
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(targetUrl);
+  } catch {
+    return res.status(400).json({ error: "Invalid stream URL" });
+  }
+  const allowedHosts = [
+    "cdn.mp3quran.net",
+    "backup.qurango.net",
+    "qurango.net",
+    "radio.mp3islam.com",
+    "download.quranicaudio.com",
+    "live.mp3quran.net",
+    "mp3quran.net",
+    "www.mp3quran.net",
+    "cdn.islamic.network"
+  ];
+  if (!allowedHosts.some((host) => parsedUrl.hostname === host || parsedUrl.hostname.endsWith(`.${host}`))) {
+    return res.status(403).json({ error: "Host not permitted by audio proxy" });
+  }
+  const abortController = new AbortController();
+  req.on("close", () => {
+    abortController.abort();
+  });
+  try {
+    const upstreamHeaders = {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+      "Accept": "audio/*, */*;q=0.9",
+      "Icy-MetaData": "0"
+    };
+    if (req.headers.range) {
+      upstreamHeaders["Range"] = req.headers.range;
+    }
+    const upstreamRes = await fetch(targetUrl, {
+      headers: upstreamHeaders,
+      redirect: "follow",
+      signal: abortController.signal
+    });
+    if (!upstreamRes.ok || !upstreamRes.body) {
+      return res.status(upstreamRes.status || 502).json({ error: `Upstream audio returned ${upstreamRes.status}` });
+    }
+    const upstreamContentType = upstreamRes.headers.get("content-type") || "audio/mpeg";
+    if (upstreamContentType.includes("text/html")) {
+      return res.status(502).json({ error: "Upstream returned HTML instead of audio stream" });
+    }
+    res.status(upstreamRes.status === 206 ? 206 : 200);
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    res.setHeader("Content-Type", upstreamContentType.includes("audio") ? upstreamContentType : "audio/mpeg");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    const contentLength = upstreamRes.headers.get("content-length");
+    if (contentLength) {
+      res.setHeader("Content-Length", contentLength);
+    }
+    const contentRange = upstreamRes.headers.get("content-range");
+    if (contentRange) {
+      res.setHeader("Content-Range", contentRange);
+    }
+    const acceptRanges = upstreamRes.headers.get("accept-ranges");
+    if (acceptRanges) {
+      res.setHeader("Accept-Ranges", acceptRanges);
+    }
+    res.flushHeaders();
+    if (req.method === "HEAD") {
+      abortController.abort();
+      return res.end();
+    }
+    const reader = upstreamRes.body.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (res.writableEnded || res.destroyed) {
+        await reader.cancel();
+        break;
+      }
+      res.write(Buffer.from(value));
+    }
+    if (!res.writableEnded) {
+      res.end();
+    }
+  } catch (err) {
+    if (err?.name !== "AbortError") {
+      console.warn("[Quran Stream Proxy] Error:", err?.message || err);
+    }
+    if (!res.headersSent) {
+      res.status(502).json({ error: "Failed to stream audio" });
+    } else if (!res.writableEnded) {
+      res.end();
+    }
+  }
+});
 app.get("/api/fetch-lesson-text", async (req, res) => {
   const lessonUrl = req.query.url;
   const title = req.query.title || "";
