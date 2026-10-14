@@ -11,7 +11,7 @@ import { initializeFirestore, getFirestore, doc, setDoc, getDoc, collection, get
 import firebaseConfigData from '../../firebase-applet-config.json';
 
 // Mute non-fatal Firestore network retry warnings in browser console
-setLogLevel('error');
+setLogLevel('silent');
 
 const firebaseConfig = {
   apiKey: firebaseConfigData.apiKey,
@@ -25,10 +25,10 @@ const firebaseConfig = {
 // Initialize Firebase App safely
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Firestore with custom Database ID & Long Polling for sandboxed web environments
+// Initialize Firestore with Force Long Polling for sandboxed / iframe web environments
 const dbId = (firebaseConfigData as any).firestoreDatabaseId || undefined;
 export const db = initializeFirestore(app, {
-  experimentalAutoDetectLongPolling: true
+  experimentalForceLongPolling: true
 }, dbId);
 
 export const auth = getAuth(app);

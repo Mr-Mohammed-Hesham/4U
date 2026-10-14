@@ -136,11 +136,8 @@ export function useChatUnread(
             [room.id]: count
           };
         });
-      }, (err: any) => {
-        // Silently handle permission error or initial state without spamming console
-        if (err?.code !== 'permission-denied') {
-          console.warn(`Firestore unread check notice for room ${room.id}:`, err?.message || err);
-        }
+      }, () => {
+        // Silently operate in offline mode without logging warning notices
       });
 
       unsubscribes.push(unsub);
