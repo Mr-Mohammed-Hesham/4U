@@ -34,8 +34,13 @@ import {
   Check,
   Lock,
   FileCheck,
-  GraduationCap
+  GraduationCap,
+  RefreshCw,
+  GitBranch,
+  ExternalLink,
+  X
 } from 'lucide-react';
+import { fetchLiveSatExamBank, getSavedSatMocks, InteractiveMockExam } from '../services/externalBanksService';
 
 interface SatViewProps {
   onSwitchToCurriculum?: () => void;
@@ -75,8 +80,41 @@ export const SatView: React.FC<SatViewProps> = ({
   // Selected SAT Subject
   const [selectedSubject, setSelectedSubject] = useState<SatSubjectId>('math');
 
-  // Math Sections: 'models' (Section 1 - Existing Models) vs 'standardized-bank' (Section 2 - Imported Standardized Tests)
-  const [mathSubSection, setMathSubSection] = useState<'models' | 'standardized-bank'>('models');
+  // Math Sections: 'models' (Section 1) vs 'standardized-bank' (Section 2) vs 'bank-revisions' (Section 3 - Live SAT-Math-Bank)
+  const [mathSubSection, setMathSubSection] = useState<'models' | 'standardized-bank' | 'bank-revisions'>('models');
+
+  // Live SAT-Math-Bank Repository State
+  const [liveSatMocks, setLiveSatMocks] = useState<InteractiveMockExam[]>(() => getSavedSatMocks());
+  const [isSyncingSat, setIsSyncingSat] = useState<boolean>(false);
+  const [lastSatSyncTime, setLastSatSyncTime] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('4u_sat_exams_bank_synced_at');
+    } catch {
+      return null;
+    }
+  });
+  const [selectedMockExam, setSelectedMockExam] = useState<InteractiveMockExam | null>(null);
+  const [mockSearchQuery, setMockSearchQuery] = useState<string>('');
+  const [mockDifficultyFilter, setMockDifficultyFilter] = useState<string>('all');
+
+  const handleSyncSatBank = async (force = false) => {
+    setIsSyncingSat(true);
+    try {
+      const res = await fetchLiveSatExamBank(force);
+      if (res.revisionExams && res.revisionExams.length > 0) {
+        setLiveSatMocks(res.revisionExams);
+        setLastSatSyncTime(new Date().toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-US'));
+      }
+    } catch (err) {
+      console.warn("Failed to sync SAT bank:", err);
+    } finally {
+      setIsSyncingSat(false);
+    }
+  };
+
+  useEffect(() => {
+    handleSyncSatBank(false);
+  }, []);
 
   // Selected Exam Model (Model 1, Model 2, Model 3, or All Bank)
   const [selectedModelId, setSelectedModelId] = useState<string>('model-1');
@@ -367,6 +405,30 @@ export const SatView: React.FC<SatViewProps> = ({
                 <span>📜 {lang === 'ar' ? 'قسم الهياكل EOT' : 'EOT Specs'}</span>
               </button>
             )}
+
+            {/* Live GitHub Repository Connected Badge */}
+            <div className="flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-400/30 px-3 py-1.5 rounded-xl text-xs font-black text-emerald-300">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>مستودع السات المباشر:</span>
+              <a
+                href="https://github.com/Mr-Mohammed-Hesham/SAT-Math-Bank"
+                target="_blank"
+                rel="noreferrer"
+                className="underline hover:text-white flex items-center gap-1 font-mono"
+                title="فتح مستودع SAT-Math-Bank على GitHub"
+              >
+                <span>SAT-Math-Bank</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+              <button
+                onClick={() => handleSyncSatBank(true)}
+                disabled={isSyncingSat}
+                className="p-1 hover:bg-emerald-600/30 rounded-lg transition text-white cursor-pointer ml-1"
+                title="مزامنة فورية الآن مع المستودع"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncingSat ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -452,14 +514,241 @@ export const SatView: React.FC<SatViewProps> = ({
               }`}
             >
               <GraduationCap className="w-4 h-4 text-emerald-400" />
-              <span>{lang === 'ar' ? 'القسم الثاني: الاختبارات المعيارية وبنك الأسئلة' : 'Section 2: Standardized Tests Bank'}</span>
+              <span>{lang === 'ar' ? 'القسم الثاني: الاختبارات المعيارية' : 'Section 2: Standardized Tests'}</span>
+            </button>
+
+            <button
+              onClick={() => setMathSubSection('bank-revisions')}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                mathSubSection === 'bank-revisions'
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/30'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <GitBranch className="w-4 h-4 text-emerald-400" />
+              <span>{lang === 'ar' ? 'القسم الثالث: بنك نماذج المراجعة المباشرة (المستودع)' : 'Section 3: SAT-Math-Bank Live'}</span>
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded-full font-black">
+                {liveSatMocks.length}
+              </span>
             </button>
           </div>
         </div>
       )}
 
-      {/* Render Section 2 (Standardized Tests Bank) OR Section 1 (Models & Practice) */}
-      {selectedSubject === 'math' && mathSubSection === 'standardized-bank' ? (
+      {/* Render Section 3 (SAT-Math-Bank Revisions) OR Section 2 (Standardized Tests Bank) OR Section 1 (Models & Practice) */}
+      {selectedSubject === 'math' && mathSubSection === 'bank-revisions' ? (
+        <div className="space-y-6">
+          {/* Header Info Banner */}
+          <div className="bg-gradient-to-br from-slate-900 via-indigo-950/70 to-slate-900 p-6 rounded-3xl border border-indigo-500/30 text-white shadow-xl space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-black">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>{lang === 'ar' ? 'مربوط مباشرة بمستودع SAT-Math-Bank' : 'Directly synced with SAT-Math-Bank'}</span>
+                </div>
+                <h3 className="text-xl md:text-2xl font-black text-white flex items-center gap-2">
+                  <span>🚀</span> {lang === 'ar' ? 'نماذج محاكاة مراجعة السات الشاملة (Interactive Mocks)' : 'SAT Comprehensive Revision Mocks Bank'}
+                </h3>
+                <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                  {lang === 'ar' 
+                    ? 'نماذج امتحانات تفاعلية موقوتة تحاكي اختبار السات الرقمي الفعلي مع التصحيح الفوري والشروحات. أي نموذج يتم رفعه على المستودع يظهر هنا تلقائياً!'
+                    : 'Interactive timed mock exams mirroring real Digital SAT conditions with instant scoring and explanations. New exams added to the repo appear here instantly!'}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5 shrink-0">
+                <button
+                  onClick={() => handleSyncSatBank(true)}
+                  disabled={isSyncingSat}
+                  className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isSyncingSat ? 'animate-spin' : ''}`} />
+                  <span>{isSyncingSat ? (lang === 'ar' ? 'جاري المزامنة...' : 'Syncing...') : (lang === 'ar' ? 'تحديث فوري من المستودع 🔄' : 'Sync Live Bank 🔄')}</span>
+                </button>
+
+                <a
+                  href="https://github.com/Mr-Mohammed-Hesham/SAT-Math-Bank"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition border border-slate-700 flex items-center gap-1.5"
+                >
+                  <GitBranch className="w-4 h-4 text-emerald-400" />
+                  <span>{lang === 'ar' ? 'مستودع السات' : 'GitHub Repo'}</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            </div>
+
+            {lastSatSyncTime && (
+              <div className="text-[11px] text-slate-400 flex items-center gap-2 pt-2 border-t border-slate-800">
+                <span className="text-emerald-400 font-bold">● {lang === 'ar' ? 'متصل ومحدّث' : 'Connected & Synced'}</span>
+                <span>{lang === 'ar' ? `آخر مزامنة: ${lastSatSyncTime}` : `Last sync: ${lastSatSyncTime}`}</span>
+                <span>• {lang === 'ar' ? `إجمالي النماذج: ${liveSatMocks.length} نموذج تفاعلي` : `Total Mocks: ${liveSatMocks.length}`}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Filter Bar */}
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-3 shadow-sm">
+            {/* Difficulty Filter */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">
+                {lang === 'ar' ? 'مستوى الصعوبة:' : 'Difficulty Level:'}
+              </label>
+              <select
+                value={mockDifficultyFilter}
+                onChange={(e) => setMockDifficultyFilter(e.target.value)}
+                className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer"
+              >
+                <option value="all">{lang === 'ar' ? 'جميع المستويات' : 'All Levels'}</option>
+                <option value="Standard">{lang === 'ar' ? 'قياسي (Standard)' : 'Standard'}</option>
+                <option value="Advanced">{lang === 'ar' ? 'متقدم وتكيفي (Advanced)' : 'Advanced'}</option>
+              </select>
+            </div>
+
+            {/* Search */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">
+                {lang === 'ar' ? 'البحث بالاسم أو الموديل:' : 'Search by name or code:'}
+              </label>
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-3" />
+                <input
+                  type="text"
+                  value={mockSearchQuery}
+                  onChange={(e) => setMockSearchQuery(e.target.value)}
+                  placeholder={lang === 'ar' ? 'مثال: Mock M4, M10, Algebra...' : 'e.g. Mock M4, M10, Algebra...'}
+                  className="w-full pl-3 pr-8 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Cards Grid */}
+          {(() => {
+            const filteredMocks = liveSatMocks.filter((mock) => {
+              if (mockDifficultyFilter !== 'all' && mock.difficulty !== mockDifficultyFilter) return false;
+              if (mockSearchQuery.trim()) {
+                const q = mockSearchQuery.toLowerCase();
+                const matchCode = mock.code.toLowerCase().includes(q);
+                const matchTitle = mock.title.toLowerCase().includes(q) || mock.titleAr.includes(q);
+                const matchDesc = mock.description?.toLowerCase().includes(q) || mock.descriptionAr?.includes(q);
+                const matchTags = mock.tags?.some((t) => t.toLowerCase().includes(q));
+                return matchCode || matchTitle || matchDesc || matchTags;
+              }
+              return true;
+            });
+
+            if (filteredMocks.length === 0) {
+              return (
+                <div className="text-center py-12 bg-slate-50 dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 space-y-3">
+                  <p className="text-sm font-bold text-slate-600 dark:text-slate-400">
+                    {lang === 'ar' ? 'لا توجد نماذج مطابقة للبحث.' : 'No mock models match your criteria.'}
+                  </p>
+                  <button
+                    onClick={() => {
+                      setMockDifficultyFilter('all');
+                      setMockSearchQuery('');
+                    }}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold transition hover:bg-indigo-700 cursor-pointer"
+                  >
+                    {lang === 'ar' ? 'إعادة ضبط الفلاتر' : 'Reset Filters'}
+                  </button>
+                </div>
+              );
+            }
+
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filteredMocks.map((mock) => {
+                  const isAdvanced = mock.difficulty === 'Advanced';
+                  return (
+                    <div
+                      key={mock.id}
+                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm hover:border-indigo-500 dark:hover:border-indigo-500 transition-all flex flex-col justify-between space-y-4 hover:shadow-lg group"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-black px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20 font-mono">
+                            {mock.code}
+                          </span>
+                          <span
+                            className={`text-[11px] font-black px-2.5 py-0.5 rounded-full border ${
+                              isAdvanced
+                                ? 'bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/20'
+                                : 'bg-blue-500/10 text-blue-600 dark:text-blue-300 border-blue-500/20'
+                            }`}
+                          >
+                            {lang === 'ar' ? mock.difficultyAr || mock.difficulty : mock.difficulty}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h4 className="font-black text-sm md:text-base text-slate-900 dark:text-white leading-snug group-hover:text-indigo-400 transition-colors">
+                            {lang === 'ar' ? mock.titleAr : mock.title}
+                          </h4>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1">
+                            {lang === 'ar' ? mock.subtitleAr : mock.subtitle}
+                          </p>
+                        </div>
+
+                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2">
+                          {lang === 'ar' ? mock.descriptionAr : mock.description}
+                        </p>
+
+                        {mock.tags && mock.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {mock.tags.map((tag, tidx) => (
+                              <span
+                                key={tidx}
+                                className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md font-medium"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-bold">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-indigo-400" />
+                            <span>{mock.durationMinutes} {lang === 'ar' ? 'دقيقة' : 'Mins'}</span>
+                          </span>
+                          <span>{mock.totalQuestions} {lang === 'ar' ? 'سؤالاً' : 'Questions'}</span>
+                          <span className="text-emerald-500 font-black">
+                            {lang === 'ar' ? 'تصحيح فوري ✓' : 'Instant Score'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setSelectedMockExam(mock)}
+                            className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-black text-xs transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <Play className="w-3.5 h-3.5 fill-current" />
+                            <span>{lang === 'ar' ? 'بدء المحاكاة التفاعلية' : 'Launch Mock Exam'}</span>
+                          </button>
+                          <a
+                            href={mock.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-indigo-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+                            title={lang === 'ar' ? 'فتح في علامة تبويب جديدة' : 'Open in new tab'}
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </div>
+      ) : selectedSubject === 'math' && mathSubSection === 'standardized-bank' ? (
         <StandardizedMathBankView language={lang} />
       ) : (
         <>
@@ -823,6 +1112,66 @@ export const SatView: React.FC<SatViewProps> = ({
 
           </div>
         </>
+      )}
+
+      {/* FULLSCREEN / EMBEDDED MODAL RUNNER FOR LIVE SAT MOCK EXAM */}
+      {selectedMockExam && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-2 md:p-6"
+          onClick={() => setSelectedMockExam(null)}
+        >
+          <div
+            className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-6xl h-[92vh] flex flex-col overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="p-4 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400 text-lg">
+                  🎓
+                </span>
+                <div>
+                  <h3 className="font-black text-white text-sm md:text-base">
+                    {lang === 'ar' ? selectedMockExam.titleAr : selectedMockExam.title}
+                  </h3>
+                  <p className="text-[11px] text-slate-400 font-mono">
+                    {selectedMockExam.code} • {selectedMockExam.durationMinutes} {lang === 'ar' ? 'دقيقة' : 'Mins'} • {selectedMockExam.totalQuestions} {lang === 'ar' ? 'سؤالاً' : 'Questions'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={selectedMockExam.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition flex items-center gap-1.5"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">{lang === 'ar' ? 'نافذة جديدة' : 'New Tab'}</span>
+                </a>
+                <button
+                  onClick={() => setSelectedMockExam(null)}
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-400 transition cursor-pointer"
+                  title={lang === 'ar' ? 'إغلاق' : 'Close'}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Interactive Iframe */}
+            <div className="flex-1 w-full bg-white relative">
+              <iframe
+                src={selectedMockExam.url}
+                title={selectedMockExam.title}
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -13,5 +13,6 @@ export const streams: Stream[] = [
 
 export const programs: Program[] = [
   { id: 'inspire', name: 'INSPIRE', icon: '🌟', desc: 'برنامج الإلهام والتميز - المحتوى باللغة الإنجليزية', isEnglish: true },
-  { id: 'bridge', name: 'BRIDGE', icon: '🌉', desc: 'برنامج الجسر التأهيلي', isEnglish: false }
+  { id: 'bridge', name: 'BRIDGE (عربي)', icon: '🌉', desc: 'برنامج الجسر التأهيلي - المنهج باللغة العربية', isEnglish: false },
+  { id: 'bridge-en', name: 'BRIDGE (English 2026)', icon: '🇬🇧', desc: 'Bridge Program - English Curriculum 2026', isEnglish: true }
 ];

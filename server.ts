@@ -638,6 +638,161 @@ app.delete("/api/lesson-exams/:lessonKey/:examId", (req, res) => {
   }
 });
 
+// -------------------------------------------------------------
+// 🌐 External Banks Live Connectors (IG-Exam-Bank & SAT-Math-Bank)
+// Real-time synchronization with GitHub repositories:
+// - https://github.com/Mr-Mohammed-Hesham/IG-Exam-Bank
+// - https://github.com/Mr-Mohammed-Hesham/SAT-Math-Bank
+// -------------------------------------------------------------
+let igBankCache: { data: any[]; timestamp: number } | null = null;
+let satBankCache: { data: any[]; timestamp: number } | null = null;
+
+function parseTsArray(code: string, variableName: string): any[] {
+  try {
+    const startIdx = code.indexOf(variableName);
+    if (startIdx === -1) return [];
+    const eqIdx = code.indexOf("=", startIdx);
+    const arrStart = code.indexOf("[", eqIdx);
+    if (arrStart === -1) return [];
+
+    let depth = 0;
+    let arrEnd = -1;
+    let inString = false;
+    let stringChar = "";
+
+    for (let i = arrStart; i < code.length; i++) {
+      const ch = code[i];
+      const prev = code[i - 1];
+      if (inString) {
+        if (ch === stringChar && prev !== "\\") inString = false;
+      } else {
+        if (ch === '"' || ch === "'" || ch === '`') {
+          inString = true;
+          stringChar = ch;
+        } else if (ch === "[") depth++;
+        else if (ch === "]") {
+          depth--;
+          if (depth === 0) {
+            arrEnd = i + 1;
+            break;
+          }
+        }
+      }
+    }
+
+    if (arrEnd !== -1) {
+      const arrCode = code.substring(arrStart, arrEnd);
+      const parsed = new Function("return " + arrCode)();
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (err) {
+    console.warn(`[External Banks Parser] Error parsing ${variableName}:`, err);
+  }
+  return [];
+}
+
+app.get("/api/external-banks/ig", async (req, res) => {
+  const forceRefresh = req.query.refresh === "true";
+  const now = Date.now();
+  const cacheFile = path.join(examsDataDir, "ig_bank_cache.json");
+
+  // In-memory 60s cache
+  if (!forceRefresh && igBankCache && (now - igBankCache.timestamp < 60000)) {
+    return res.json({ success: true, count: igBankCache.data.length, exams: igBankCache.data, source: "memory_cache" });
+  }
+
+  try {
+    const rawUrl = `https://raw.githubusercontent.com/Mr-Mohammed-Hesham/IG-Exam-Bank/main/src/data/igExamsData.ts?_t=${now}`;
+    const abortCtrl = new AbortController();
+    const timeout = setTimeout(() => abortCtrl.abort(), 6000);
+    const upstreamRes = await fetch(rawUrl, { signal: abortCtrl.signal, headers: { "User-Agent": "4U-Platform" } });
+    clearTimeout(timeout);
+
+    if (upstreamRes.ok) {
+      const code = await upstreamRes.text();
+      const exams = parseTsArray(code, "allIGExams");
+      if (exams.length > 0) {
+        igBankCache = { data: exams, timestamp: now };
+        ensureExamsFile();
+        try {
+          fs.writeFileSync(cacheFile, JSON.stringify(exams, null, 2), "utf8");
+        } catch {}
+        return res.json({ success: true, count: exams.length, exams, source: "live_github" });
+      }
+    }
+  } catch (err: any) {
+    console.warn("[IG Exam Bank Sync] Fetch failed, falling back to disk cache:", err?.message || err);
+  }
+
+  // Fallback to disk cache if available
+  if (fs.existsSync(cacheFile)) {
+    try {
+      const diskData = JSON.parse(fs.readFileSync(cacheFile, "utf8"));
+      if (Array.isArray(diskData) && diskData.length > 0) {
+        igBankCache = { data: diskData, timestamp: now };
+        return res.json({ success: true, count: diskData.length, exams: diskData, source: "disk_cache" });
+      }
+    } catch {}
+  }
+
+  if (igBankCache) {
+    return res.json({ success: true, count: igBankCache.data.length, exams: igBankCache.data, source: "stale_cache" });
+  }
+
+  return res.json({ success: true, count: 0, exams: [], source: "empty" });
+});
+
+app.get("/api/external-banks/sat", async (req, res) => {
+  const forceRefresh = req.query.refresh === "true";
+  const now = Date.now();
+  const cacheFile = path.join(examsDataDir, "sat_bank_cache.json");
+
+  // In-memory 60s cache
+  if (!forceRefresh && satBankCache && (now - satBankCache.timestamp < 60000)) {
+    return res.json({ success: true, count: satBankCache.data.length, revisionExams: satBankCache.data, source: "memory_cache" });
+  }
+
+  try {
+    const rawUrl = `https://raw.githubusercontent.com/Mr-Mohammed-Hesham/SAT-Math-Bank/main/src/data/fullExamsData.ts?_t=${now}`;
+    const abortCtrl = new AbortController();
+    const timeout = setTimeout(() => abortCtrl.abort(), 6000);
+    const upstreamRes = await fetch(rawUrl, { signal: abortCtrl.signal, headers: { "User-Agent": "4U-Platform" } });
+    clearTimeout(timeout);
+
+    if (upstreamRes.ok) {
+      const code = await upstreamRes.text();
+      const revisionExams = parseTsArray(code, "interactiveRevisionExams");
+      if (revisionExams.length > 0) {
+        satBankCache = { data: revisionExams, timestamp: now };
+        ensureExamsFile();
+        try {
+          fs.writeFileSync(cacheFile, JSON.stringify(revisionExams, null, 2), "utf8");
+        } catch {}
+        return res.json({ success: true, count: revisionExams.length, revisionExams, source: "live_github" });
+      }
+    }
+  } catch (err: any) {
+    console.warn("[SAT Math Bank Sync] Fetch failed, falling back to disk cache:", err?.message || err);
+  }
+
+  // Fallback to disk cache if available
+  if (fs.existsSync(cacheFile)) {
+    try {
+      const diskData = JSON.parse(fs.readFileSync(cacheFile, "utf8"));
+      if (Array.isArray(diskData) && diskData.length > 0) {
+        satBankCache = { data: diskData, timestamp: now };
+        return res.json({ success: true, count: diskData.length, revisionExams: diskData, source: "disk_cache" });
+      }
+    } catch {}
+  }
+
+  if (satBankCache) {
+    return res.json({ success: true, count: satBankCache.data.length, revisionExams: satBankCache.data, source: "stale_cache" });
+  }
+
+  return res.json({ success: true, count: 0, revisionExams: [], source: "empty" });
+});
+
 // Helper function to inject the dynamic host URL for WhatsApp and social media bots
 function transformHtmlForSocialPreviews(rawHtml: string, req: express.Request): string {
   const forwardedProto = (req.headers['x-forwarded-proto'] as string) || '';

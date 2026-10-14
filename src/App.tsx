@@ -36,7 +36,7 @@ import {
   Announcement, 
   ExamHistoryItem 
 } from './lib/firebase';
-import { WeeklyStudyPlanner } from './components/layout';
+import { WeeklyStudyPlanner, SmartNavigatorBar, StudentServicesMenu, UnifiedCurriculumExplorer } from './components/layout';
 import { STUDY_QUOTES } from './data/quotes';
 import { extractTextFromLessonUrl } from './utils/pdfParser';
 import { generateComprehensiveSpokenLessonLecture, mathToSpokenArabicText } from './utils/lessonVoiceLectureEngine';
@@ -1992,7 +1992,7 @@ export default function App() {
     // Program code: 'bridge' -> '-Bri', 'inspire' -> '-Ins', otherwise empty
     let programCode = '';
     if (appState.program) {
-      if (appState.program.id === 'bridge') programCode = '-Bri';
+      if (appState.program.id === 'bridge' || appState.program.id === 'bridge-en') programCode = '-Bri';
       else if (appState.program.id === 'inspire') programCode = '-Ins';
     }
     
@@ -2033,6 +2033,14 @@ export default function App() {
       if (DB.curriculum[baseKey]) return DB.curriculum[baseKey];
       const strippedBaseKey = baseKey.startsWith('UAE-') ? baseKey.substring(4) : baseKey;
       if (DB.curriculum[strippedBaseKey]) return DB.curriculum[strippedBaseKey];
+
+      // Advanced without program fallback (default to bridge or inspire)
+      if (key.includes('-advanced-') || key.includes('-adv-')) {
+        const bridgeKey = key.replace('-advanced-', '-bridge-').replace('-adv-', '-bridge-');
+        if (DB.curriculum[bridgeKey]) return DB.curriculum[bridgeKey];
+        const strippedBridge = bridgeKey.startsWith('UAE-') ? bridgeKey.substring(4) : bridgeKey;
+        if (DB.curriculum[strippedBridge]) return DB.curriculum[strippedBridge];
+      }
     }
     // For other countries or subjects, we do not generate mock content. Show as "🚧 قريباً" / "قيد التحضير"
     return null;
@@ -2041,47 +2049,17 @@ export default function App() {
   // Helper to determine if a curriculum is imported and active for academic year 2026 (matching 2025 curriculum)
   const isCurriculumImportedFor2026 = (stateVal: AppState = appState): boolean => {
     if (!stateVal.subject || !stateVal.grade || !stateVal.stream) return false;
+    const testKey = getCurriculumKey({ ...stateVal, academicYear: '2026' });
+    const curr = getCurriculum(testKey, { ...stateVal, academicYear: '2026' });
+    if (curr && curr.units && curr.units.length > 0) return true;
+
+    // Check base key
+    const baseKey = getCurriculumKey({ ...stateVal, academicYear: undefined });
+    const baseCurr = getCurriculum(baseKey, { ...stateVal, academicYear: undefined });
+    if (baseCurr && baseCurr.units && baseCurr.units.length > 0) return true;
+
     const gradeId = Number(stateVal.grade.id);
-    const streamId = stateVal.stream.id;
-    const subjectId = stateVal.subject.id;
-    const programId = stateVal.program?.id;
-
-    // 1. Grade 12 Advanced (Bridge & Inspire) Math & Physics
-    if (gradeId === 12 && streamId === 'advanced') {
-      if (subjectId === 'math' && (programId === 'bridge' || programId === 'inspire' || !programId)) {
-        return true;
-      }
-      if (subjectId === 'physics' && (programId === 'bridge' || programId === 'inspire' || !programId)) {
-        return true;
-      }
-    }
-
-    // 2. Grade 12 General Physics & Math
-    if (gradeId === 12 && streamId === 'general') {
-      if (subjectId === 'physics' || subjectId === 'math') {
-        return true;
-      }
-    }
-
-    // 3. Grade 10 General Math
-    if (gradeId === 10 && streamId === 'general' && subjectId === 'math') {
-      return true;
-    }
-
-    // 4. Grade 9 Advanced (Bridge & Inspire) Physics
-    if (gradeId === 9 && streamId === 'advanced') {
-      if (subjectId === 'physics' && (programId === 'bridge' || programId === 'inspire' || !programId)) {
-        return true;
-      }
-    }
-
-    // 5. Grade 11 Advanced (Bridge) Physics & Math
-    if (gradeId === 11 && streamId === 'advanced') {
-      if ((subjectId === 'physics' || subjectId === 'math') && (programId === 'bridge' || !programId)) {
-        return true;
-      }
-    }
-
+    if ([12, 11, 10, 9, 8, 7, 5].includes(gradeId)) return true;
     return false;
   };
 
@@ -2520,23 +2498,51 @@ export default function App() {
     setHistory(prev => [...prev, { ...appState }]);
     setAppState(prev => {
       const next = { ...prev, ...updater };
-      // Clear lower selections if higher selection changes
+      // Clear lower selections ONLY if higher selection changes and lower is NOT explicitly provided in updater
       if (updater.country !== undefined) {
-        next.term = null; next.stream = null; next.program = null; next.grade = null; next.subject = null; next.academicYear = null; next.unit = null; next.lesson = null;
+        if (updater.term === undefined) next.term = null;
+        if (updater.stream === undefined) next.stream = null;
+        if (updater.program === undefined) next.program = null;
+        if (updater.grade === undefined) next.grade = null;
+        if (updater.subject === undefined) next.subject = null;
+        if (updater.academicYear === undefined) next.academicYear = null;
+        if (updater.unit === undefined) next.unit = null;
+        if (updater.lesson === undefined) next.lesson = null;
       } else if (updater.term !== undefined) {
-        next.stream = null; next.program = null; next.grade = null; next.subject = null; next.academicYear = null; next.unit = null; next.lesson = null;
+        if (updater.stream === undefined) next.stream = null;
+        if (updater.program === undefined) next.program = null;
+        if (updater.grade === undefined) next.grade = null;
+        if (updater.subject === undefined) next.subject = null;
+        if (updater.academicYear === undefined) next.academicYear = null;
+        if (updater.unit === undefined) next.unit = null;
+        if (updater.lesson === undefined) next.lesson = null;
       } else if (updater.stream !== undefined) {
-        next.program = null; next.grade = null; next.subject = null; next.academicYear = null; next.unit = null; next.lesson = null;
+        if (updater.program === undefined) next.program = null;
+        if (updater.grade === undefined) next.grade = null;
+        if (updater.subject === undefined) next.subject = null;
+        if (updater.academicYear === undefined) next.academicYear = null;
+        if (updater.unit === undefined) next.unit = null;
+        if (updater.lesson === undefined) next.lesson = null;
       } else if (updater.program !== undefined) {
-        next.grade = null; next.subject = null; next.academicYear = null; next.unit = null; next.lesson = null;
+        if (updater.grade === undefined) next.grade = null;
+        if (updater.subject === undefined) next.subject = null;
+        if (updater.academicYear === undefined) next.academicYear = null;
+        if (updater.unit === undefined) next.unit = null;
+        if (updater.lesson === undefined) next.lesson = null;
       } else if (updater.grade !== undefined) {
-        next.subject = null; next.academicYear = null; next.unit = null; next.lesson = null;
+        if (updater.subject === undefined) next.subject = null;
+        if (updater.academicYear === undefined) next.academicYear = null;
+        if (updater.unit === undefined) next.unit = null;
+        if (updater.lesson === undefined) next.lesson = null;
       } else if (updater.subject !== undefined) {
-        next.academicYear = null; next.unit = null; next.lesson = null;
+        if (updater.academicYear === undefined) next.academicYear = null;
+        if (updater.unit === undefined) next.unit = null;
+        if (updater.lesson === undefined) next.lesson = null;
       } else if (updater.academicYear !== undefined) {
-        next.unit = null; next.lesson = null;
+        if (updater.unit === undefined) next.unit = null;
+        if (updater.lesson === undefined) next.lesson = null;
       } else if (updater.unit !== undefined) {
-        next.lesson = null;
+        if (updater.lesson === undefined) next.lesson = null;
       }
       return next;
     });
@@ -2956,39 +2962,56 @@ export default function App() {
     });
   };
 
-  const openLesson = () => {
-    if (appState.lesson?.lessonUrl) {
+  const openLesson = (targetLesson?: Lesson | null, targetUnit?: Unit | null) => {
+    const l = targetLesson || appState.lesson;
+    const u = targetUnit || appState.unit;
+    if (l?.lessonUrl) {
       setActiveEmbeddedViewer({
         isOpen: true,
-        title: appState.lesson.title,
+        title: l.title,
         contentType: 'lesson',
-        url: appState.lesson.lessonUrl,
-        unitName: appState.unit?.name,
+        url: l.lessonUrl,
+        unitName: u?.name,
         subjectName: appState.subject?.name
       });
-      toggleLessonRead(appState.lesson, appState.unit!, true);
+      if (u) {
+        toggleLessonRead(l, u, true);
+      }
+    } else if (l && u) {
+      navigateTo({ unit: u, lesson: l });
     } else {
       showToastMsg('⚠️ رابط الشرح غير متوفر لهذا الدرس حالياً');
     }
   };
 
-  const openExam = (specificExam?: { title: string; url: string; icon?: string }) => {
-    if (specificExam && specificExam.url) {
+  const openExam = (targetLessonOrExam?: Lesson | { title: string; url: string; icon?: string } | null, targetUnit?: Unit | null, specificExam?: { title: string; url: string; icon?: string }) => {
+    let l = appState.lesson;
+    let u = targetUnit || appState.unit;
+    let specExam = specificExam;
+
+    if (targetLessonOrExam && 'id' in targetLessonOrExam && typeof (targetLessonOrExam as any).id === 'number') {
+      l = targetLessonOrExam as Lesson;
+    } else if (targetLessonOrExam && 'url' in targetLessonOrExam) {
+      specExam = targetLessonOrExam as { title: string; url: string; icon?: string };
+    }
+
+    if (specExam && specExam.url) {
       setActiveEmbeddedViewer({
         isOpen: true,
-        title: specificExam.title || `اختبار: ${appState.lesson?.title || ''}`,
+        title: specExam.title || `اختبار: ${l?.title || ''}`,
         contentType: 'exam',
-        url: specificExam.url,
-        unitName: appState.unit?.name,
+        url: specExam.url,
+        unitName: u?.name,
         subjectName: appState.subject?.name
       });
-      if (appState.lesson && appState.unit) {
-        markExamDone(appState.lesson, appState.unit);
+      if (l && u) {
+        markExamDone(l, u);
       }
       return;
     }
 
-    if (appState.lesson) {
+    if (l) {
+      setAppState(prev => ({ ...prev, lesson: l, unit: u || prev.unit }));
       setShowLessonExamsModal(true);
     } else {
       showToastMsg('⚠️ يرجى اختيار درس للوصول إلى اختباراته');
@@ -3322,178 +3345,65 @@ export default function App() {
               <span>رجوع</span>
             </button>
 
-            {/* Bookmarks */}
+            {/* Quran Radio Mini Toggle Button */}
             <button 
-              onClick={() => setShowFavoritesModal(true)}
-              className="bg-white/10 hover:bg-white/20 p-2 rounded-xl backdrop-blur-sm border border-white/15 transition flex items-center gap-1.5 text-sm font-semibold relative cursor-pointer"
-              title="المفضلة"
+              onClick={() => setShowRadioPanel(!showRadioPanel)}
+              className={`p-2 rounded-xl backdrop-blur-sm border transition flex items-center gap-1.5 text-sm font-bold cursor-pointer ${
+                isRadioPlaying 
+                  ? 'bg-emerald-600 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' 
+                  : 'bg-white/10 hover:bg-white/20 text-emerald-100 border-white/15'
+              }`}
+              title="راديو القرآن الكريم المباشر"
             >
-              <Heart className="w-4 h-4 text-red-300 fill-red-300" />
-              <span className="hidden sm:inline">المفضلة</span>
-              {favorites.length > 0 && (
-                <span className="absolute -top-1.5 -left-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shadow-md">
-                  {favorites.length}
-                </span>
+              <Radio className={`w-4 h-4 ${isRadioPlaying ? 'animate-pulse text-emerald-400' : ''}`} />
+              <span className="hidden md:inline">
+                {isRadioPlaying 
+                  ? `إذاعة ${QURAN_RECITERS.find(r => r.id === activeReciterId)?.name.split(' ')[1] || 'القرآن'}`
+                  : 'إذاعة القرآن'}
+              </span>
+              {isRadioPlaying && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-ping" />
               )}
             </button>
 
-            {/* Platform Share Button */}
-            <button 
-              onClick={() => setShowShareModal({
-                title: 'المنصة التعليمية المتكاملة 4U | م. محمد هشام',
-                url: window.location.href,
-                description: 'منصة تعليمية متكاملة للمناهج والخطط الدراسية التفاعلية: اختبارات إلكترونية ذاتية، شروحات ذكية، ومكتبة شاملة لكافة المواد والصفوف.'
-              })}
-              className="bg-white/10 hover:bg-white/20 p-2 rounded-xl backdrop-blur-sm border border-white/15 transition flex items-center gap-1.5 text-sm font-semibold relative cursor-pointer text-amber-300"
-              title="مشاركة المنصة مع زملائك"
-            >
-              <Share2 className="w-4 h-4 text-amber-300" />
-              <span className="hidden sm:inline">مشاركة</span>
-            </button>
-
-            {/* Student Dashboard Statistics */}
-            <button 
-              onClick={() => setShowStatsModal(true)}
-              className="bg-indigo-600/30 hover:bg-indigo-600/50 p-2 rounded-xl backdrop-blur-sm border border-indigo-400/40 text-indigo-200 transition flex items-center gap-1.5 text-sm font-bold cursor-pointer shadow-sm"
-              title="لوحة تحكم الطالب وإحصائياتي والشهادة"
-            >
-              <BarChart2 className="w-4 h-4 text-emerald-300" />
-              <span className="hidden sm:inline">لوحة تحكم الطالب 🎓</span>
-            </button>
-
-            {/* Flashcards & Quick Reviews Button */}
-            <button 
-              onClick={() => {
+            {/* Student Services Suite Dropdown */}
+            <StudentServicesMenu
+              favoritesCount={favorites.length}
+              studyPlanCount={studyPlan.length}
+              pendingMistakesCount={pendingMistakesCount}
+              unreadChatCount={Number(totalUnreadCount) || 0}
+              dailyReminderActive={dailyReminderActive}
+              isAdmin={isAdmin}
+              subscriberCount={subscriberCount}
+              isStandalone={isStandalone}
+              isRefreshing={isRefreshing}
+              onOpenFavorites={() => setShowFavoritesModal(true)}
+              onOpenStats={() => setShowStatsModal(true)}
+              onOpenFlashcards={() => {
                 if (appState.subject?.id) {
                   setFlashcardsSubject(appState.subject.id.toLowerCase());
                 }
                 setShowFlashcardsModal(true);
               }}
-              className="bg-purple-600/40 hover:bg-purple-600/60 p-2 md:px-3 rounded-xl backdrop-blur-md border border-purple-400/50 text-purple-200 transition flex items-center gap-1.5 text-sm font-extrabold cursor-pointer shadow-md shrink-0"
-              title="بطاقات التكرار المتباعد والمراجعة السريعة"
-            >
-              <Sparkles className="w-4 h-4 text-amber-300" />
-              <span className="hidden sm:inline">بطاقات المراجعة 🎴</span>
-            </button>
-
-            {/* Scientific & Graphing Calculator Button */}
-            <button 
-              onClick={() => setShowCalculatorModal(true)}
-              className="bg-emerald-600/40 hover:bg-emerald-600/60 p-2 md:px-3 rounded-xl backdrop-blur-md border border-emerald-400/50 text-emerald-100 transition flex items-center gap-1.5 text-sm font-extrabold cursor-pointer shadow-md shrink-0"
-              title="الآلة الحاسبة العلمية والبيانية (رسم بياني، مصفوفات، معادلات، إحصاء)"
-            >
-              <Calculator className="w-4 h-4 text-amber-300" />
-              <span className="hidden sm:inline">آلة حاسبة علمية 🧮</span>
-            </button>
-
-            {/* Student Mistakes Log & Smart Notebook Button */}
-            <button 
-              onClick={() => setShowMistakesModal(true)}
-              className="bg-rose-600/40 hover:bg-rose-600/60 p-2 md:px-3 rounded-xl backdrop-blur-md border border-rose-400/50 text-rose-100 transition flex items-center gap-1.5 text-sm font-extrabold cursor-pointer shadow-md shrink-0 relative"
-              title="دفتر أخطائي وسجل الملاحظات الذكية"
-            >
-              <BookMarked className="w-4 h-4 text-amber-300" />
-              <span className="hidden sm:inline">دفتر أخطائي 📓</span>
-              {pendingMistakesCount > 0 && (
-                <span className="bg-rose-500 text-white font-mono text-[10px] px-1.5 py-0.2 rounded-full border border-white/50 animate-pulse">
-                  {pendingMistakesCount}
-                </span>
-              )}
-            </button>
-
-            {/* General Community Chat Button */}
-            <button 
-              onClick={() => {
+              onOpenCalculator={() => setShowCalculatorModal(true)}
+              onOpenMistakes={() => setShowMistakesModal(true)}
+              onOpenChat={() => {
                 setShowGeneralChatModal(true);
                 markRoomAsRead(activeChatRoomId);
               }}
-              className="bg-amber-500/30 hover:bg-amber-500/50 p-2 md:px-3 rounded-xl backdrop-blur-md border border-amber-400/50 text-amber-200 transition flex items-center gap-1.5 text-sm font-extrabold cursor-pointer shadow-md shrink-0 relative"
-              title="الشات العام وغرف التواصل الطلابية"
-            >
-              <MessageSquare className="w-4 h-4 text-amber-300 animate-pulse" />
-              <span className="hidden sm:inline">الشات العام 💬</span>
-              {Number(totalUnreadCount) > 0 ? (
-                <span className="bg-rose-500 text-white font-mono text-[10px] px-1.5 py-0.2 rounded-full border border-white/60 font-black animate-bounce shadow-lg flex items-center justify-center min-w-[18px]">
-                  {totalUnreadCount}
-                </span>
-              ) : (
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
-              )}
-            </button>
-
-            {/* Weekly Study Planner Button */}
-            <button 
-              onClick={() => setShowPlannerModal(true)}
-              className="bg-white/10 hover:bg-white/20 p-2 rounded-xl backdrop-blur-sm border border-white/15 transition flex items-center gap-1.5 text-sm font-semibold cursor-pointer relative"
-              title="جدول المذاكرة الأسبوعي"
-            >
-              <span>📅</span>
-              <span className="hidden sm:inline">جدول المذاكرة</span>
-              {studyPlan.length > 0 && (
-                <span className="absolute -top-1.5 -left-1.5 bg-amber-500 text-slate-950 rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-extrabold shadow-md">
-                  {studyPlan.length}
-                </span>
-              )}
-            </button>
-
-            {/* Dafter Khana external link */}
-            <a 
-              href="https://hesham-afandi.github.io/DafterKhana/" 
-              target="_blank" 
-              rel="noreferrer"
-              className="bg-white/10 hover:bg-white/20 p-2 rounded-xl backdrop-blur-sm border border-white/15 transition flex items-center gap-1.5 text-sm font-semibold"
-              title="مكتبة دفتر خانة"
-            >
-              <span>📓</span>
-              <span className="hidden sm:inline">دفتر خانة</span>
-            </a>
-
-            {/* Daily Reminder Button */}
-            <button 
-              onClick={() => setShowReminderSettingModal(true)}
-              className="bg-white/10 hover:bg-white/20 p-2 rounded-xl backdrop-blur-sm border border-white/15 transition flex items-center gap-1.5 text-sm font-semibold cursor-pointer"
-              title="التذكير اليومي"
-            >
-              <span>{dailyReminderActive ? '⏰' : '🔕'}</span>
-              <span className="hidden sm:inline">التذكير اليومي</span>
-            </button>
-
-            {/* Summary Review Notes Button */}
-            <button 
-              onClick={() => setShowSummaryNotesModal(true)}
-              className="bg-white/10 hover:bg-white/20 p-2 rounded-xl backdrop-blur-sm border border-white/15 transition flex items-center gap-1.5 text-sm font-semibold cursor-pointer"
-              title="مذكرة مراجعة الامتحان"
-            >
-              <span>📝</span>
-              <span className="hidden sm:inline">مراجعة الامتحان</span>
-            </button>
-
-            {/* Direct PWA Install Button (Shown only when in browser, hidden when installed/standalone) */}
-            {!isStandalone && (
-              <button 
-                onClick={handleInstallApp}
-                className="bg-white/10 hover:bg-white/20 p-2 rounded-xl backdrop-blur-sm border border-white/15 transition flex items-center gap-1 text-sm font-semibold cursor-pointer text-amber-300"
-                title="تثبيت التطبيق مباشرة"
-              >
-                <Download className="w-4 h-4 text-amber-300" />
-                <span className="hidden sm:inline">تثبيت</span>
-              </button>
-            )}
-
-            {/* Admin-Only Subscribers Database Panel Button */}
-            {isAdmin && (
-              <button 
-                onClick={openSubscribersDatabase}
-                className="bg-gradient-to-r from-amber-500/40 via-amber-600/30 to-indigo-600/40 hover:from-amber-500/50 hover:to-indigo-600/50 p-2 md:px-3 rounded-xl backdrop-blur-md border border-amber-400/80 text-amber-300 transition flex items-center gap-1.5 text-xs font-black cursor-pointer shadow-xl animate-pulse shrink-0"
-                title="لوحة تحكم الأدمن وقاعدة بيانات المشتركين"
-              >
-                <Crown className="w-4 h-4 text-amber-300 shrink-0" />
-                <span className="inline font-bold">لوحة الأدمن</span>
-                <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded-full shadow">
-                  {subscriberCount}
-                </span>
-              </button>
-            )}
+              onOpenPlanner={() => setShowPlannerModal(true)}
+              onOpenReminder={() => setShowReminderSettingModal(true)}
+              onOpenSummaryNotes={() => setShowSummaryNotesModal(true)}
+              onOpenShare={() => setShowShareModal({
+                title: 'المنصة التعليمية المتكاملة 4U | م. محمد هشام',
+                url: window.location.href,
+                description: 'منصة تعليمية متكاملة للمناهج والخطط الدراسية التفاعلية: اختبارات إلكترونية ذاتية، شروحات ذكية، ومكتبة شاملة لكافة المواد والصفوف.'
+              })}
+              onInstallApp={handleInstallApp}
+              onOpenAdmin={openSubscribersDatabase}
+              onRefresh={handlePlatformRefresh}
+              language={language}
+            />
 
             {/* Current User Profile Pill */}
             {currentUser ? (
@@ -3534,17 +3444,6 @@ export default function App() {
               </button>
             )}
 
-            {/* Always-visible Platform Refresh / Reload Button */}
-            <button 
-              onClick={handlePlatformRefresh}
-              disabled={isRefreshing}
-              className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 p-2 rounded-xl backdrop-blur-sm border border-emerald-400/40 transition flex items-center gap-1.5 text-xs font-bold cursor-pointer active:scale-95 shadow-md shrink-0"
-              title="تحديث المنصة بالكامل وجلب أحدث الدروس والبيانات"
-            >
-              <RefreshCw className={`w-4 h-4 text-emerald-300 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span className="hidden md:inline">تحديث المنصة</span>
-            </button>
-
             {/* Theme toggler */}
             <button 
               onClick={toggleTheme}
@@ -3554,35 +3453,14 @@ export default function App() {
               {isDarkMode ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-slate-200" />}
             </button>
 
-            {/* Quran Radio Toggle Button */}
-            <button 
-              onClick={() => setShowRadioPanel(!showRadioPanel)}
-              className={`p-2 rounded-xl backdrop-blur-sm border transition flex items-center gap-1.5 text-sm font-bold cursor-pointer ${
-                isRadioPlaying 
-                  ? 'bg-emerald-600 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' 
-                  : 'bg-white/10 hover:bg-white/20 text-emerald-100 border-white/15'
-              }`}
-              title="راديو القرآن الكريم المباشر"
-            >
-              <Radio className={`w-4 h-4 ${isRadioPlaying ? 'animate-pulse text-emerald-400' : ''}`} />
-              <span className="hidden md:inline">
-                {isRadioPlaying 
-                  ? `إذاعة ${QURAN_RECITERS.find(r => r.id === activeReciterId)?.name.split(' ')[1] || 'القرآن'}`
-                  : 'إذاعة القرآن'}
-              </span>
-              {isRadioPlaying && (
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-ping" />
-              )}
-            </button>
-
             {/* Manual Save Progress Button */}
             <button 
               onClick={handleManualSaveProgress}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-3.5 rounded-xl transition flex items-center gap-1.5 text-sm font-bold shadow-md cursor-pointer"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-3 rounded-xl transition flex items-center gap-1 text-xs font-bold shadow-md cursor-pointer"
               title="حفظ التقدم يدوياً"
             >
               <span>💾</span>
-              <span>حفظ التقدم</span>
+              <span className="hidden md:inline">حفظ</span>
             </button>
 
             {/* Home button */}
@@ -3823,6 +3701,25 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* 🧭 SMART CASCADING CURRICULUM NAVIGATOR BAR */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-3 w-full">
+        <SmartNavigatorBar
+          appState={appState}
+          onNavigate={(updater) => navigateTo(updater)}
+          activePlatformSection={activePlatformSection}
+          onSectionChange={(sec) => {
+            setActivePlatformSection(sec);
+            if (sec === 'curriculum') {
+              setCurriculumSubView(appState.term ? 'terms' : 'landing');
+            }
+          }}
+          activeCurriculum={getCurriculum(getCurriculumKey())}
+          language={language}
+          onReset={goHome}
+          isCurriculumImported2026={isCurriculumImportedFor2026(appState)}
+        />
+      </div>
 
       {/* 3. APPLICATION WORKSPACE CONTAINER */}
       <main id="app" className="max-w-7xl mx-auto px-4 md:px-6 pb-16 flex-1 w-full">
@@ -4668,8 +4565,8 @@ export default function App() {
               </div>
             )}
 
-            {/* VIEW 6: UNITS LIST (صفحة المنهج) */}
-            {appState.term && appState.stream && appState.grade && appState.subject && appState.academicYear && !appState.unit && (
+            {/* VIEW 6: UNITS LIST & CURRICULUM EXPLORER (صفحة المنهج والوحدات) */}
+            {appState.term && appState.stream && appState.grade && appState.subject && appState.academicYear && !appState.lesson && (
               <div className="fade-in">
                 {(() => {
                   const key = getCurriculumKey();
@@ -4888,181 +4785,32 @@ export default function App() {
                         </div>
                       )}
 
-                      <h3 className="text-2xl font-black mb-6 text-gray-800 dark:text-white flex items-center gap-2">
-                        <span>📚</span> {isEnglish ? 'Curriculum Units' : 'الوحدات الدراسية'}
-                      </h3>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {curriculum.units.map(unit => {
-                          const lessonCount = unit.lessons.length;
-                          const compRate = getUnitCompletionRate(`${key}-U${unit.id}`, lessonCount);
-                          
-                          return (
-                            <button 
-                              key={unit.id}
-                              onClick={() => navigateTo({ unit })}
-                              className="card-hover bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-md border-2 border-transparent hover:border-indigo-500 text-right cursor-pointer flex flex-col justify-between"
-                            >
-                              <div className="flex gap-4 mb-4 items-start w-full">
-                                <div className={`bg-gradient-to-br ${unit.color} text-white w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-md flex-shrink-0`}>
-                                  {unit.icon}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
-                                    <h3 className="font-extrabold text-lg dark:text-white">{unit.name}</h3>
-                                    {compRate === 100 && <span className="completed-badge">{isEnglish ? '✓ Completed' : '✓ مكتمل'}</span>}
-                                  </div>
-                                  {unit.description && <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-2">{unit.description}</p>}
-                                  <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                                    📖 {lessonCount} {isEnglish ? 'lessons' : 'دروس'} {compRate > 0 && `• ${isEnglish ? 'Progress' : 'انجاز'} ${compRate}%`}
-                                  </span>
-                                  {compRate > 0 && (
-                                    <div className="lesson-progress-bar mt-2">
-                                      <div className="lesson-progress-fill" style={{ width: `${compRate}%` }}></div>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div className="flex items-center justify-between text-indigo-600 dark:text-indigo-400 font-bold text-xs border-t border-slate-100 dark:border-slate-800/80 pt-3">
-                                <span>{isEnglish ? 'Browse Lessons' : 'استعراض الدروس'}</span>
-                                <span>←</span>
-                              </div>
-                            </button>
-                          );
+                      {/* Unified Curriculum Explorer Hub (Units & Lessons seamlessly in one modern view) */}
+                      <UnifiedCurriculumExplorer
+                        curriculum={curriculum}
+                        appState={appState}
+                        onSelectUnitAndLesson={(unit, lesson) => navigateTo({ unit, lesson })}
+                        onSelectUnitOnly={(unit) => setAppState(prev => ({ ...prev, unit }))}
+                        onOpenLessonNotes={(lesson, unit) => openLesson(lesson, unit)}
+                        onOpenPresentation={(lesson, unit) => setActivePresentationLesson({
+                          isOpen: true,
+                          lesson,
+                          unit
                         })}
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-
-            {/* VIEW 7: LESSONS LIST */}
-            {appState.term && appState.stream && appState.grade && appState.subject && appState.unit && !appState.lesson && (
-              <div className="fade-in">
-                {(() => {
-                  const key = getCurriculumKey();
-                  const curriculum = getCurriculum(key);
-                  const isEnglish = curriculum?.isEnglish || appState.program?.id === 'inspire' || appState.program?.isEnglish;
-                  const subjectDisplayName = isEnglish ? getEnglishSubjectName(appState.subject.name, appState.subject.id) : appState.subject.name;
-                  const gradeDisplayName = isEnglish ? getEnglishGradeName(appState.grade.name, appState.grade.id) : appState.grade.name;
-                  const termDisplayName = isEnglish ? getEnglishTermName(appState.term.name, appState.term.id) : appState.term.name;
-                  
-                  return (
-                    <div>
-                      <div className="gradient-violet rounded-3xl p-6 md:p-8 text-white mb-8 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6">
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-amber-300">
-                              {appState.subject.icon} {subjectDisplayName}
-                            </span>
-                            <span className="bg-emerald-400 text-slate-950 font-black px-2.5 py-0.5 rounded-full text-xs shadow-sm">
-                              📅 {appState.academicYear === '2025' ? 'منهج 2025' : 'منهج 2026'}
-                            </span>
-                          </div>
-                          <h2 className="text-3xl font-black mb-1">{appState.unit.icon} {appState.unit.name}</h2>
-                          <p className="opacity-90 text-sm font-medium">
-                            {subjectDisplayName} • {gradeDisplayName} • {termDisplayName} • 📅 {appState.academicYear === '2025' ? 'منهج 2025' : 'منهج 2026'}
-                          </p>
-                        </div>
-
-                        {/* Student Book Button - Opens embedded inside the platform */}
-                        <button 
-                          type="button"
-                          onClick={() => {
-                            const bookUrl = getStudentBookUrl();
-                            const targetUrl = bookUrl || `https://www.google.com/search?q=${encodeURIComponent(`كتاب الطالب ${appState.subject.name} الصف ${appState.grade.name} ${appState.term.name} منهج ${appState.stream.name} pdf`)}`;
-                            setActiveEmbeddedViewer({
-                              isOpen: true,
-                              title: isEnglish ? `Student Textbook - ${subjectDisplayName}` : `كتاب الطالب المنهجي - ${subjectDisplayName}`,
-                              contentType: 'lesson',
-                              url: targetUrl,
-                              unitName: `${gradeDisplayName} • ${appState.unit?.name || ''}`,
-                              subjectName: subjectDisplayName
-                            });
-                          }}
-                          className="bg-white/10 hover:bg-white/20 p-3 rounded-2xl border border-white/20 backdrop-blur-md transition flex items-center gap-2 text-xs font-black cursor-pointer shadow-md select-none w-full md:w-auto text-center justify-center shrink-0 active:scale-95"
-                          title={isEnglish ? "Open Student Textbook (In-App)" : "فتح كتاب الطالب المنهجي داخل المنصة"}
-                        >
-                          <span className="text-lg">📖</span>
-                          <span>{isEnglish ? "Student Book (PDF)" : "كتاب الطالب المنهجي (PDF)"}</span>
-                          <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">4U Viewer</span>
-                        </button>
-                      </div>
-
-                      <h3 className="text-2xl font-black mb-6 text-gray-800 dark:text-white flex items-center gap-2">
-                        <span>📖</span> {isEnglish ? 'Lessons & Topics' : 'الدروس والاجزاء العلمية'}
-                      </h3>
-
-                      <div className="space-y-4">
-                        {appState.unit.lessons.map((l, index) => {
-                          const lessonKey = `${key}-U${appState.unit!.id}-L${l.id}`;
-                          const isRead = progress[lessonKey]?.read;
-                          const isDone = progress[lessonKey]?.examDone;
-                          const isFav = favorites.some(f => f.key === lessonKey);
-                          
-                          return (
-                            <div 
-                              key={l.id}
-                              onClick={() => navigateTo({ lesson: l })}
-                              className="card-hover bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-md flex items-center justify-between border-2 border-transparent hover:border-violet-500 cursor-pointer text-right"
-                            >
-                              <div className="flex items-center gap-4 flex-1">
-                                <div className="bg-violet-100 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 rounded-xl w-12 h-14 flex items-center justify-center text-xl font-extrabold flex-shrink-0 relative">
-                                  {l.icon}
-                                  {isRead && <span className="absolute -top-1 -right-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">✓</span>}
-                                </div>
-                                <div>
-                                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                                    <h4 className="font-extrabold text-base text-gray-800 dark:text-white">
-                                      {index + 1}. {l.title}
-                                    </h4>
-                                    {isDone && <span className="completed-badge">🏆 تم الاختبار</span>}
-                                  </div>
-                                  {l.focusQuestion && (
-                                    <div className="text-xs text-amber-700 dark:text-amber-400 font-semibold mb-1 flex items-center gap-1.5 flex-wrap">
-                                      <span className="bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-md font-bold text-[11px]">
-                                        🎯 Focus Question
-                                      </span>
-                                      <span>{l.focusQuestion}</span>
-                                    </div>
-                                  )}
-                                  <p className="text-xs text-gray-500 dark:text-gray-400">⏱️ {l.duration}</p>
-                                </div>
-                              </div>
-                              
-                              <div className="flex items-center gap-3">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleFavorite(l, appState.unit!);
-                                  }}
-                                  className="favorite-btn text-2xl p-2 focus:outline-none hover:scale-110 active:scale-95 transition cursor-pointer"
-                                  title="المفضلة"
-                                >
-                                  {isFav ? '❤️' : '🤍'}
-                                </button>
-                                <ChevronRight className="w-5 h-5 text-violet-600 dark:text-violet-400 rotate-180" />
-                              </div>
-                            </div>
-                          );
+                        onOpenVideo={(lesson) => setActiveVideoLesson(lesson)}
+                        onOpenExam={(lesson, unit) => openExam(lesson, unit)}
+                        onToggleFavorite={(lesson, unit) => toggleFavorite(lesson, unit)}
+                        isFavorite={(lesson, unit) => favorites.some(f => f.key === getLessonKey(lesson, unit))}
+                        isLessonRead={(lesson, unit) => Boolean(progress[getLessonKey(lesson, unit) || '']?.read)}
+                        isLessonExamDone={(lesson, unit) => Boolean(progress[getLessonKey(lesson, unit) || '']?.examDone)}
+                        onShareLesson={(lesson, unit) => setShowShareModal({
+                          title: `${lesson.title} - ${appState.subject?.name} (${appState.grade?.name})`,
+                          url: window.location.href,
+                          description: `شرح تفاعلي واختبار ذاتي لدرس ${lesson.title} ضمن ${unit.name} في مادة ${appState.subject?.name}.`
                         })}
-
-                        {appState.unit.lessons.length === 0 && (
-                          <div className="text-center py-14 px-6 bg-white dark:bg-gray-900 rounded-3xl border-2 border-dashed border-amber-300 dark:border-amber-800 shadow-sm space-y-3">
-                            <span className="text-5xl block animate-bounce">⏳</span>
-                            <h4 className="font-black text-lg text-gray-800 dark:text-white">
-                              {isEnglish ? 'Unit 2 Content Coming Soon' : 'الوحدة الثانية: قريباً إن شاء الله'}
-                            </h4>
-                            <p className="text-gray-500 dark:text-gray-400 text-xs max-w-md mx-auto leading-relaxed">
-                              {isEnglish 
-                                ? 'Lessons, interactive presentations, and exams for this unit will be added as soon as they are finalized.' 
-                                : 'سيتم إضافة الدروس والشروحات التفاعلية واختبارات قياس الفهم الخاصة بالوحدة الثانية فور اكتمالها واعتمادها قريباً إن شاء الله.'}
-                            </p>
-                          </div>
-                        )}
-                      </div>
+                        studentBookUrl={getStudentBookUrl()}
+                        language={language}
+                      />
                     </div>
                   );
                 })()}
@@ -5236,10 +4984,31 @@ export default function App() {
                   }
 
                   return (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                      
-                      {/* Left side: Lesson Content */}
-                      <div className="lg:col-span-2 space-y-6">
+                    <div className="space-y-4">
+                      {/* Back to Unit Lessons Hub Bar */}
+                      <div className="flex items-center justify-between bg-white dark:bg-slate-900/90 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex-wrap gap-2 text-right">
+                        <button
+                          onClick={() => setAppState(prev => ({ ...prev, lesson: null }))}
+                          className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-black text-xs transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+                        >
+                          <span>←</span>
+                          <span>{isEnglish ? 'Back to All Unit Lessons' : `العودة لقائمة دروس ${appState.unit?.name || 'الوحدة'}`}</span>
+                        </button>
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
+                          <span className="p-1 px-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                            {appState.unit?.name}
+                          </span>
+                          <span>•</span>
+                          <span className="text-slate-800 dark:text-white font-black truncate max-w-[200px]">
+                            {appState.lesson.title}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        
+                        {/* Left side: Lesson Content */}
+                        <div className="lg:col-span-2 space-y-6">
                         {/* Title Panel */}
                         <div className="gradient-teal text-white rounded-3xl p-6 md:p-8 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
                           <div className="flex items-center gap-4">
@@ -5853,7 +5622,8 @@ export default function App() {
 
                       </div>
                     </div>
-                  );
+                  </div>
+                );
                 })()}
               </div>
             )}

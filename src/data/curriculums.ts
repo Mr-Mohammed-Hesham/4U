@@ -19,15 +19,18 @@ import {
   phy11AdvBridge2025,
   math11General1
 } from '../curriculum/uae/addedCurriculums';
+import { math11General2026 } from '../curriculum/uae/grade11MathGeneral2026';
 
 // Grade 9 Physics & Math
 import { phy9AdvBridge1, phy9AdvInspire1 } from '../curriculum/uae/grade9Physics';
 import { math9AdvInspire1, math9AdvBridge1 } from '../curriculum/uae/grade9Math';
+import { math9General1 } from '../curriculum/uae/grade9MathGeneral';
 
 // Grade 10 Physics & Math
 import { phy10AdvInspire1, phy10AdvBridge1 } from '../curriculum/uae/grade10Physics';
 import { math10General1 } from '../curriculum/uae/grade10MathGeneral';
 import { math10AdvBridge1 } from '../curriculum/uae/grade10MathBridge';
+import { math10AdvBridgeEnglish2026 } from '../curriculum/uae/grade10MathBridgeEnglish2026';
 import { math10AdvInspire1 } from '../curriculum/uae/grade10MathInspire';
 
 // Grade 5 Math & Physics / Science (General & Advanced)
@@ -51,23 +54,63 @@ export const curriculums: Record<string, Curriculum> = {
   ...physics12Curriculum,
   ...physicsOthersCurriculum,
 
-  // Explicit Grade 12 Math & Physics Aliases with UAE- prefix
+  // Explicit Grade 12 Math & Physics Aliases with UAE- prefix and year variants
   'UAE-math-12-bridge-1': math12Curriculum['math-12-bridge-1'],
+  'math-12-bridge-1': math12Curriculum['math-12-bridge-1'],
   'UAE-math-12-inspire-1': math12Curriculum['math-12-inspire-1'],
+  'math-12-inspire-1': math12Curriculum['math-12-inspire-1'],
   'UAE-math-12-bridge-3': math12Curriculum['math-12-bridge-3'],
   'UAE-math-12-inspire-3': math12Curriculum['math-12-inspire-3'],
   'UAE-math-12-adv-bridge-1': math12Curriculum['math-12-bridge-1'],
+  'math-12-adv-bridge-1': math12Curriculum['math-12-bridge-1'],
   'UAE-math-12-adv-inspire-1': math12Curriculum['math-12-inspire-1'],
+  'math-12-adv-inspire-1': math12Curriculum['math-12-inspire-1'],
+  'UAE-math-12-advanced-1': math12Curriculum['math-12-bridge-1'],
+  'math-12-advanced-1': math12Curriculum['math-12-bridge-1'],
+  'UAE-math-12-adv-1': math12Curriculum['math-12-bridge-1'],
+  'math-12-adv-1': math12Curriculum['math-12-bridge-1'],
+
+  // Grade 12 Advanced Math 2026 & 2025
+  'UAE-math-12-bridge-1-2026': math12Curriculum['math-12-bridge-1'],
+  'math-12-bridge-1-2026': math12Curriculum['math-12-bridge-1'],
+  'UAE-math-12-adv-bridge-1-2026': math12Curriculum['math-12-bridge-1'],
+  'math-12-adv-bridge-1-2026': math12Curriculum['math-12-bridge-1'],
+  'UAE-math-12-inspire-1-2026': math12Curriculum['math-12-inspire-1'],
+  'math-12-inspire-1-2026': math12Curriculum['math-12-inspire-1'],
+  'UAE-math-12-adv-inspire-1-2026': math12Curriculum['math-12-inspire-1'],
+  'math-12-adv-inspire-1-2026': math12Curriculum['math-12-inspire-1'],
+  'UAE-math-12-advanced-1-2026': math12Curriculum['math-12-bridge-1'],
+  'math-12-advanced-1-2026': math12Curriculum['math-12-bridge-1'],
+
+  'UAE-math-12-bridge-1-2025': math12Curriculum['math-12-bridge-1'],
+  'math-12-bridge-1-2025': math12Curriculum['math-12-bridge-1'],
+  'UAE-math-12-adv-bridge-1-2025': math12Curriculum['math-12-bridge-1'],
+  'math-12-adv-bridge-1-2025': math12Curriculum['math-12-bridge-1'],
+  'UAE-math-12-inspire-1-2025': math12Curriculum['math-12-inspire-1'],
+  'math-12-inspire-1-2025': math12Curriculum['math-12-inspire-1'],
+  'UAE-math-12-adv-inspire-1-2025': math12Curriculum['math-12-inspire-1'],
+  'math-12-adv-inspire-1-2025': math12Curriculum['math-12-inspire-1'],
+  'UAE-math-12-advanced-1-2025': math12Curriculum['math-12-bridge-1'],
+  'math-12-advanced-1-2025': math12Curriculum['math-12-bridge-1'],
+
+  // Grade 12 Physics Aliases
   'UAE-physics-12-bridge-1': physics12Curriculum['physics-12-bridge-1'],
+  'physics-12-bridge-1': physics12Curriculum['physics-12-bridge-1'],
   'UAE-physics-12-bridge-3': physics12Curriculum['physics-12-bridge-3'],
   'UAE-physics-12-adv-bridge-1': physics12Curriculum['physics-12-bridge-1'],
+  'physics-12-adv-bridge-1': physics12Curriculum['physics-12-bridge-1'],
+  'UAE-physics-12-advanced-1': physics12Curriculum['physics-12-bridge-1'],
+  'physics-12-advanced-1': physics12Curriculum['physics-12-bridge-1'],
   'UAE-physics-12-adv-inspire-1': phy12Inspire2026,
   'physics-12-adv-inspire-1': phy12Inspire2026,
   'UAE-physics-12-adv-inspire-1-2026': phy12Inspire2026,
   'physics-12-adv-inspire-1-2026': phy12Inspire2026,
   'UAE-physics-12-adv-inspire-1-2025': phy12Inspire2025,
   'physics-12-adv-inspire-1-2025': phy12Inspire2025,
-  'physics-12-adv-bridge-1': physics12Curriculum['physics-12-bridge-1'],
+  'UAE-physics-12-advanced-1-2026': physics12Curriculum['physics-12-bridge-1'],
+  'physics-12-advanced-1-2026': physics12Curriculum['physics-12-bridge-1'],
+  'UAE-physics-12-adv-bridge-1-2026': physics12Curriculum['physics-12-bridge-1'],
+  'physics-12-adv-bridge-1-2026': physics12Curriculum['physics-12-bridge-1'],
 
   // --- Grade 5 Curriculums (General & Advanced) ---
   // Grade 5 Math General Term 1
@@ -350,11 +393,25 @@ export const curriculums: Record<string, Curriculum> = {
   'phy-11-adv-bridge-1-2025': phy11AdvBridge2025,
   'UAE-phy-11-adv-bridge-1-2025': phy11AdvBridge2025,
 
-  // Grade 11 General Math Term 1
-  'math-11-general-1': math11General1,
-  'UAE-math-11-general-1': math11General1,
-  'math-11-gen-1': math11General1,
-  'UAE-math-11-gen-1': math11General1,
+  // Grade 11 General Math Term 1 (2026 Curriculum)
+  'math-11-general-1': math11General2026,
+  'UAE-math-11-general-1': math11General2026,
+  'math-11-gen-1': math11General2026,
+  'UAE-math-11-gen-1': math11General2026,
+  'math-11-general-1-2026': math11General2026,
+  'UAE-math-11-general-1-2026': math11General2026,
+  'math-11-gen-1-2026': math11General2026,
+  'UAE-math-11-gen-1-2026': math11General2026,
+
+  // Grade 9 General Math Term 1 (2026 Curriculum)
+  'math-9-general-1': math9General1,
+  'UAE-math-9-general-1': math9General1,
+  'math-9-gen-1': math9General1,
+  'UAE-math-9-gen-1': math9General1,
+  'math-9-general-1-2026': math9General1,
+  'UAE-math-9-general-1-2026': math9General1,
+  'math-9-gen-1-2026': math9General1,
+  'UAE-math-9-gen-1-2026': math9General1,
 
   // Grade 9 Physics (Adv Bridge 1 & Adv Inspire 1)
   'phy-9-adv-bridge-1': phy9AdvBridge1,
@@ -399,14 +456,46 @@ export const curriculums: Record<string, Curriculum> = {
   // Grade 10 Math (General 1, Adv Bridge 1, Adv Inspire 1)
   'math-10-general-1': math10General1,
   'UAE-math-10-general-1': math10General1,
+  'math-10-gen-1': math10General1,
+  'UAE-math-10-gen-1': math10General1,
+  'math-10-general-1-2026': math10General1,
+  'UAE-math-10-general-1-2026': math10General1,
+  'math-10-gen-1-2026': math10General1,
+  'UAE-math-10-gen-1-2026': math10General1,
 
+  // Grade 10 Math Advanced Bridge (Arabic)
   'math-10-adv-bridge-1': math10AdvBridge1,
   'UAE-math-10-adv-bridge-1': math10AdvBridge1,
   'math-10-bridge-1': math10AdvBridge1,
   'UAE-math-10-bridge-1': math10AdvBridge1,
+  'math-10-adv-bridge-1-2026': math10AdvBridge1,
+  'UAE-math-10-adv-bridge-1-2026': math10AdvBridge1,
+  'math-10-bridge-1-2026': math10AdvBridge1,
+  'UAE-math-10-bridge-1-2026': math10AdvBridge1,
+  'math-10-bridge-ar-1': math10AdvBridge1,
+  'UAE-math-10-bridge-ar-1': math10AdvBridge1,
+  'math-10-adv-bridge-ar-1': math10AdvBridge1,
+  'UAE-math-10-adv-bridge-ar-1': math10AdvBridge1,
+  'math-10-bridge-ar-1-2026': math10AdvBridge1,
+  'UAE-math-10-bridge-ar-1-2026': math10AdvBridge1,
 
+  // Grade 10 Math Advanced Bridge English Curriculum Term 1 2026
+  'math-10-adv-bridge-en-1': math10AdvBridgeEnglish2026,
+  'UAE-math-10-adv-bridge-en-1': math10AdvBridgeEnglish2026,
+  'math-10-bridge-en-1': math10AdvBridgeEnglish2026,
+  'UAE-math-10-bridge-en-1': math10AdvBridgeEnglish2026,
+  'math-10-bridge-en-1-2026': math10AdvBridgeEnglish2026,
+  'UAE-math-10-bridge-en-1-2026': math10AdvBridgeEnglish2026,
+  'math-10-adv-bridge-en-1-2026': math10AdvBridgeEnglish2026,
+  'UAE-math-10-adv-bridge-en-1-2026': math10AdvBridgeEnglish2026,
+
+  // Grade 10 Math Advanced Inspire
   'math-10-adv-inspire-1': math10AdvInspire1,
   'UAE-math-10-adv-inspire-1': math10AdvInspire1,
   'math-10-inspire-1': math10AdvInspire1,
-  'UAE-math-10-inspire-1': math10AdvInspire1
+  'UAE-math-10-inspire-1': math10AdvInspire1,
+  'math-10-adv-inspire-1-2026': math10AdvInspire1,
+  'UAE-math-10-adv-inspire-1-2026': math10AdvInspire1,
+  'math-10-inspire-1-2026': math10AdvInspire1,
+  'UAE-math-10-inspire-1-2026': math10AdvInspire1
 };

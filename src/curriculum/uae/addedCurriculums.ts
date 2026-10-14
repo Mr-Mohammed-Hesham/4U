@@ -336,11 +336,244 @@ export const phy12Inspire2026: Curriculum = {
     },
     {
       id: 2,
-      name: 'Unit 2: قريباً إن شاء الله (Coming Soon)',
-      icon: '⏳',
-      color: 'from-indigo-600 to-purple-700',
-      description: 'سيتم إضافة دروس ومحتوى واختبارات الوحدة الثانية لمنهج فيزياء انسباير 2026 فور اعتمادها قريباً إن شاء الله.',
-      lessons: []
+      name: 'Unit 2: Quantum Theory',
+      icon: '⚛️',
+      color: 'from-violet-600 to-indigo-700',
+      description: 'The emergence of quantum theory: particle model of waves, the photoelectric effect, matter waves, and atomic models from Bohr to modern quantum mechanics.',
+      lessons: [
+        {
+          id: 1,
+          title: 'Lesson 1: Particle Model of Waves',
+          focusQuestion: 'How does light behave as particles?',
+          icon: '🔥',
+          duration: '50 min',
+          lessonUrl: 'https://hesham-afandi.github.io/Particle-model-ofWave/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/12Adv-Ins-phy-T1-2026-2.1-exam/',
+          lessonTitle: '📖 Lesson Explanation',
+          examTitle: '📝 Take the Quiz',
+          content: {
+            intro: 'At the beginning of the twentieth century, classical physics could not explain blackbody radiation or the emission of electrons from illuminated metals. Max Planck and Albert Einstein revolutionized physics by showing that electromagnetic radiation is emitted and absorbed in discrete packets called photons.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'How does light behave as particles? Light behaves as a stream of localized packets of energy called photons, each carrying quantized energy directly proportional to frequency.' },
+              { title: "Planck's Quantum Hypothesis", type: 'formula', content: 'E = n h f \\quad (h = 6.626 \\times 10^{-34}\\text{ J}\\cdot\\text{s})' },
+              { title: 'The Photoelectric Effect', type: 'formula', content: 'KE_{max} = h f - W_0 = q V_{stop}' },
+              { title: 'Threshold Frequency & Work Function', type: 'formula', content: 'W_0 = h f_0 \\implies f_0 = \\frac{W_0}{h}' },
+              { title: 'Crucial Experimental Observations', type: 'bullets', content: [
+                'Radiation below threshold frequency f₀ produces zero photoelectrons, regardless of light intensity or illumination duration.',
+                'Maximum kinetic energy of ejected electrons depends strictly on light frequency (f), completely independent of intensity.',
+                'Electron emission occurs instantaneously (under 10⁻⁹ seconds) upon light exposure with no time lag.',
+                'Increasing light intensity increases the number of emitted electrons per second (photocurrent), but does not alter maximum kinetic energy.'
+              ]},
+              { title: 'The Compton Effect & Photon Momentum', type: 'formula', content: '\\Delta \\lambda = \\lambda\' - \\lambda = \\frac{h}{m_e c}(1 - \\cos\\theta) \\quad , \\quad p = \\frac{E}{c} = \\frac{h}{\\lambda}' }
+            ]
+          }
+        },
+        {
+          id: 2,
+          title: 'Lesson 2: Matter Waves',
+          focusQuestion: 'Do particles of matter exhibit wave properties?',
+          icon: '🌊',
+          duration: '50 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12adv-ins-ph-T3-U1L2/',
+          examUrl: 'https://hesham-afandi.github.io/12adv-ins-ph-T3-U1L2-exam/',
+          lessonTitle: '📖 Lesson Explanation',
+          examTitle: '📝 Take the Quiz',
+          content: {
+            intro: 'In 1924, Louis de Broglie hypothesized nature is symmetrical: if electromagnetic waves possess particle-like characteristics, material particles such as electrons must also exhibit wave-like characteristics.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'Do particles of matter exhibit wave properties? Yes, any moving particle of matter has an associated de Broglie wavelength inversely proportional to its linear momentum.' },
+              { title: 'De Broglie Wavelength Equation', type: 'formula', content: '\\lambda = \\frac{h}{p} = \\frac{h}{m v}' },
+              { title: 'Experimental Confirmation of Matter Waves', type: 'bullets', content: [
+                'Davisson-Germer Experiment (1927): Electron beams scattered off a nickel crystal displayed constructive and destructive interference fringes.',
+                'G.P. Thomson: Accelerated electrons through a thin metallic film produced diffraction rings identical to X-ray diffraction patterns.',
+                'Wave nature is observable for subatomic particles because Planck constant h is extremely small (10⁻³⁴ J·s).'
+              ]},
+              { title: 'Applications: The Electron Microscope', type: 'bullets', content: [
+                'Uses high-speed electrons with picometer wavelengths (~10⁻¹² m) instead of visible light (~5 × 10⁻⁷ m).',
+                'Delivers magnifications up to 1,000,000×, resolving sub-nanometer atomic surface structures.'
+              ]},
+              { title: 'Heisenberg Uncertainty Principle', type: 'formula', content: '\\Delta x \\cdot \\Delta p \\ge \\frac{h}{4\\pi} \\quad \\text{and} \\quad \\Delta E \\cdot \\Delta t \\ge \\frac{h}{4\\pi}' }
+            ]
+          }
+        },
+        {
+          id: 3,
+          title: "Lesson 3: Bohr's Model of the Atom",
+          focusQuestion: 'Why do excited atoms emit discrete line spectra?',
+          icon: '💡',
+          duration: '55 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12adv-ins-ph-T3-U1L3/',
+          examUrl: 'https://hesham-afandi.github.io/12adv-ins-ph-T3-U1L3-exam/',
+          lessonTitle: '📖 Lesson Explanation',
+          examTitle: '📝 Take the Quiz',
+          content: {
+            intro: "Classical electromagnetism predicted orbiting electrons would radiate energy continuously and collapse into the nucleus within nanoseconds. Niels Bohr synthesized Planck's quantum theory and Rutherford's nuclear model to create a stable, quantized atomic model.",
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'Why do excited atoms emit discrete line spectra? Atoms only absorb or emit photons matching the exact energy difference between quantized stationary orbits.' },
+              { title: "Bohr's Postulates", type: 'bullets', content: [
+                'Electrons orbit the nucleus only in certain stable, non-radiating stationary orbits.',
+                'Orbital angular momentum is quantized in integer multiples: L = m v r = n(h / 2π) for n = 1, 2, 3, ...',
+                'Radiation is emitted or absorbed only when an electron jumps between levels: ΔE = E_i - E_f = h f.'
+              ]},
+              { title: 'Energy Levels of Hydrogen', type: 'formula', content: 'E_n = -\\frac{13.6\\text{ eV}}{n^2} \\quad (n = 1, 2, 3, \\dots)' },
+              { title: 'Hydrogen Spectral Series', type: 'table', headers: ['Series', 'Lower Level (n_f)', 'Upper Level (n_i)', 'Spectral Region'], rows: [
+                ['Lyman Series', 'n = 1', 'n = 2, 3, 4, ...', 'Ultraviolet (UV)'],
+                ['Balmer Series', 'n = 2', 'n = 3, 4, 5, ...', 'Visible Light'],
+                ['Paschen Series', 'n = 3', 'n = 4, 5, 6, ...', 'Near Infrared (IR)'],
+                ['Brackett Series', 'n = 4', 'n = 5, 6, 7, ...', 'Infrared'],
+                ['Pfund Series', 'n = 5', 'n = 6, 7, ...', 'Far Infrared']
+              ]},
+              { title: 'Rydberg Equation', type: 'formula', content: '\\frac{1}{\\lambda} = R_H \\left(\\frac{1}{n_f^2} - \\frac{1}{n_i^2}\\right) \\quad (R_H = 1.09737 \\times 10^7\\text{ m}^{-1})' }
+            ]
+          }
+        },
+        {
+          id: 4,
+          title: 'Lesson 4: The Quantum Model of the Atom',
+          focusQuestion: 'How does modern quantum mechanics describe electron states in atoms?',
+          icon: '🔆',
+          duration: '60 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12adv-ins-ph-T3-U1L4/',
+          examUrl: 'https://hesham-afandi.github.io/12adv-ins-ph-T3-U1L4-exam/',
+          lessonTitle: '📖 Lesson Explanation',
+          examTitle: '📝 Take the Quiz',
+          content: {
+            intro: 'While Bohr model explained hydrogen, it failed for multielectron atoms and could not explain chemical bonds. Modern physics models electrons as three-dimensional probability wave functions governed by the Schrödinger equation.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'How does modern quantum mechanics describe electron states in atoms? Electrons exist in three-dimensional probability clouds called orbitals, defined by four quantum numbers.' },
+              { title: 'Schrödinger Wave Equation', type: 'formula', content: '\\hat{H} \\psi = E \\psi' },
+              { title: 'Wave Function and Probability Density', type: 'bullets', content: [
+                'The wave function ψ describes the quantum wave state of an electron.',
+                'The square of the absolute value |ψ|² represents probability density of finding the electron at a given position.',
+                'An atomic orbital is a 3D region where there is at least 90% probability of finding the electron.'
+              ]},
+              { title: 'The Four Quantum Numbers', type: 'table', headers: ['Quantum Number', 'Symbol', 'Allowed Values', 'Physical Significance'], rows: [
+                ['Principal', 'n', '1, 2, 3, ...', 'Main energy level and orbital size'],
+                ['Orbital Angular', 'l', '0, 1, ..., n-1', 'Subshell and orbital shape (s, p, d, f)'],
+                ['Magnetic', 'm_l', '-l, ..., 0, ..., +l', 'Orbital spatial orientation in 3D'],
+                ['Spin', 'm_s', '+1/2, -1/2', 'Intrinsic electron spin angular momentum']
+              ]},
+              { title: 'Pauli Exclusion Principle & Lasers', type: 'bullets', content: [
+                'No two electrons in an atom can have the exact same set of four quantum numbers.',
+                'Stimulated emission: an incoming photon stimulates an excited electron to emit an identical in-phase photon.',
+                'Population inversion allows the production of monochromatic, coherent laser light.'
+              ]}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      id: 3,
+      name: 'Unit 3: The Atom & Nuclear Physics',
+      icon: '☢️',
+      color: 'from-rose-500 to-red-600',
+      description: 'From the structure of the atomic nucleus, to radioactive decay, fission, fusion, and the fundamental building blocks of matter (quarks and leptons).',
+      lessons: [
+        {
+          id: 1,
+          title: 'Lesson 1: The Atom and The Nucleus',
+          focusQuestion: 'What holds the atomic nucleus together despite electrostatic repulsion?',
+          icon: '⚛️',
+          duration: '50 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12adv-ins-ph-T3-U2L1/',
+          examUrl: 'https://hesham-afandi.github.io/12adv-ins-ph-T3-U2L1-exam/',
+          lessonTitle: '📖 Lesson Explanation',
+          examTitle: '📝 Take the Quiz',
+          content: {
+            intro: 'The nucleus constitutes more than 99.9% of the atom mass, crammed into a space ten thousand times smaller than the atom itself. Protons and neutrons are bound by the strong nuclear force, overcoming enormous electrostatic repulsion.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'What holds the atomic nucleus together? The strong nuclear force—the most powerful interaction in nature—binds nucleons together across sub-femtometer distances.' },
+              { title: 'Nuclear Composition and Notation', type: 'formula', content: '_Z^A X \\quad (A = Z + N)' },
+              { title: 'Nucleon Comparison', type: 'table', headers: ['Particle', 'Charge (C)', 'Mass (kg)', 'Mass (u)'], rows: [
+                ['Proton (p)', '+1.602 × 10⁻¹⁹ C', '1.6726 × 10⁻²⁷ kg', '1.007276 u'],
+                ['Neutron (n)', '0 C', '1.6749 × 10⁻²⁷ kg', '1.008665 u'],
+                ['Electron (e)', '-1.602 × 10⁻¹⁹ C', '9.109 × 10⁻³¹ kg', '0.000549 u']
+              ]},
+              { title: 'Nuclear Size and Constant Density', type: 'formula', content: 'R = r_0 A^{1/3} \\quad (r_0 \\approx 1.2 \\times 10^{-15}\\text{ m} = 1.2\\text{ fm})' },
+              { title: 'Mass Defect and Nuclear Binding Energy', type: 'formula', content: 'E_b = \\Delta m \\cdot c^2 = [ (Z m_p + N m_n) - m_{nucleus} ] \\times 931.5\\text{ MeV}' },
+              { title: 'Binding Energy per Nucleon Curve', type: 'bullets', content: [
+                'Peak stability occurs near Iron-56 (⁵⁶Fe) with BE/A ≈ 8.8 MeV per nucleon.',
+                'Nuclei lighter than Iron-56 release energy through nuclear fusion.',
+                'Nuclei heavier than Iron-56 release energy through nuclear fission.'
+              ]}
+            ]
+          }
+        },
+        {
+          id: 2,
+          title: 'Lesson 2: Nuclear Decay and Reactions',
+          focusQuestion: 'Why do unstable nuclei decay and how is nuclear energy harnessed?',
+          icon: '💥',
+          duration: '60 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12adv-ins-ph-T3-U2L2/',
+          examUrl: 'https://hesham-afandi.github.io/12adv-ins-ph-T3-U2L2-exam/',
+          lessonTitle: '📖 Lesson Explanation',
+          examTitle: '📝 Take the Quiz',
+          content: {
+            intro: 'Unstable atomic nuclei undergo spontaneous radioactive transmutation to achieve nuclear stability. When heavy nuclei split or light nuclei fuse, mass defects are converted directly into harvestable energy.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'Why do unstable nuclei decay and how is nuclear energy harnessed? Nuclei decay to reach a more stable binding energy state, and nuclear reactions convert mass defects into immense kinetic and radiative energy.' },
+              { title: 'Types of Radioactive Decay', type: 'table', headers: ['Decay Type', 'Emitted Particle', 'Nuclear Equation', 'Penetrating Power'], rows: [
+                ['Alpha (α)', 'He-4 nucleus (²⁴He)', '^{A}_{Z}X → ^{A-4}_{Z-2}Y + ²⁴He', 'Low (stopped by paper)'],
+                ['Beta-minus (β⁻)', 'Electron (e⁻) + antineutrino', '^{A}_{Z}X → ^{A}_{Z+1}Y + e⁻ + ν̄_e', 'Medium (stopped by aluminium)'],
+                ['Beta-plus (β⁺)', 'Positron (e⁺) + neutrino', '^{A}_{Z}X → ^{A}_{Z-1}Y + e⁺ + ν_e', 'Medium (annihilates into gamma)'],
+                ['Gamma (γ)', 'High-energy photon', '^{A}_{Z}X* → ^{A}_{Z}X + γ', 'High (requires thick lead/concrete)']
+              ]},
+              { title: 'Radioactive Decay Law & Half-Life', type: 'formula', content: 'N(t) = N_0 \\left(\\frac{1}{2}\\right)^{t / T_{1/2}} = N_0 e^{-\\lambda t} \\quad , \\quad \\lambda = \\frac{\\ln 2}{T_{1/2}} = \\frac{0.693}{T_{1/2}}' },
+              { title: 'Nuclear Fission vs Fusion', type: 'bullets', content: [
+                'Fission: Heavy nucleus (²³⁵U) absorbs a neutron and splits into two intermediate nuclei plus 2-3 neutrons, releasing ~200 MeV.',
+                'Chain Reaction: Sustained when at least one emitted neutron triggers subsequent fission (controlled in nuclear reactors).',
+                'Fusion: Two light nuclei (²H + ³H) combine under extreme temperature and pressure to form ⁴He + n + 17.6 MeV, powering stars.'
+              ]}
+            ]
+          }
+        },
+        {
+          id: 3,
+          title: 'Lesson 3: The Building Blocks of Matter',
+          focusQuestion: 'What are the ultimate, indivisible building blocks of matter?',
+          icon: '🧱',
+          duration: '55 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12adv-ins-ph-T3-U2L2/',
+          examUrl: 'https://hesham-afandi.github.io/12adv-ins-ph-T3-U2L2-exam/',
+          lessonTitle: '📖 Lesson Explanation',
+          examTitle: '📝 Take the Quiz',
+          content: {
+            intro: 'Protons and neutrons are not elementary particles; they are composed of even more fundamental constituents called quarks. The Standard Model describes all known fundamental particles and three of the four fundamental forces.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'What are the ultimate, indivisible building blocks of matter? Quarks and leptons are the fundamental fermions of matter, interacting via gauge bosons that mediate the fundamental forces.' },
+              { title: 'The Four Fundamental Forces', type: 'table', headers: ['Force', 'Relative Strength', 'Range', 'Exchange Boson (Carrier)'], rows: [
+                ['Strong Nuclear', '1', '~10⁻¹⁵ m', 'Gluon (g)'],
+                ['Electromagnetic', '10⁻²', 'Infinite (1/r²)', 'Photon (γ)'],
+                ['Weak Nuclear', '10⁻⁶', '~10⁻¹⁸ m', 'W⁺, W⁻, Z⁰ bosons'],
+                ['Gravitation', '10⁻³⁸', 'Infinite (1/r²)', 'Graviton (hypothesized)']
+              ]},
+              { title: 'The Quark Model', type: 'table', headers: ['Generation', 'Quark', 'Symbol', 'Electric Charge'], rows: [
+                ['1st Generation', 'Up / Down', 'u / d', '+2/3 e / -1/3 e'],
+                ['2nd Generation', 'Charm / Strange', 'c / s', '+2/3 e / -1/3 e'],
+                ['3rd Generation', 'Top / Bottom', 't / b', '+2/3 e / -1/3 e']
+              ]},
+              { title: 'Hadron Quark Compositions', type: 'bullets', content: [
+                'Proton: composed of uud (two up, one down) -> charge = +2/3 + 2/3 - 1/3 = +1e.',
+                'Neutron: composed of udd (one up, two down) -> charge = +2/3 - 1/3 - 1/3 = 0.',
+                'Baryons: 3-quark composite fermions (protons, neutrons).',
+                'Mesons: quark-antiquark composite bosons (pions, kaons).'
+              ]},
+              { title: 'Leptons & The Higgs Boson', type: 'bullets', content: [
+                'Six Leptons: Electron (e⁻), Muon (μ⁻), Tau (τ⁻), and their corresponding neutrinos (νₑ, ν_μ, ν_τ).',
+                'Leptons do not experience the strong nuclear interaction.',
+                'Higgs Boson: Quantum excitation of the Higgs field that endows fundamental particles with rest mass.'
+              ]},
+              { title: 'Conservation Laws in Particle Physics', type: 'bullets', content: [
+                'Conservation of Electric Charge (Q)',
+                'Conservation of Baryon Number (B)',
+                'Conservation of Lepton Number (Lₑ, L_μ, L_τ)'
+              ]}
+            ]
+          }
+        }
+      ]
     }
   ]
 };
@@ -1699,11 +1932,382 @@ export const math12General2026: Curriculum = {
     },
     {
       id: 2,
-      name: 'الوحدة الثانية: قريباً إن شاء الله (Coming Soon)',
-      icon: '⏳',
-      color: 'from-purple-600 to-pink-700',
-      description: 'سيتم إضافة دروس وشروحات واختبارات الوحدة الثانية لمنهج 12 عام رياضيات 2026 فور اعتمادها قريباً إن شاء الله.',
-      lessons: []
+      name: 'الوحدة الثانية: كثيرات الحدود والدوال كثيرة الحدود',
+      icon: '🔢',
+      color: 'from-purple-600 to-indigo-700',
+      description: 'دراسة شاملة للعمليات على كثيرات الحدود، قسمة كثيرات الحدود المطولة والتركيبية، خصائص وتحليل التمثيلات البيانية للدوال كثيرة الحدود، حل المعادلات كثيرة الحدود، نظريتي الباقي والعامل، والجذور والأصفار ونظرية الصفر النسبي.',
+      lessons: [
+        {
+          id: 1,
+          title: 'الدرس 2-1: العمليات على كثيرات الحدود',
+          focusQuestion: 'كيف نحدد درجة كثيرة الحدود والمعامل الرئيسي ونجري عليها عمليات الجمع والطرح والضرب؟',
+          icon: '➕',
+          duration: '50 min',
+          lessonUrl: 'https://mr-mohammed-hesham.github.io/12Jen-math-T1-2026-2.1-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/12Jen-math-T1-2026-2.1-exam/',
+          lessonTitle: '📖 شرح الدرس',
+          examTitle: '📝 اختبر نفسك',
+          content: {
+            intro: 'كثيرة الحدود هي تعبير جبري يتكون من حد واحد أو مجموع حدود، حيث أسس المتغيرات أعداد كلية غير سالبة. تُحدد درجة كثيرة الحدود بأعلى أس لمتغير فيها عند كتابتها بالصيغة القياسية.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'كيف نحدد درجة كثيرة الحدود والمعامل الرئيسي؟ نكتب كثيرة الحدود في صورتها القياسية بترتيب تنازلي للأسس؛ أعلى أس يمثل درجة الدالة ومعامله هو المعامل الرئيسي.' },
+              { title: 'الصورة القياسية لكثيرة الحدود', type: 'formula', content: 'P(x) = a_n x^n + a_{n-1} x^{n-1} + \\dots + a_1 x + a_0 \\quad (a_n \\neq 0)' },
+              { title: 'قوانين الأسس الأساسية للتبسيط', type: 'bullets', content: [
+                'ضرب القوى: xᵐ · xⁿ = xᵐ⁺ⁿ',
+                'قسمة القوى: xᵐ / xⁿ = xᵐ⁻ⁿ  (x ≠ 0)',
+                'قوة القوة: (xᵐ)ⁿ = xᵐⁿ',
+                'قوة حاصل الضرب: (xy)ⁿ = xⁿ yⁿ',
+                'الأس الصفري: x⁰ = 1  (x ≠ 0)',
+                'الأس السالب: x⁻ⁿ = 1 / xⁿ  (x ≠ 0)'
+              ]},
+              { title: 'العمليات على كثيرات الحدود', type: 'bullets', content: [
+                'الجمع والطرح: دمج الحدود المتشابهة (الحدود التي تتطابق في المتغيرات والأسس تماماً).',
+                'الضرب: تطبيق خاصية التوزيع وضرب كل حد من المقدار الأول بجميع حدود المقدار الثاني مع جمع أسس الأساسات المتشابهة.'
+              ]}
+            ]
+          }
+        },
+        {
+          id: 2,
+          title: 'الدرس 2-2: قسمة كثيرات الحدود',
+          focusQuestion: 'متى نستخدم القسمة التركيبية كبديل سريع للقسمة المطولة لكثيرات الحدود؟',
+          icon: '➗',
+          duration: '55 min',
+          lessonUrl: 'https://mr-mohammed-hesham.github.io/12Jen-math-T1-2026-2.2-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/12Jen-math-T1-2026-2.2-exam/',
+          lessonTitle: '📖 شرح الدرس',
+          examTitle: '📝 اختبر نفسك',
+          content: {
+            intro: 'لقسمة كثيرة حدود على كثيرة حدود أخرى نستخدم خوارزمية القسمة المطولة أو طريقة القسمة التركيبية، وتعد القسمة التركيبية طريقة مختصرة وفعالة عندما يكون المقسوم عليه ثنائية حد خطية على صورة x - c.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'متى نستخدم القسمة التركيبية؟ نستخدمها عندما يكون المقسوم عليه ثنائية حد خطية على صورة x - c بمعامل للمتغير x يساوي 1.' },
+              { title: 'خوارزمية القسمة لكثيرات الحدود', type: 'formula', content: 'P(x) = D(x) \\cdot Q(x) + R(x) \\implies \\frac{P(x)}{D(x)} = Q(x) + \\frac{R(x)}{D(x)}' },
+              { title: 'خطوات القسمة المطولة', type: 'bullets', content: [
+                '1. ترتيب حدود المقسوم والمقسوم عليه تنازلياً حسب الأسس مع وضع صفر للحدود المفقودة.',
+                '2. قسمة الحد الأول للمقسوم على الحد الأول للمقسوم عليه للحصول على أول حد في ناتج القسمة.',
+                '3. ضرب ناتج القسمة في المقسوم عليه وطرحه من المقسوم.',
+                '4. تنزيل الحد التالي وتكرار العملية حتى تصبح درجة الباقي أقل من درجة المقسوم عليه.'
+              ]},
+              { title: 'طريقة القسمة التركيبية (Synthetic Division)', type: 'bullets', content: [
+                'كتابة قيمة c في صندوق صغير على اليسار (عكس إشارة الحد الثابت في x - c).',
+                'كتابة معاملات المقسوم بالترتيب أفقياً.',
+                'إنزال المعامل الأول مباشرة، ثم الضرب في c وجمع الناتج مع المعامل التالي وتكرار الخطوات.',
+                'العدد الأخير يمثل الباقي R، وبقية الأعداد تمثل معاملات ناتج القسمة Q(x).'
+              ]}
+            ]
+          }
+        },
+        {
+          id: 3,
+          title: 'الدرس 2-3: الدوال كثيرة الحدود',
+          focusQuestion: 'كيف يؤثر المعامل الرئيسي ودرجة الدالة في تحديد سلوك طرفي التمثيل البياني لها؟',
+          icon: '📊',
+          duration: '50 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-2.2/',
+          examUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-2.2-exam/',
+          lessonTitle: '📖 شرح الدرس',
+          examTitle: '📝 اختبر نفسك',
+          content: {
+            intro: 'الدالة كثيرة الحدود هي دالة متصلة ومنحناها أملس لا يحتوي على فجوات أو رؤوس حادة. يُحدد سلوك طرفي المنحنى (End Behavior) بواسطة اختبار المعامل الرئيسي والدرجة (فردية أم زوجية).',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'كيف يحدد المعامل الرئيسي والدرجة سلوك طرفي التمثيل البياني؟ تحدد الدرجة ما إذا كان الطرفان في نفس الاتجاه (درجة زوجية) أو في اتجاهين متعاكسين (درجة فردية)، وتحدد إشارة المعامل الرئيسي اتجاه الصعود أو الهبوط.' },
+              { title: 'اختبار المعامل الرئيسي لسلوك طرفي التمثيل البياني', type: 'table', headers: ['الدرجة n', 'المعامل الرئيسي aₙ', 'سلوك الطرف الأيسر (x → -∞)', 'سلوك الطرف الأيمن (x → ∞)'], rows: [
+                ['زوجية', 'موجب (aₙ > 0)', 'f(x) → ∞ (لأعلى)', 'f(x) → ∞ (لأعلى)'],
+                ['زوجية', 'سالب (aₙ < 0)', 'f(x) → -∞ (لأسفل)', 'f(x) → -∞ (لأسفل)'],
+                ['فردية', 'موجب (aₙ > 0)', 'f(x) → -∞ (لأسفل)', 'f(x) → ∞ (لأعلى)'],
+                ['فردية', 'سالب (aₙ < 0)', 'f(x) → ∞ (لأعلى)', 'f(x) → -∞ (لأسفل)']
+              ]},
+              { title: 'خصائص منحنى الدالة كثيرة الحدود', type: 'bullets', content: [
+                'المجال دائماً هو مجموعة الأعداد الحقيقية R.',
+                'المنحنى متصل ولا ينقطع على كامل مجاله.',
+                'المقطع الصادي يوجد دائماً عند النقطة (0, a₀).'
+              ]}
+            ]
+          }
+        },
+        {
+          id: 4,
+          title: 'الدرس 2-4: تحليل التمثيلات البيانية للدوال كثيرة الحدود',
+          focusQuestion: 'كيف نحدد الأصفار الحقيقية ونقاط التحول وفترات التزايد والتناقص والقيم القصوى؟',
+          icon: '📉',
+          duration: '55 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-2.4/',
+          examUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-2.4-exam/',
+          lessonTitle: '📖 شرح الدرس',
+          examTitle: '📝 اختبر نفسك',
+          content: {
+            intro: 'يساعد تحليل التمثيل البياني في فهم الخصائص الهندسية للدالة كثيرة الحدود، من حيث عدد نقاط التحول (نقاط القمة والقاع) وأصفار الدالة وفترات تزايدها وتناقصها.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'كيف نحدد نقاط التحول والأصفار وفترات التزايد والتناقص؟ الدالة من الدرجة n تمتلك على الأكثر (n - 1) نقطة تحول تفصل بين فترات التزايد والتناقص، وتتقاطع مع المحور x عند أصفارها الحقيقية.' },
+              { title: 'قاعدة نقاط التحول (Turning Points)', type: 'formula', content: '\\text{عدد نقاط التحول على الأكثر} = n - 1' },
+              { title: 'مبدأ موقع الأصفار (Location Principle)', type: 'bullets', content: [
+                'إذا كانت f(a) و f(b) مختلفتين في الإشارة لدالة كثيرة حدود مستمرة، فإنه يوجد صفر حقيقي واحد على الأقل بين العددين a و b.',
+                'يساعد هذا المبدأ في تقريب وحصر الجذور غير النسبية.'
+              ]},
+              { title: 'سلوك المنحنى عند الأصفار ومضاعفاتها (Multiplicity)', type: 'bullets', content: [
+                'مضاعفة فردية: المنحنى يقطع المحور x عند نقطة الصفر.',
+                'مضاعفة زوجية: المنحنى يمس المحور x ويرتد عنه دون أن يقطعه.'
+              ]}
+            ]
+          }
+        },
+        {
+          id: 5,
+          title: 'الدرس 2-5: حل المعادلات كثيرة الحدود',
+          focusQuestion: 'ما هي الطرق الجبرية المتنوعة لتحليل وحل المعادلات كثيرة الحدود ذات الدرجات العليا؟',
+          icon: '⚖️',
+          duration: '55 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-2.4/',
+          examUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-2.4-exam/',
+          lessonTitle: '📖 شرح الدرس',
+          examTitle: '📝 اختبر نفسك',
+          content: {
+            intro: 'حل المعادلة كثيرة الحدود P(x) = 0 يعني إيجاد جميع قيم x التي تحقق المعادلة. تشمل التقنيات التحليل بإخراج العامل المشترك، التجميع، متطابقات المكعبين، وحل المعادلات بالصورة التربيعية.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'ما هي تقنيات تحليل المعادلات كثيرة الحدود؟ تشمل إخراج العامل المشترك الأكبر GCF، التحليل بالتجميع لأربعة حدود، واستخدام متطابقات مجموع وفرق المكعبين، والتحويل إلى الصورة التربيعية.' },
+              { title: 'متطابقات مجموع وفرق المكعبين', type: 'formula', content: 'a^3 + b^3 = (a + b)(a^2 - ab + b^2) \\quad , \\quad a^3 - b^3 = (a - b)(a^2 + ab + b^2)' },
+              { title: 'التحليل بالتجميع (Factoring by Grouping)', type: 'formula', content: 'ax + ay + bx + by = a(x + y) + b(x + y) = (a + b)(x + y)' },
+              { title: 'المعادلات في الصورة التربيعية (Quadratic Form)', type: 'formula', content: 'a u^2 + b u + c = 0 \\quad (\\text{حيث } u = x^n)' },
+              { title: 'مثال على الصورة التربيعية', type: 'formula', content: 'x^4 - 13x^2 + 36 = 0 \\implies (x^2 - 4)(x^2 - 9) = 0 \\implies x = \\pm 2, \\, \\pm 3' }
+            ]
+          }
+        },
+        {
+          id: 6,
+          title: 'الدرس 2-6: نظريتا الباقي والعامل',
+          focusQuestion: 'كيف نستخدم نظرية الباقي لحساب قيمة الدالة ونظرية العامل للتحقق من عواملها؟',
+          icon: '🧩',
+          duration: '50 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-2.3/',
+          examUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-2.3-exam/',
+          lessonTitle: '📖 شرح الدرس',
+          examTitle: '📝 اختبر نفسك',
+          content: {
+            intro: 'تربط نظرية الباقي بين قيمة الدالة f(c) وباقي قسمتها على x - c، بينما تُعد نظرية العامل أداة حاسمة لتحديد العوامل الخطية وتفكيك كثيرات الحدود إلى عواملها الأولية.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'كيف تساعد نظريتا الباقي والعامل في تحليل كثيرات الحدود؟ نظرية الباقي تنص على أن f(c) هو باقي القسمة على (x - c)، ونظرية العامل تؤكد أن (x - c) عامل إذا وفقط إذا كان الباقي يساوي صفراً.' },
+              { title: 'نظرية الباقي (Remainder Theorem)', type: 'formula', content: 'f(x) \\div (x - c) \\implies \\text{الباقي } R = f(c)' },
+              { title: 'التعويض التركيبي (Synthetic Substitution)', type: 'bullets', content: [
+                'طريقة بديلة سريعة ودقيقة لحساب قيمة f(c) بإجراء قسمة تركيبية على c.',
+                'العدد الأخير الناتج من القسمة التركيبية هو بالضبط قيمة f(c).'
+              ]},
+              { title: 'نظرية العامل (Factor Theorem)', type: 'formula', content: '(x - c) \\text{ عامل لـ } f(x) \\iff f(c) = 0' },
+              { title: 'استخدام كثيرة الحدود المنخفضة (Depressed Polynomial)', type: 'bullets', content: [
+                'عندما يكون f(c) = 0، نستخدم ناتج القسمة (كثيرة الحدود المنخفضة) للبحث عن بقية العوامل والأصفار.'
+              ]}
+            ]
+          }
+        },
+        {
+          id: 7,
+          title: 'الدرس 2-7: الجذور والأصفار',
+          focusQuestion: 'ماذا تقرر النظرية الأساسية في الجبر وقاعدة ديكارت للإشارات حول جذور كثيرات الحدود؟',
+          icon: '🌱',
+          duration: '55 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-2.4/',
+          examUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-2.4-exam/',
+          lessonTitle: '📖 شرح الدرس',
+          examTitle: '📝 اختبر نفسك',
+          content: {
+            intro: 'تضمن النظرية الأساسية في الجبر أن لكل معادلة كثيرة حدود من الدرجة n عدداً من الجذور المركبة يساوي تماماً n (بما في ذلك الجذور المكررة). وتحدد قاعدة ديكارت احتمالات الجذور الحقيقية.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'كم عدداً من الجذور تمتلكه كثيرة حدود من الدرجة n؟ تمتلك بالضبط n من الجذور في مجموعة الأعداد المركبة (مع احتساب الجذور المكررة) بحسب النظرية الأساسية في الجبر.' },
+              { title: 'النظرية الأساسية في الجبر والنتيجة المرتبطة بها', type: 'formula', content: 'P(x) = 0 \\text{ من الدرجة } n \\implies \\text{عدد الجذور المركبة بالضبط } = n' },
+              { title: 'قاعدة ديكارت للإشارات (Descartes\' Rule of Signs)', type: 'bullets', content: [
+                'عدد الجذور الحقيقية الموجبة يساوي عدد مرات تغير إشارات معاملات P(x) أو ينقص عنه بعدد زوجي.',
+                'عدد الجذور الحقيقية السالبة يساوي عدد مرات تغير إشارات معاملات P(-x) أو ينقص عنه بعدد زوجي.'
+              ]},
+              { title: 'نظرية الجذور المركبة المترافقة (Complex Conjugates)', type: 'formula', content: 'a + bi \\text{ جذر } \\implies a - bi \\text{ جذر أيضاً حتماً}' }
+            ]
+          }
+        },
+        {
+          id: 8,
+          title: 'الدرس 2-8: نظرية الصفر النسبي',
+          focusQuestion: 'كيف تساعد نظرية الصفر النسبي في حصر جميع الأصفار النسبية الممكنة لدالة كثيرة حدود؟',
+          icon: '🎯',
+          duration: '55 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-2.4/',
+          examUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-2.4-exam/',
+          lessonTitle: '📖 شرح الدرس',
+          examTitle: '📝 اختبر نفسك',
+          content: {
+            intro: 'نظرية الصفر النسبي هي أداة رياضية قوية لحصر قائمة بجميع الأصفار النسبية المحتملة لكثيرة حدود بمعاملات صحيحة، تمهيداً لاختبارها وتحديد الجذور الحقيقية بدقة.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'كيف نحدد الأصفار النسبية الممكنة؟ نقسم عوامل الحد الثابت p على عوامل المعامل الرئيسي q، وتكون جميع النسب الممكنة ±p/q هي الأصفار النسبية المحتملة.' },
+              { title: 'نص نظرية الصفر النسبي (Rational Zero Theorem)', type: 'formula', content: '\\text{الأصفار النسبية المحتملة} = \\pm \\frac{\\text{عوامل الحد الثابت } a_0}{\\text{عوامل المعامل الرئيسي } a_n} = \\pm \\frac{p}{q}' },
+              { title: 'خطوات إيجاد جميع أصفار كثيرة الحدود', type: 'bullets', content: [
+                '1. حصر جميع الأصفار النسبية المحتملة ±p/q.',
+                '2. اختبار هذه القيم بواسطة القسمة التركيبية أو التمثيل البياني حتى نجد صفراً يعطي باقياً R = 0.',
+                '3. كتابة كثيرة الحدود المنخفضة وتكرار العملية أو استخدام التحليل والقانون العام لإيجاد بقية الجذور الحقيقية والمركبة.'
+              ]}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      id: 3,
+      name: 'الوحدة الثالثة: الدوال والمعادلات الأسيّة',
+      icon: '📈',
+      color: 'from-emerald-600 to-teal-700',
+      description: 'دراسة شاملة للدوال الأسية، تمثيلها وتحويلاتها الهندسية، تحديد الدوال باستخدام الفروق والنسب المتتالية، نماذج النمو والاضمحلال الأسي، المتتاليات الهندسية كدوال أسية، الصيغ التكرارية، وحل المعادلات والمتباينات الأسية.',
+      lessons: [
+        {
+          id: 1,
+          title: 'الدرس 3-1: الدوال الأسيّة',
+          focusQuestion: 'ما الخصائص المميزة للدالة الأسية y = bˣ وكيف تؤثر التحويلات الهندسية على تمثيلها البياني؟',
+          icon: '📊',
+          duration: '50 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-3.1/',
+          examUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-3.1-exam/',
+          lessonTitle: '📖 شرح الدرس',
+          examTitle: '📝 اختبر نفسك',
+          content: {
+            intro: 'الدالة الأسية هي دالة غير خطية يتغير فيها المتغير المستقل في الأس، صيغتها الأساسية f(x) = bˣ حيث الأساس b > 0 و b ≠ 1.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'ما الخصائص الأساسية للدالة الأسية؟ مجالها جميع الأعداد الحقيقية R، ومداها الأعداد الحقيقية الموجبة (y > 0)، وتقطع المحور y عند (0, 1)، ولها خط تقارب أفقي هو المحور x.' },
+              { title: 'الصيغة العامة للدالة الأسية والتحويلات الهندسية', type: 'formula', content: 'g(x) = a \\cdot b^{x - h} + k' },
+              { title: 'مقارنة بين دالتي النمو والتضاؤل الأسي', type: 'table', headers: ['الخاصية', 'دالة النمو الأسي (b > 1)', 'دالة التضاؤل الأسي (0 < b < 1)'], rows: [
+                ['السلوك', 'متزايدة على كامل مجالها', 'متناقصة على كامل مجالها'],
+                ['المجال والمدى', 'المجال R ، المدى (0, ∞)', 'المجال R ، المدى (0, ∞)'],
+                ['المقطع الصادي y', 'يمر بالنقطة (0, 1)', 'يمر بالنقطة (0, 1)'],
+                ['خط التقارب الأفقي', 'المحور x أي المستقيم y = 0', 'المحور x أي المستقيم y = 0']
+              ]},
+              { title: 'عناصر التحويلات الهندسية', type: 'bullets', content: [
+                'h: إزاحة أفقية بمقدار h وحدة (إلى اليمين إذا h > 0، وإلى اليسار إذا h < 0).',
+                'k: إزاحة رأسية بمقدار k وحدة (خط التقارب الأفقي يصبح المستقيم y = k والمدى y > k إذا a > 0).',
+                'a: تمدد رأسي إذا |a| > 1 أو انضغاط إذا 0 < |a| < 1، وانعكاس حول المحور x إذا a < 0.'
+              ]}
+            ]
+          }
+        },
+        {
+          id: 2,
+          title: 'الدرس 3-2: تحديد الدوال باستخدام الفروق المتتالية',
+          focusQuestion: 'كيف نحدد نوع الدالة (خطية، تربيعية، أسية) من جداول البيانات باستخدام الفروق والنسب؟',
+          icon: '🔍',
+          duration: '50 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-3.1/',
+          examUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-3.1-exam/',
+          lessonTitle: '📖 شرح الدرس',
+          examTitle: '📝 اختبر نفسك',
+          content: {
+            intro: 'عندما تكون قيم x متباعدة بمسافات متساوية في جدول بيانات، يمكن تحديد نوع الدالة الرياضية التي تُمثل هذه البيانات من خلال فحص الفروق المتتالية لقيم y أو النسب بينها.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'كيف نميز بين الدوال من جدول البيانات؟ الدالة الخطية تتميز بثبات الفروق الأولى، والدالة التربيعية بثبات الفروق الثانية، والدالة الأسية بثبات النسبة بين كل حد وسابقه.' },
+              { title: 'معايير تصنيف الدوال من جداول البيانات (لفترات متساوية لـ x)', type: 'table', headers: ['نوع الدالة', 'الصيغة الجبرية', 'المعيار الرياضي المميز'], rows: [
+                ['دالة خطية', 'y = mx + b', 'الفروق الأولى (First Differences) متساوية وثابتة'],
+                ['دالة تربيعية', 'y = ax² + bx + c', 'الفروق الثانية (Second Differences) متساوية وثابتة'],
+                ['دالة أسيّة', 'y = a · bˣ', 'النسب المتتالية (Ratios yₙ / yₙ₋₁) متساوية وثابتة وتساوي b']
+              ]},
+              { title: 'خطوات فحص جدول البيانات', type: 'bullets', content: [
+                '1. التأكد أولاً من أن قيم x تتغير بزيادة ثابتة منتظمة (Δx = ثابت).',
+                '2. حساب الفروق الأولى بطرح كل قيمة لـ y من القيمة التالية لها: y₂ - y₁ , y₃ - y₂ , ...',
+                '3. إذا لم تكن ثابتة، نحسب الفروق الثانية بطرح الفروق المتتالية الناتجة.',
+                '4. إذا لم تكن ثابتة، نقسم كل قيمة لـ y على سابقتها لفحص ثبات النسبة وتأكيد النموذج الأسي.'
+              ]}
+            ]
+          }
+        },
+        {
+          id: 3,
+          title: 'الدرس 3-3: النمو والاضمحلال (التضاؤل)',
+          focusQuestion: 'كيف نستخدم نماذج النمو والاضمحلال والربح المركب في حل المسائل الحياتية والمالية؟',
+          icon: '🌱',
+          duration: '55 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-2.2/',
+          examUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-2.2-exam/',
+          lessonTitle: '📖 شرح الدرس',
+          examTitle: '📝 اختبر نفسك',
+          content: {
+            intro: 'تُستخدم دوال النمو والاضمحلال الأسي لنمذجة العديد من الظواهر الطبيعية والاقتصادية، مثل تكاثر البكتيريا، النمو السكاني، التحلل الإشعاعي للمواد، وتراكم الفوائد المالية.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'ما الفرق بين دوال النمو والاضمحلال والربح المركب؟ النمو يعتمد على عامل (1 + r) والتضاؤل يعتمد على (1 - r)، بينما يقسم الربح المركب المعدل على فترات التركيب n سنوياً.' },
+              { title: 'نموذج النمو الأسي (Exponential Growth)', type: 'formula', content: 'y = a(1 + r)^t \\quad (a > 0, \\, r > 0, \\, 1 + r = \\text{عامل النمو})' },
+              { title: 'نموذج الاضمحلال الأسي (Exponential Decay)', type: 'formula', content: 'y = a(1 - r)^t \\quad (a > 0, \\, 0 < r < 1, \\, 1 - r = \\text{عامل الاضمحلال})' },
+              { title: 'صيغة الربح المركب الدوري (Compound Interest)', type: 'formula', content: 'A = P\\left(1 + \\frac{r}{n}\\right)^{nt}' },
+              { title: 'التحلل الإشعاعي وعمر النصف (Half-life)', type: 'formula', content: 'A = A_0 \\left(\\frac{1}{2}\\right)^{t / h} \\quad (h = \\text{فترة عمر النصف})' }
+            ]
+          }
+        },
+        {
+          id: 4,
+          title: 'الدرس 3-4: المتتاليات الهندسية في صورة دوال أسيّة',
+          focusQuestion: 'ما العلاقة الوثيقة بين الحد النوني للمتتالية الهندسية والدالة الأسية؟',
+          icon: '🔗',
+          duration: '50 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-3.1/',
+          examUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-3.1-exam/',
+          lessonTitle: '📖 شرح الدرس',
+          examTitle: '📝 اختبر نفسك',
+          content: {
+            intro: 'المتتالية الهندسية هي دالة أسية مجالها مجموعة الأعداد الصحيحة الموجبة أو الكلية. النسبة المشتركة r بين حدود المتتالية تطابق أساس الدالة الأسية b.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'كيف تترجم المتتالية الهندسية إلى دالة أسية؟ صيغة الحد النوني aₙ = a₁ · rⁿ⁻¹ هي دالة أسية منفصلة النقاط أساسها r ومعاملها a₁/r ومجالها الأعداد الطبيعية.' },
+              { title: 'صيغة الحد النوني للمتتالية الهندسية', type: 'formula', content: 'a_n = a_1 \\cdot r^{n-1} \\quad (r = \\frac{a_n}{a_{n-1}} = \\text{النسبة المشتركة})' },
+              { title: 'الربط الجبري بين المتتالية والدالة الأسية', type: 'formula', content: 'a_n = \\left(\\frac{a_1}{r}\\right) \\cdot r^n \\iff f(x) = a \\cdot b^x \\quad (b = r, \\, a = \\frac{a_1}{r})' },
+              { title: 'التمثيل البياني للمتتالية الهندسية', type: 'bullets', content: [
+                'تُمثل المتتالية بمجموعة نقاط منفصلة تقع على منحنى دالة أسية متصلة.',
+                'إذا كان r > 1: تتزايد الحدود باطراد.',
+                'إذا كان 0 < r < 1: تتناقص الحدود وتقترب من الصفر.',
+                'إذا كان r < 0: تتذبذب الحدود بين القيم الموجبة والسالبة (المتتالية متذبذبة Alternating).'
+              ]}
+            ]
+          }
+        },
+        {
+          id: 5,
+          title: 'الدرس 3-5: الصيغ التكرارية',
+          focusQuestion: 'كيف تُكتب الصيغة التكرارية للمتتاليات الهندسية والحسابية وترتبط بالصيغ الصريحة؟',
+          icon: '🔁',
+          duration: '50 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-3.1/',
+          examUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-3.1-exam/',
+          lessonTitle: '📖 شرح الدرس',
+          examTitle: '📝 اختبر نفسك',
+          content: {
+            intro: 'تُعبر الصيغة التكرارية (Recursive Formula) عن الحد النوني a_n للمتتالية بدلالة الحد السابق a_{n-1} أو الحدود السابقة له، مع تحديد قيمة الحد الأول a_1.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'ما الفرق بين الصيغة التكرارية والصيغة الصريحة؟ الصيغة الصريحة تحسب أي حد aₙ بدلالة رتبته n مباشرة، بينما تحسب الصيغة التكرارية كل حد بالاعتماد على الحد السابق aₙ₋₁.' },
+              { title: 'الصيغة التكرارية والصريحة للمتتالية الحسابية', type: 'formula', content: '\\text{تكرارية: } a_1 = k, \\, a_n = a_{n-1} + d \\quad \\iff \\quad \\text{صريحة: } a_n = a_1 + (n - 1)d' },
+              { title: 'الصيغة التكرارية والصريحة للمتتالية الهندسية', type: 'formula', content: '\\text{تكرارية: } a_1 = k, \\, a_n = r \\cdot a_{n-1} \\quad \\iff \\quad \\text{صريحة: } a_n = a_1 \\cdot r^{n-1}' },
+              { title: 'خطوات كتابة الصيغة التكرارية', type: 'bullets', content: [
+                '1. تحديد الحد الأول a₁ وكتابته كجزء أساسي من التعريف التكراري.',
+                '2. إيجاد الأساس الثابت: الفرق المشترك d في الحسابية، أو النسبة المشتركة r في الهندسية.',
+                '3. كتابة معادلة التكرار: aₙ = aₙ₋₁ + d أو aₙ = r · aₙ₋₁ لجميع n ≥ 2.'
+              ]}
+            ]
+          }
+        },
+        {
+          id: 6,
+          title: 'الدرس 3-6: حل المعادلات والمتباينات الأسيّة',
+          focusQuestion: 'كيف نحل المعادلات والمتباينات الأسية بتوحيد الأساسات أو تطبيق خواص الأسس؟',
+          icon: '⚖️',
+          duration: '55 min',
+          lessonUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-2.3/',
+          examUrl: 'https://hesham-afandi.github.io/12Jen-math-T1-2.3-exam/',
+          lessonTitle: '📖 شرح الدرس',
+          examTitle: '📝 اختبر نفسك',
+          content: {
+            intro: 'المعادلة الأسية تحتوي على متغير في الأس. لحلها جبرياً نستخدم خاصية المساواة للدوال الأسية بتوحيد الأساسات، وللمتباينات نراعي قيمة الأساس هل هو أكبر من 1 أم كسراً موجباً.',
+            sections: [
+              { title: 'Focus Question', type: 'text', content: 'كيف نحل المعادلة أو المتباينة الأسية؟ نوحد الأساسات في الطرفين باستخدام التحليل وقوانين الأسس، ثم نطبق خاصية المساواة bˣ = bʸ ⟹ x = y، أو خاصية المتباينات مع مراعاة اتجاه الإشارة.' },
+              { title: 'خاصية المساواة للدوال الأسية', type: 'formula', content: 'b^x = b^y \\iff x = y \\quad (b > 0, \\, b \\neq 1)' },
+              { title: 'خاصية المتباينات للدوال الأسية', type: 'bullets', content: [
+                'إذا كان الأساس أكبر من 1 (b > 1): فإن bˣ > bʸ ⟺ x > y (نفس اتجاه علامة المتباينة).',
+                'إذا كان الأساس كسراً (0 < b < 1): فإن bˣ > bʸ ⟺ x < y (ينعكس اتجاه علامة المتباينة لأن الدالة متناقصة).'
+              ]},
+              { title: 'أمثلة محلولة', type: 'bullets', content: [
+                'معادلة: 3^(2x + 1) = 81 ⟹ 3^(2x + 1) = 3⁴ ⟹ 2x + 1 = 4 ⟹ 2x = 3 ⟹ x = 1.5',
+                'متباينة: 2^(x + 2) ≥ 16 ⟹ 2^(x + 2) ≥ 2⁴ ⟹ x + 2 ≥ 4 ⟹ x ≥ 2',
+                'كسر: (1/3)^(x - 1) ≤ 9 ⟹ 3^(-(x - 1)) ≤ 3² ⟹ -x + 1 ≤ 2 ⟹ -x ≤ 1 ⟹ x ≥ -1'
+              ]}
+            ]
+          }
+        }
+      ]
     }
   ]
 };
