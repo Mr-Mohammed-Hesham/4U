@@ -202,7 +202,7 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
     }
 
     if (!trimmedUrl) {
-      setFormError(isEnglish ? 'Please enter the repository / exam URL' : 'يرجى كتابة رابط مستودع الاختبار الجديد');
+      setFormError(isEnglish ? 'Please enter the exam URL' : 'يرجى كتابة رابط الاختبار الجديد');
       return;
     }
 
@@ -391,7 +391,7 @@ export const LessonExamsModal: React.FC<LessonExamsModalProps> = ({
                   className="bg-white text-slate-900 hover:bg-amber-100 font-black px-4 py-1.5 rounded-xl shadow transition cursor-pointer flex items-center gap-1.5 text-xs active:scale-95"
                 >
                   {showAddForm ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-                  <span>{showAddForm ? (isEnglish ? 'Cancel' : 'إلغاء الإضافة') : (isEnglish ? '+ Add New Exam (Repo Link)' : '+ إضافة اختبار جديد (مستودع جديد)')}</span>
+                  <span>{showAddForm ? (isEnglish ? 'Cancel' : 'إلغاء الإضافة') : (isEnglish ? '+ Add New Exam' : '+ إضافة اختبار جديد')}</span>
                 </button>
               )}
             </div>
@@ -483,7 +483,7 @@ service cloud.firestore {
                     <span>
                       {editingExamId 
                         ? (isEnglish ? 'Edit Exam' : 'تعديل بيانات الاختبار') 
-                        : (isEnglish ? 'Add New Exam (New Repository Link)' : 'إضافة اختبار جديد للدرس (لينك مستودع جديد)')}
+                        : (isEnglish ? 'Add New Exam to Lesson' : 'إضافة اختبار جديد للدرس')}
                     </span>
                   </h3>
                   <button
@@ -513,7 +513,7 @@ service cloud.firestore {
                       id="admin-exam-title-input"
                       value={examTitle}
                       onChange={(e) => handleTitleChange(e.target.value)}
-                      placeholder={isEnglish ? 'e.g., Chapter 1 Mastery Quiz' : 'مثال: اختبار المستودع الثاني - أسئلة تدريبية متقدمة'}
+                      placeholder={isEnglish ? 'e.g., Chapter 1 Mastery Quiz' : 'مثال: اختبار تجريبي - أسئلة تدريبية متقدمة'}
                       required
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none"
                     />
@@ -578,7 +578,7 @@ service cloud.firestore {
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="block text-xs font-black text-slate-700 dark:text-slate-300">
-                        {isEnglish ? 'Exam Repository URL (GitHub Pages / Applet Link) *' : 'رابط مستودع الاختبار الجديد (رابط GitHub Pages أو التطبيق) *'}
+                        {isEnglish ? 'Exam URL (GitHub Pages / Applet Link) *' : 'رابط الاختبار الجديد (رابط GitHub Pages أو التطبيق) *'}
                       </label>
                       <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                         <Lock className="w-3 h-3" />
@@ -590,7 +590,7 @@ service cloud.firestore {
                       id="admin-exam-url-input"
                       value={examRepoUrl}
                       onChange={(e) => setExamRepoUrl(e.target.value)}
-                      placeholder="https://hesham-afandi.github.io/example-exam/ أو رابط مستودع الاختبار..."
+                      placeholder="https://... أو رابط الاختبار..."
                       required
                       dir="ltr"
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-mono focus:ring-2 focus:ring-amber-500 focus:outline-none text-left"
@@ -747,7 +747,7 @@ service cloud.firestore {
                     <div className="space-y-1 min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[11px] font-black bg-indigo-600 text-white px-2.5 py-0.5 rounded-full shadow-sm">
-                          {isEnglish ? `Repository Exam #${idx + 1}` : `مستودع تدريبي إضافي #${idx + 1}`}
+                          {isEnglish ? `Practice Exam #${idx + 1}` : `اختبار تدريبي إضافي #${idx + 1}`}
                         </span>
                         <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full">
                           {exam.iconName || exam.title}
@@ -767,7 +767,7 @@ service cloud.firestore {
                       <div className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-2 pt-0.5">
                         <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
                           <Lock className="w-3 h-3" />
-                          <span>{isEnglish ? 'Secured in-app exam' : 'مستودع اختبار معتمد ومدمج'}</span>
+                          <span>{isEnglish ? 'Secured in-app exam' : 'اختبار تدريبي معتمد ومدمج'}</span>
                         </span>
                       </div>
                     </div>
@@ -829,11 +829,11 @@ service cloud.firestore {
                   <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
                     {effectiveIsAdmin
                       ? (isEnglish 
-                          ? 'As an Admin, click "+ Add New Exam (New Repository Link)" above to add the first exam for this lesson!' 
-                          : 'بصفتك المشرف / الأدمن، يمكنك الآن الضغط على زر "+ إضافة اختبار جديد (مستودع جديد)" بالأعلى لإضافة اختبار لهذا الدرس.')
+                          ? 'As an Admin, click "+ Add New Exam" above to add the first exam for this lesson!' 
+                          : 'بصفتك المشرف / الأدمن، يمكنك الآن الضغط على زر "+ إضافة اختبار جديد" بالأعلى لإضافة اختبار لهذا الدرس.')
                       : (isEnglish
                           ? 'Stay tuned! The instructor will be adding interactive quizzes for this lesson soon.'
-                          : 'سيقوم معلم المادة برفع المستودعات والاختبارات التفاعلية لهذا الدرس قريباً بإذن الله.')}
+                          : 'سيقوم معلم المادة برفع الاختبارات والتدريبات التفاعلية لهذا الدرس قريباً بإذن الله.')}
                   </p>
                   {effectiveIsAdmin && !showAddForm && (
                     <button

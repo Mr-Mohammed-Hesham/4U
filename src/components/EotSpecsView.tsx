@@ -40,6 +40,8 @@ import {
 interface EotSpecsViewProps {
   onSwitchToCurriculum?: () => void;
   language?: 'ar' | 'en';
+  selectedAcademicYear?: '2025' | '2026';
+  onAcademicYearChange?: (year: '2025' | '2026') => void;
 }
 
 export type SubjectType = 'math' | 'physics' | 'chemistry' | 'biology';
@@ -51,14 +53,31 @@ const SUBJECT_OPTIONS = [
   { id: 'biology', name: 'الأحياء', nameEn: 'Biology', icon: Dna, color: 'from-rose-500 to-pink-600' },
 ];
 
-export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum, language = 'ar' }) => {
+export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ 
+  onSwitchToCurriculum, 
+  language = 'ar',
+  selectedAcademicYear: propYear,
+  onAcademicYearChange
+}) => {
   const isEn = language === 'en';
   // Navigation View Mode: 'selection' (step 1) or 'exam' (step 2)
   const [viewMode, setViewMode] = useState<'selection' | 'exam'>('selection');
 
   const [activeTab, setActiveTab] = useState<'all' | 'mcq' | 'paper' | 'matrix' | 'quiz' | 'tutor'>('all');
 
-  // Framework Selection States
+  // Framework Selection States (Default to 2025)
+  const [selectedAcademicYear, setInternalYear] = useState<'2025' | '2026'>(propYear || '2025');
+
+  useEffect(() => {
+    if (propYear && (propYear === '2025' || propYear === '2026')) {
+      setInternalYear(propYear);
+    }
+  }, [propYear]);
+
+  const setSelectedAcademicYear = (yr: '2025' | '2026') => {
+    setInternalYear(yr);
+    onAcademicYearChange?.(yr);
+  };
   const [selectedSubject, setSelectedSubject] = useState<SubjectType>('math');
   const [selectedStream, setSelectedStream] = useState<StreamType>('advanced');
   const [selectedGrade, setSelectedGrade] = useState<GradeType>('12');
@@ -76,8 +95,10 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum
   // AI Tutor Modal
   const [aiModalQuestion, setAiModalQuestion] = useState<QuestionItem | null>(null);
 
-  // Active dataset based on subject, grade, stream, term
+  // Active dataset based on academicYear, subject, grade, stream, term
   const activeDataset = useMemo(() => {
+    // 2026 specifications will be available soon Insha'Allah
+    if (selectedAcademicYear === '2026') return [];
     if (selectedTerm !== 'EOT1') return [];
     
     // Math
@@ -123,7 +144,7 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum
     }
 
     return [];
-  }, [selectedSubject, selectedGrade, selectedStream, selectedTerm]);
+  }, [selectedAcademicYear, selectedSubject, selectedGrade, selectedStream, selectedTerm]);
 
   const hasExamQuestions = activeDataset.length > 0;
 
@@ -203,8 +224,14 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum
                     <GraduationCap className="w-4 h-4 text-amber-400" />
                     Mr. Mohammed Hesham
                   </span>
-                  <span className="bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full text-xs font-bold border border-emerald-500/30">
-                    {isEn ? 'Academic Year 2026-2027' : 'العام الدراسي 2026-2027'}
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                    selectedAcademicYear === '2025'
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                      : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                  }`}>
+                    {selectedAcademicYear === '2025' 
+                      ? (isEn ? '📅 2025 Specifications (2024-2025)' : '📅 هياكل 2025 (2024-2025)') 
+                      : (isEn ? '📅 2026 Specifications (Coming Soon)' : '📅 هياكل 2026 (ستتوفر قريباً)')}
                   </span>
                   {onSwitchToCurriculum && (
                     <button
@@ -242,10 +269,93 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-lg space-y-6">
               <h3 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
                 <Filter className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                {isEn ? 'Select Subject, Grade, and Stream' : 'قائمة اختيار المادة والصف والمسار'}
+                {isEn ? 'Select Year, Subject, Grade, and Stream' : 'قائمة اختيار السنة الدراسية والمادة والصف والمسار'}
               </h3>
 
-              {/* 1. Subjects Grid */}
+              {/* 1. Academic Year Selection for EOT (تقسيم السنوات) */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                    <span>📅</span>
+                    <span>{isEn ? 'Select Exam Specifications Year:' : 'تحديد السنة الدراسية للهيكل الامتحاني:'}</span>
+                  </label>
+                  <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+                    {selectedAcademicYear === '2025' ? (isEn ? '2025 Specs Selected (Available)' : 'هياكل 2025 (متاحة حالياً بالكامل)') : (isEn ? '2026 Specs Selected (Coming Soon)' : 'هياكل 2026 (ستتوفر قريباً إن شاء الله)')}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {/* 2025 Specs Option */}
+                  <div
+                    onClick={() => setSelectedAcademicYear('2025')}
+                    className={`p-4 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between gap-3 text-right ${
+                      selectedAcademicYear === '2025'
+                        ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-500 shadow-md ring-2 ring-emerald-500/30'
+                        : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/80 hover:border-emerald-400'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl p-2 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                          📜
+                        </span>
+                        <div>
+                          <span className="block font-black text-sm text-slate-900 dark:text-white">
+                            {isEn ? '2025 Exam Specifications' : 'هياكل 2025'}
+                          </span>
+                          <span className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                            {isEn ? 'Academic Year 2024 - 2025' : 'العام الدراسي 2024 - 2025'}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-700 shrink-0">
+                        {isEn ? '✅ Available Now' : '✅ متاح حالياً بالكامل'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                      {isEn
+                        ? 'All official EOT specifications, MCQ questions, paper questions, and verified model answers.'
+                        : 'جميع مواصفات الهيكل الوزاري المعتمدة، أسئلة الاختيار من متعدد، والأسئلة المقالية والحلول النموذجية.'}
+                    </p>
+                  </div>
+
+                  {/* 2026 Specs Option */}
+                  <div
+                    onClick={() => setSelectedAcademicYear('2026')}
+                    className={`p-4 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between gap-3 text-right ${
+                      selectedAcademicYear === '2026'
+                        ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-500 shadow-md ring-2 ring-amber-500/30'
+                        : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/80 hover:border-amber-400'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl p-2 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-xl">
+                          ⏳
+                        </span>
+                        <div>
+                          <span className="block font-black text-sm text-slate-900 dark:text-white">
+                            {isEn ? '2026 Exam Specifications' : 'هياكل 2026'}
+                          </span>
+                          <span className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                            {isEn ? 'Academic Year 2025 - 2026' : 'العام الدراسي 2025 - 2026'}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-amber-300 dark:border-amber-700 shrink-0">
+                        {isEn ? '⏳ Coming Soon' : '⏳ ستتوفر قريباً إن شاء الله'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                      {isEn
+                        ? 'Exam specifications for the 2026 academic year will be available soon Insha\'Allah once officially released.'
+                        : 'هياكل ونماذج اختبارات 2026 ستتوفر قريباً إن شاء الله فور صدورها واعتمادها رسمياً من الوزارة.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Subjects Grid */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-600 dark:text-slate-300">{isEn ? 'Select Subject:' : 'اختر المادة الدراسية:'}</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -278,7 +388,7 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum
                 </div>
               </div>
 
-              {/* 2. Dropdown selectors: Grade, Stream, Term */}
+              {/* 3. Dropdown selectors: Grade, Stream, Term */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                 {/* Grade Select */}
                 <div className="flex flex-col gap-1.5">
@@ -328,9 +438,33 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum
                 </div>
               </div>
 
-              {/* Action Button to Enter Exam */}
+              {/* Action Button to Enter Exam / Notice for 2026 */}
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col items-center gap-3">
-                {hasExamQuestions ? (
+                {selectedAcademicYear === '2026' ? (
+                  <div className="text-center space-y-4 py-8 px-6 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border-2 border-dashed border-amber-400/40 rounded-3xl w-full">
+                    <div className="w-16 h-16 mx-auto rounded-3xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-3xl font-black shadow-inner">
+                      ⏳
+                    </div>
+                    <div className="space-y-1.5">
+                      <h4 className="text-xl font-black text-slate-900 dark:text-slate-100">
+                        {isEn ? '2026 Exam Specifications Coming Soon Insha\'Allah' : 'هياكل 2026 ستتوفر قريباً إن شاء الله'}
+                      </h4>
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-lg mx-auto leading-relaxed">
+                        {isEn
+                          ? 'The 2026 exam specifications are currently being audited and will be uploaded here as soon as officially issued. You can explore the fully solved 2025 specifications in the meantime.'
+                          : 'يجري العمل على إعداد وتدقيق هياكل ونماذج اختبارات 2026 للعام الدراسي الجديد، وستتوفر هنا بالكامل فور اعتمادها وصدورها رسمياً إن شاء الله. يمكنك الاطلاع على هياكل 2025 المتاحة حالياً.'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedAcademicYear('2025')}
+                      className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm rounded-2xl shadow-lg shadow-emerald-600/25 transition cursor-pointer inline-flex items-center gap-2 active:scale-95"
+                    >
+                      <span>{isEn ? 'Switch to Available 2025 Specs' : 'الانتقال إلى هياكل 2025 المتاحة الآن'}</span>
+                      <span>✓</span>
+                    </button>
+                  </div>
+                ) : hasExamQuestions ? (
                   <button
                     onClick={handleEnterExam}
                     disabled={isLoading}
@@ -343,7 +477,7 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum
                       </>
                     ) : (
                       <>
-                        <span>{isEn ? 'View Exam Specifications & Solved Questions 🚀' : 'الانتقال لصفحة الامتحان وهيكل المادة 🚀'}</span>
+                        <span>{isEn ? 'View 2025 Exam Specifications & Solved Questions 🚀' : 'الانتقال لصفحة امتحان وهيكل 2025 🚀'}</span>
                         <ArrowLeft className="w-5 h-5" />
                       </>
                     )}
@@ -536,6 +670,9 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum
                   <span className="bg-slate-800 text-indigo-300 font-bold px-3 py-1 rounded-lg">
                     {selectedTerm}
                   </span>
+                  <span className="bg-emerald-950 text-emerald-300 border border-emerald-800 font-bold px-3 py-1 rounded-lg">
+                    📅 {selectedAcademicYear === '2025' ? 'هيكل 2025' : 'هيكل 2026'}
+                  </span>
                 </div>
               </div>
 
@@ -559,10 +696,43 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ onSwitchToCurriculum
               setSelectedGrade={setSelectedGrade}
               selectedTerm={selectedTerm}
               setSelectedTerm={setSelectedTerm}
+              selectedAcademicYear={selectedAcademicYear}
+              setSelectedAcademicYear={setSelectedAcademicYear}
             />
 
-            {/* Exam Views based on activeTab */}
-            {activeTab === 'matrix' ? (
+            {/* Exam Views based on activeTab / 2026 Coming Soon guard */}
+            {selectedAcademicYear === '2026' ? (
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-amber-400/40 p-12 text-center space-y-4 shadow-sm">
+                <div className="w-16 h-16 mx-auto rounded-3xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-3xl font-black">
+                  ⏳
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">
+                    {isEn ? '2026 Exam Specifications Coming Soon Insha\'Allah' : 'هياكل 2026 ستتوفر قريباً إن شاء الله'}
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 max-w-lg mx-auto leading-relaxed">
+                    {isEn
+                      ? 'The exam specifications for the 2026 academic year are currently being audited and will be uploaded here as soon as approved. You can explore the fully solved 2025 specifications in the meantime.'
+                      : 'يجري العمل على إعداد وتدقيق هياكل ونماذج اختبارات 2026 للعام الدراسي الجديد، وستتوفر هنا بالكامل فور اعتمادها وصدورها رسمياً إن شاء الله. يمكنك مراجعة هياكل 2025 المحلولة بالكامل حالياً.'}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <button
+                    onClick={() => setSelectedAcademicYear('2025')}
+                    className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm rounded-2xl shadow-lg shadow-emerald-600/25 transition cursor-pointer inline-flex items-center gap-2"
+                  >
+                    <span>{isEn ? 'Switch to Available 2025 Specs' : 'الانتقال إلى هياكل 2025 المتاحة الآن'}</span>
+                    <span>✓</span>
+                  </button>
+                  <button
+                    onClick={handleBackToSelection}
+                    className="px-5 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm rounded-2xl transition cursor-pointer"
+                  >
+                    {isEn ? 'Back to Selection' : 'العودة لاختيار الصف والمادة'}
+                  </button>
+                </div>
+              </div>
+            ) : activeTab === 'matrix' ? (
               <ExamTable onSelectOutcome={handleSelectOutcome} />
             ) : activeTab === 'quiz' ? (
               <QuizMode

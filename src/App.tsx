@@ -3612,7 +3612,7 @@ export default function App() {
               <>
                 <span className="text-gray-400">‹</span>
                 <button onClick={() => jumpToBreadcrumb('academicYear')} className="hover:text-indigo-600 dark:hover:text-indigo-400 font-medium cursor-pointer flex items-center gap-1 bg-amber-500/10 dark:bg-amber-400/10 text-amber-700 dark:text-amber-300 px-2.5 py-0.5 rounded-lg border border-amber-500/30 text-xs font-black">
-                  <span>📅</span> {appState.academicYear === '2025' ? 'منهج 2025' : 'منهج 2026'}
+                  <span>📅</span> {activePlatformSection === 'eot' ? (appState.academicYear === '2025' ? 'هيكل 2025' : 'هيكل 2026') : (appState.academicYear === '2025' ? 'منهج 2025' : 'منهج 2026')}
                 </button>
               </>
             )}
@@ -3934,6 +3934,8 @@ export default function App() {
             {appState.country === 'UAE' && activePlatformSection === 'eot' && (
               <EotSpecsView 
                 language={language}
+                selectedAcademicYear={appState.academicYear === '2026' ? '2026' : '2025'}
+                onAcademicYearChange={(yr) => setAppState(prev => ({ ...prev, academicYear: yr }))}
                 onSwitchToCurriculum={() => {
                   setActivePlatformSection('curriculum');
                   setCurriculumSubView('terms');
@@ -4036,14 +4038,20 @@ export default function App() {
                   {/* EOT Specs Section Card */}
                   <div
                     onClick={() => setActivePlatformSection('eot')}
-                    className="group p-6 rounded-3xl shadow-xl border-2 border-amber-500/40 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 text-white hover:border-amber-400 hover:ring-4 hover:ring-amber-500/20 transition-all cursor-pointer flex flex-col items-center text-center justify-center space-y-4"
+                    className="group p-6 rounded-3xl shadow-xl border-2 border-amber-500/40 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 text-white hover:border-amber-400 hover:ring-4 hover:ring-amber-500/20 transition-all cursor-pointer flex flex-col items-center text-center justify-center space-y-3"
                   >
                     <div className="w-16 h-16 rounded-3xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-3xl font-bold group-hover:scale-110 transition-transform">
                       📜
                     </div>
-                    <h3 className="text-lg font-black text-amber-300 group-hover:text-amber-200 transition-colors">
-                      {language === 'en' ? 'EOT Specs & Exams' : 'قسم الهياكل (EOT)'}
-                    </h3>
+                    <div className="space-y-1">
+                      <h3 className="text-lg font-black text-amber-300 group-hover:text-amber-200 transition-colors">
+                        {language === 'en' ? 'EOT Specs & Exams' : 'قسم الهياكل (EOT)'}
+                      </h3>
+                      <div className="flex items-center justify-center gap-1.5 text-[10px] font-bold">
+                        <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">هياكل 2025 ✅</span>
+                        <span className="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">هياكل 2026 ⏳</span>
+                      </div>
+                    </div>
                   </div>
 
                   {/* SAT Section Card */}

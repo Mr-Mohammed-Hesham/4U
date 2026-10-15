@@ -1773,30 +1773,6 @@ export const IgView: React.FC<IgViewProps> = ({
                 <span>🎓 {language === 'en' ? 'SAT Exams' : 'السات (SAT)'}</span>
               </button>
             )}
-
-            {/* Live GitHub Repository Connected Badge */}
-            <div className="flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-400/30 px-3 py-1.5 rounded-xl text-xs font-black text-emerald-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>مستودع IG المباشر:</span>
-              <a
-                href="https://github.com/Mr-Mohammed-Hesham/IG-Exam-Bank"
-                target="_blank"
-                rel="noreferrer"
-                className="underline hover:text-white flex items-center gap-1 font-mono"
-                title="فتح مستودع IG-Exam-Bank على GitHub"
-              >
-                <span>IG-Exam-Bank</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-              <button
-                onClick={() => handleSyncIgBank(true)}
-                disabled={isSyncingIg}
-                className="p-1 hover:bg-emerald-600/30 rounded-lg transition text-white cursor-pointer ml-1"
-                title="مزامنة فورية الآن مع المستودع"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isSyncingIg ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -2057,8 +2033,8 @@ export const IgView: React.FC<IgViewProps> = ({
                   : 'text-slate-600 dark:text-slate-300 hover:text-emerald-500'
               }`}
             >
-              <GitBranch className="w-3.5 h-3.5 text-emerald-400" />
-              <span>بنك المستودع المباشر</span>
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+              <span>بنك الامتحانات التفاعلية المباشرة</span>
               <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded-full font-black">
                 {liveIgExams.length}
               </span>
@@ -2890,22 +2866,13 @@ export const IgView: React.FC<IgViewProps> = ({
                 <div className="space-y-1">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-black">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>مربوط مباشرة بمستودع GitHub الرسمي</span>
+                    <span>بنك الامتحانات التفاعلية المباشرة المعتمد</span>
                   </div>
                   <h3 className="text-xl md:text-2xl font-black text-white flex items-center gap-2">
-                    <span>🏛️</span> بنك امتحانات IG التفاعلية المباشرة (IG-Exam-Bank)
+                    <span>🏛️</span> بنك امتحانات IG التفاعلية المباشرة
                   </h3>
                   <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-                    يتم استيراد وتحديث هذه الامتحانات مباشرة وحصرياً من المستودع الرسمي{' '}
-                    <a
-                      href="https://github.com/Mr-Mohammed-Hesham/IG-Exam-Bank"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-emerald-400 font-bold underline"
-                    >
-                      Mr-Mohammed-Hesham/IG-Exam-Bank
-                    </a>
-                    . أي امتحان جديد يتم رفعه على المستودع يظهر تلقائياً هنا فوراً!
+                    امتحانات وبنك أسئلة تفاعلية شاملة لمادة الرياضيات IG تحاكي الاختبارات الرسمية مع التصحيح الفوري والشروحات النموذجية المعتمدة.
                   </p>
                 </div>
 
@@ -2916,19 +2883,8 @@ export const IgView: React.FC<IgViewProps> = ({
                     className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     <RefreshCw className={`w-4 h-4 ${isSyncingIg ? 'animate-spin' : ''}`} />
-                    <span>{isSyncingIg ? 'جاري المزامنة...' : 'تحديث فوري من المستودع 🔄'}</span>
+                    <span>{isSyncingIg ? 'جاري المزامنة...' : 'تحديث الامتحانات 🔄'}</span>
                   </button>
-
-                  <a
-                    href="https://github.com/Mr-Mohammed-Hesham/IG-Exam-Bank"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition border border-slate-700 flex items-center gap-1.5"
-                  >
-                    <GitBranch className="w-4 h-4 text-emerald-400" />
-                    <span>عرض المستودع</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
                 </div>
               </div>
 

@@ -405,30 +405,6 @@ export const SatView: React.FC<SatViewProps> = ({
                 <span>📜 {lang === 'ar' ? 'قسم الهياكل EOT' : 'EOT Specs'}</span>
               </button>
             )}
-
-            {/* Live GitHub Repository Connected Badge */}
-            <div className="flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-400/30 px-3 py-1.5 rounded-xl text-xs font-black text-emerald-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>مستودع السات المباشر:</span>
-              <a
-                href="https://github.com/Mr-Mohammed-Hesham/SAT-Math-Bank"
-                target="_blank"
-                rel="noreferrer"
-                className="underline hover:text-white flex items-center gap-1 font-mono"
-                title="فتح مستودع SAT-Math-Bank على GitHub"
-              >
-                <span>SAT-Math-Bank</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-              <button
-                onClick={() => handleSyncSatBank(true)}
-                disabled={isSyncingSat}
-                className="p-1 hover:bg-emerald-600/30 rounded-lg transition text-white cursor-pointer ml-1"
-                title="مزامنة فورية الآن مع المستودع"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isSyncingSat ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -525,8 +501,8 @@ export const SatView: React.FC<SatViewProps> = ({
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
-              <GitBranch className="w-4 h-4 text-emerald-400" />
-              <span>{lang === 'ar' ? 'القسم الثالث: بنك نماذج المراجعة المباشرة (المستودع)' : 'Section 3: SAT-Math-Bank Live'}</span>
+              <Sparkles className="w-4 h-4 text-emerald-400" />
+              <span>{lang === 'ar' ? 'القسم الثالث: نماذج المراجعة التفاعلية الشاملة' : 'Section 3: Interactive Revision Mocks'}</span>
               <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded-full font-black">
                 {liveSatMocks.length}
               </span>
@@ -544,15 +520,15 @@ export const SatView: React.FC<SatViewProps> = ({
               <div className="space-y-1">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-black">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>{lang === 'ar' ? 'مربوط مباشرة بمستودع SAT-Math-Bank' : 'Directly synced with SAT-Math-Bank'}</span>
+                  <span>{lang === 'ar' ? 'نماذج امتحانات تفاعلية موثوقة ومباشرة' : 'Direct Interactive Digital SAT Mocks'}</span>
                 </div>
                 <h3 className="text-xl md:text-2xl font-black text-white flex items-center gap-2">
                   <span>🚀</span> {lang === 'ar' ? 'نماذج محاكاة مراجعة السات الشاملة (Interactive Mocks)' : 'SAT Comprehensive Revision Mocks Bank'}
                 </h3>
                 <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
                   {lang === 'ar' 
-                    ? 'نماذج امتحانات تفاعلية موقوتة تحاكي اختبار السات الرقمي الفعلي مع التصحيح الفوري والشروحات. أي نموذج يتم رفعه على المستودع يظهر هنا تلقائياً!'
-                    : 'Interactive timed mock exams mirroring real Digital SAT conditions with instant scoring and explanations. New exams added to the repo appear here instantly!'}
+                    ? 'نماذج امتحانات تفاعلية موقوتة تحاكي اختبار السات الرقمي الفعلي مع التصحيح الفوري والشروحات الكاملة لكل سؤال.'
+                    : 'Interactive timed mock exams mirroring real Digital SAT conditions with instant scoring and explanations.'}
                 </p>
               </div>
 
@@ -563,19 +539,8 @@ export const SatView: React.FC<SatViewProps> = ({
                   className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   <RefreshCw className={`w-4 h-4 ${isSyncingSat ? 'animate-spin' : ''}`} />
-                  <span>{isSyncingSat ? (lang === 'ar' ? 'جاري المزامنة...' : 'Syncing...') : (lang === 'ar' ? 'تحديث فوري من المستودع 🔄' : 'Sync Live Bank 🔄')}</span>
+                  <span>{isSyncingSat ? (lang === 'ar' ? 'جاري المزامنة...' : 'Syncing...') : (lang === 'ar' ? 'تحديث النماذج 🔄' : 'Sync Mocks 🔄')}</span>
                 </button>
-
-                <a
-                  href="https://github.com/Mr-Mohammed-Hesham/SAT-Math-Bank"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition border border-slate-700 flex items-center gap-1.5"
-                >
-                  <GitBranch className="w-4 h-4 text-emerald-400" />
-                  <span>{lang === 'ar' ? 'مستودع السات' : 'GitHub Repo'}</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
               </div>
             </div>
 

@@ -16,6 +16,8 @@ interface NavbarProps {
   setSelectedGrade: (grade: GradeType) => void;
   selectedTerm: TermType;
   setSelectedTerm: (term: TermType) => void;
+  selectedAcademicYear?: '2025' | '2026';
+  setSelectedAcademicYear?: (year: '2025' | '2026') => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -32,6 +34,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   setSelectedGrade,
   selectedTerm,
   setSelectedTerm,
+  selectedAcademicYear = '2025',
+  setSelectedAcademicYear,
 }) => {
   const getSubjectName = (sub: string) => {
     switch (sub) {
@@ -90,7 +94,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   قسم الهياكل الامتحانية
                 </span>
                 <span className="bg-amber-500/20 text-amber-300 text-xs px-2.5 py-0.5 rounded-full border border-amber-500/30 font-bold">
-                  2026 / 2027
+                  {selectedAcademicYear === '2025' ? 'هيكل 2025' : 'هيكل 2026'}
                 </span>
                 <span className="bg-emerald-500/20 text-emerald-300 text-xs px-2.5 py-0.5 rounded-full border border-emerald-500/30 font-bold">
                   إعداد: Mr. Mohammed Hesham
@@ -213,6 +217,34 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
               ))}
             </div>
+
+            {/* Academic Year Selector */}
+            {setSelectedAcademicYear && (
+              <div className="flex items-center gap-1 bg-slate-900 rounded-xl p-1 border border-slate-700/80">
+                <span className="text-[10px] text-slate-400 px-1 font-semibold">السنة:</span>
+                <button
+                  onClick={() => setSelectedAcademicYear('2025')}
+                  className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                    selectedAcademicYear === '2025'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  2025
+                </button>
+                <button
+                  onClick={() => setSelectedAcademicYear('2026')}
+                  className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                    selectedAcademicYear === '2026'
+                      ? 'bg-amber-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  title="هياكل 2026 ستتوفر قريباً إن شاء الله"
+                >
+                  2026 (قريباً)
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

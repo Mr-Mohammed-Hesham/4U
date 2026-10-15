@@ -367,10 +367,19 @@ export const SmartNavigatorBar: React.FC<SmartNavigatorBarProps> = ({
                 onChange={(e) => handleYearChange(e.target.value)}
                 className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-2 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition cursor-pointer appearance-none text-right"
               >
-                <option value="2025">منهج 2025 ✅</option>
-                <option value="2026">
-                  {isCurriculumImported2026 ? 'منهج 2026 (مستورد) 🚀' : 'منهج 2026 ⏳'}
-                </option>
+                {activePlatformSection === 'eot' ? (
+                  <>
+                    <option value="2025">هياكل 2025 (متاحة بالكامل) ✅</option>
+                    <option value="2026">هياكل 2026 (ستتوفر قريباً إن شاء الله) ⏳</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="2025">منهج 2025 ✅</option>
+                    <option value="2026">
+                      {isCurriculumImported2026 ? 'منهج 2026 (مستورد) 🚀' : 'منهج 2026 ⏳'}
+                    </option>
+                  </>
+                )}
               </select>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-3 pointer-events-none" />
             </div>
