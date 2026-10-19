@@ -16,7 +16,7 @@ export const math10General1: Curriculum = {
           icon: '➕',
           duration: '50 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.1/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.1-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-1.1-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -52,7 +52,7 @@ export const math10General1: Curriculum = {
           icon: '✖️',
           duration: '50 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.2/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.2-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-1.2-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -84,7 +84,7 @@ export const math10General1: Curriculum = {
           icon: '🔢',
           duration: '55 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.3/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.3-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-1.3-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -116,7 +116,7 @@ export const math10General1: Curriculum = {
           icon: '🎯',
           duration: '50 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.4/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.4-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-1.4-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -142,7 +142,7 @@ export const math10General1: Curriculum = {
           icon: '📐',
           duration: '55 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.5/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.5-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-1.5-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -176,7 +176,7 @@ export const math10General1: Curriculum = {
           icon: '🎯',
           duration: '55 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.6/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.6-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-1.6-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -209,7 +209,7 @@ export const math10General1: Curriculum = {
           icon: '🔍',
           duration: '55 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.7/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.7-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-1.7-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -240,7 +240,7 @@ export const math10General1: Curriculum = {
           icon: '🔲',
           duration: '50 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.8/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.8-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-1.8-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -271,7 +271,7 @@ export const math10General1: Curriculum = {
           icon: '⬜',
           duration: '50 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.9/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-1.9-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-1.9-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -312,7 +312,7 @@ export const math10General1: Curriculum = {
           icon: '✖️',
           duration: '50 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-2.1/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-2.1-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-2.1-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -338,7 +338,7 @@ export const math10General1: Curriculum = {
           icon: '÷',
           duration: '50 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-2.2/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-2.2-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-2.2-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -366,7 +366,7 @@ export const math10General1: Curriculum = {
           icon: '½',
           duration: '55 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-2.3/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-2.3-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-2.3-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -395,7 +395,7 @@ export const math10General1: Curriculum = {
           icon: '🔬',
           duration: '50 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-2.4/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-2.4-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-2.4-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -427,7 +427,7 @@ export const math10General1: Curriculum = {
           icon: '➗',
           duration: '55 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-2.5/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-2.5-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-2.5-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -463,7 +463,7 @@ export const math10General1: Curriculum = {
           icon: '🔧',
           duration: '55 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-2.6/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-2.6-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-2.6-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -509,7 +509,7 @@ export const math10General1: Curriculum = {
           icon: '∥',
           duration: '50 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-3.1/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-3.1-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-3.1-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -546,7 +546,7 @@ export const math10General1: Curriculum = {
           icon: '∠',
           duration: '55 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-3.2/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-3.2-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-3.2-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -580,7 +580,7 @@ export const math10General1: Curriculum = {
           icon: '📈',
           duration: '50 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-3.3/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-3.3-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-3.3-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -608,7 +608,7 @@ export const math10General1: Curriculum = {
           icon: '📝',
           duration: '55 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-3.4/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-3.4-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-3.4-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -636,7 +636,7 @@ export const math10General1: Curriculum = {
           icon: '✓',
           duration: '50 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-3.5/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-3.5-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-3.5-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -666,7 +666,7 @@ export const math10General1: Curriculum = {
           icon: '📏',
           duration: '55 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-3.6/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-3.6-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-3.6-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -703,7 +703,7 @@ export const math10General1: Curriculum = {
           icon: '🪞',
           duration: '50 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-4.1/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-4.1-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-4.1-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -733,7 +733,7 @@ export const math10General1: Curriculum = {
           icon: '➡️',
           duration: '50 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-4.2/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-4.2-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-4.2-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -765,7 +765,7 @@ export const math10General1: Curriculum = {
           icon: '🔄',
           duration: '55 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-4.3/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-4.3-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-4.3-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -798,7 +798,7 @@ export const math10General1: Curriculum = {
           icon: '🔀',
           duration: '55 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-4.4/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-4.4-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-4.4-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
@@ -833,7 +833,7 @@ export const math10General1: Curriculum = {
           icon: '⚖️',
           duration: '50 min',
           lessonUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-4.5/',
-          examUrl: 'https://hesham-afandi.github.io/10Jen-math-T1-4.5-exam/',
+          examUrl: 'https://mr-mohammed-hesham.github.io/10Jen-math-T1-4.5-exam/',
           lessonTitle: '📖 شرح الدرس',
           examTitle: '📝 اختبر نفسك',
           content: {
