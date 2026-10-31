@@ -23,7 +23,6 @@ import { Eot2026TermId } from '../eot2026/types';
 import {
   GraduationCap,
   Mail,
-  Phone,
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
@@ -343,13 +342,6 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({
                       >
                         <Mail className="w-4 h-4 text-indigo-400" />
                         <span>mohammedhesham872@gmail.com</span>
-                      </a>
-                      <a
-                        href="tel:+971555642674"
-                        className="flex items-center gap-1.5 hover:text-emerald-300 transition"
-                      >
-                        <Phone className="w-4 h-4 text-emerald-400" />
-                        <span dir="ltr">+971555642674</span>
                       </a>
                     </div>
                   </div>
@@ -852,9 +844,9 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({
           <div className="flex flex-wrap items-center justify-center gap-2 text-slate-300 font-bold dir-ltr">
             <span className="text-amber-400">Mr. Mohammed Hesham</span>
             <span>|</span>
-            <span>mohammedhesham872@gmail.com</span>
-            <span>|</span>
-            <span dir="ltr">+971555642674</span>
+            <a href="mailto:mohammedhesham872@gmail.com" className="hover:text-amber-300 transition-colors">
+              mohammedhesham872@gmail.com
+            </a>
           </div>
         </div>
       </footer>

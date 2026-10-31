@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, CheckCircle2, FileText, GraduationCap, Sparkles, TableProperties, Award, Mail, Phone, Layers, Bookmark } from 'lucide-react';
+import { BookOpen, CheckCircle2, FileText, GraduationCap, Sparkles, TableProperties, Award, Mail, Layers, Bookmark } from 'lucide-react';
 import { StreamType, GradeType, TermType } from '../types';
 
 interface NavbarProps {
@@ -65,15 +65,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Mail className="w-3.5 h-3.5 text-indigo-400" />
               <span>mohammedhesham872@gmail.com</span>
-            </a>
-
-            <a
-              href="tel:+971555642674"
-              className="flex items-center gap-1.5 hover:text-emerald-300 transition-colors"
-              title="الاتصال المباشر"
-            >
-              <Phone className="w-3.5 h-3.5 text-emerald-400" />
-              <span dir="ltr">+971555642674</span>
             </a>
           </div>
         </div>

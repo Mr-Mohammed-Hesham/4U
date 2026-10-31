@@ -26,7 +26,7 @@ const lessonTextCache = new Map<string, string>();
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 // Highly robust standard CORS middleware for cross-origin environments (like GitHub Pages)
 app.use(cors({
@@ -1541,12 +1541,18 @@ async function initServer() {
   } else {
     console.log("Starting server in PRODUCTION mode...");
     const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath, {
-      setHeaders: (res) => {
+    const staticOpts = {
+      setHeaders: (res: express.Response) => {
         res.setHeader("Access-Control-Allow-Origin", "*");
-      }
-    }));
+      },
+    };
+    app.use(express.static(distPath, staticOpts));
+    app.use("/4U", express.static(distPath, staticOpts));
+    app.use("/4U", express.static(publicDir, staticOpts));
     app.get("*", (req, res) => {
+      if (req.path.startsWith("/api/")) {
+        return res.status(404).json({ error: "API route not found" });
+      }
       const indexPath = path.join(distPath, "index.html");
       if (fs.existsSync(indexPath)) {
         const rawHtml = fs.readFileSync(indexPath, "utf8");

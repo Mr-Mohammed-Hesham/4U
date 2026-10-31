@@ -5,7 +5,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig(({ mode }) => {
   return {
-    base: process.env.VITE_BASE || (mode === 'production' && process.env.NODE_ENV === 'production' && !process.env.AIS_APP_ID ? '/4U/' : '/'),
+    base: process.env.VITE_BASE || (mode === 'development' ? '/' : './'),
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

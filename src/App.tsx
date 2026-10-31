@@ -3268,7 +3268,7 @@ export default function App() {
 
             {/* Login Footer Contact Info */}
             <div className="mt-6 text-center text-xs text-slate-400 space-y-1">
-              <p className="font-semibold text-slate-300">Mr. Mohammed Hesham | mohammedhesham872@gmail.com | +971555642674</p>
+              <p className="font-semibold text-slate-300">Mr. Mohammed Hesham | mohammedhesham872@gmail.com</p>
               <p className="text-[11px] text-slate-500">© 2026 جميع الحقوق محفوظة لمنصة 4U التعليمية</p>
             </div>
 
@@ -5734,7 +5734,7 @@ export default function App() {
             مكتبة تفاعلية رقمية مبسطة تم تطويرها باحترافية لتغطية المقررات الأساسية .
           </p>
           <div className="text-xs text-slate-500 space-y-1">
-            <p>Mr. Mohammed Hesham | mohammedhesham872@gmail.com | +971555642674</p>
+            <p>Mr. Mohammed Hesham | mohammedhesham872@gmail.com</p>
             <p>© 2026 جميع الحقوق محفوظة لمنصة 4U التعليمية</p>
           </div>
         </div>
