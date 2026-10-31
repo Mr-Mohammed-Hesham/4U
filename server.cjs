@@ -535,12 +535,36 @@ function parseTsArray(code, variableName) {
     let arrEnd = -1;
     let inString = false;
     let stringChar = "";
+    let inLineComment = false;
+    let inBlockComment = false;
     for (let i = arrStart; i < code.length; i++) {
       const ch = code[i];
+      const next = code[i + 1];
       const prev = code[i - 1];
+      if (inLineComment) {
+        if (ch === "\n") inLineComment = false;
+        continue;
+      }
+      if (inBlockComment) {
+        if (ch === "*" && next === "/") {
+          inBlockComment = false;
+          i++;
+        }
+        continue;
+      }
       if (inString) {
         if (ch === stringChar && prev !== "\\") inString = false;
       } else {
+        if (ch === "/" && next === "/") {
+          inLineComment = true;
+          i++;
+          continue;
+        }
+        if (ch === "/" && next === "*") {
+          inBlockComment = true;
+          i++;
+          continue;
+        }
         if (ch === '"' || ch === "'" || ch === "`") {
           inString = true;
           stringChar = ch;
@@ -651,6 +675,549 @@ app.get("/api/external-banks/sat", async (req, res) => {
     return res.json({ success: true, count: satBankCache.data.length, revisionExams: satBankCache.data, source: "stale_cache" });
   }
   return res.json({ success: true, count: 0, revisionExams: [], source: "empty" });
+});
+var DEFAULT_EOT2026_BASE_T1 = [
+  {
+    id: "12-adv-bri-phy-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "12",
+    stream: "adv_bridge",
+    subject: "physics",
+    titleAr: "\u0641\u064A\u0632\u064A\u0627\u0621 12 \u0645\u062A\u0642\u062F\u0645 \u2014 \u0628\u0631\u064A\u062F\u062C",
+    titleEn: "Grade 12 Advanced Physics \u2014 Bridge",
+    subtitleAr: "\u0647\u064A\u0643\u0644 \u0627\u0645\u062A\u062D\u0627\u0646 \u0646\u0647\u0627\u064A\u0629 \u0627\u0644\u0641\u0635\u0644 \u0627\u0644\u0623\u0648\u0644 \xB7 \u0645\u0642\u0633\u0645 \u0635\u0641\u062D\u0629 \u0644\u0643\u0644 \u0633\u0624\u0627\u0644 \u0648\u0632\u0627\u0631\u064A \u0645\u0639 \u0627\u0644\u062D\u0644 \u0648\u0627\u0644\u062A\u062F\u0631\u064A\u0628 \u0627\u0644\u062A\u0641\u0627\u0639\u0644\u064A",
+    subtitleEn: "Term 1 EOT Exam Structure \xB7 Dedicated interactive page per exam question",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/12Adv-Bri-phy-T1-2026-EOT-Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/12Adv-Bri-Phy-T1-2026-EOT-Q{q}/",
+      "https://mr-mohammed-hesham.github.io/12Adv-Bri-phy-T1-2026-EOT.Q{q}/"
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20,
+    knownQuestionTitles: {
+      1: { ar: "\u0627\u0644\u0643\u0647\u0631\u0628\u0627\u0621 \u0627\u0644\u0633\u0627\u0643\u0646\u0629 \u0648\u0627\u0644\u0634\u062D\u0646\u0627\u062A \u0627\u0644\u0643\u0647\u0631\u0628\u0627\u0626\u064A\u0629 \u2014 \u0627\u0644\u0645\u0631\u0627\u062C\u0639\u0629 \u0627\u0644\u062A\u0623\u0633\u064A\u0633\u064A\u0629", en: "Electrostatics & Electric Charges \u2014 Core Review" },
+      2: { ar: "\u0627\u0644\u0642\u0633\u0645 1.2: \u0627\u0644\u0634\u062D\u0646\u0627\u062A \u0627\u0644\u0643\u0647\u0631\u0628\u0627\u0626\u064A\u0629 \u0648\u0642\u0627\u0646\u0648\u0646 \u062D\u0641\u0638 \u0627\u0644\u0634\u062D\u0646\u0629", en: "Section 1.2: Electric Charges & Conservation" },
+      3: { ar: "\u0627\u0644\u0645\u0648\u0635\u0644\u0627\u062A \u0648\u0627\u0644\u0639\u0648\u0627\u0632\u0644 \u0648\u0627\u0644\u0645\u0648\u0635\u0644\u0627\u062A \u0627\u0644\u0641\u0627\u0626\u0642\u0629", en: "Conductors, Insulators & Superconductors" },
+      4: { ar: "\u0627\u0644\u0634\u062D\u0646 \u0627\u0644\u0643\u0647\u0631\u0628\u0627\u0626\u064A \u0648\u062A\u0637\u0628\u064A\u0642\u0627\u062A \u0627\u0644\u0643\u0634\u0627\u0641 \u0627\u0644\u0643\u0647\u0631\u0628\u0627\u0626\u064A", en: "Charging Processes & Electroscope Applications" },
+      5: { ar: "\u0627\u0644\u0642\u0648\u0629 \u0627\u0644\u0643\u0647\u0631\u0648\u0633\u062A\u0627\u062A\u064A\u0643\u064A\u0629 \u062F\u0627\u062E\u0644 \u0627\u0644\u0630\u0631\u0629 \u0648\u0642\u0627\u0646\u0648\u0646 \u0643\u0648\u0644\u0648\u0645", en: "Electrostatic Force Inside the Atom & Coulomb\u2019s Law" },
+      6: { ar: "\u062E\u0637\u0648\u0637 \u0627\u0644\u0645\u062C\u0627\u0644 \u0627\u0644\u0643\u0647\u0631\u0628\u0627\u0626\u064A \u0648\u062A\u0645\u062B\u064A\u0644 \u0627\u0644\u0634\u062D\u0646\u0627\u062A", en: "Electric Field Lines & Charge Configurations" },
+      7: { ar: "\u0627\u0644\u062A\u0648\u0632\u064A\u0639\u0627\u062A \u0627\u0644\u0645\u062A\u0635\u0644\u0629 \u0644\u0644\u0634\u062D\u0646\u0627\u062A \u0627\u0644\u0643\u0647\u0631\u0628\u0627\u0626\u064A\u0629", en: "Continuous Charge Distributions" },
+      8: { ar: "\u0627\u0644\u062A\u062F\u0641\u0642 \u0627\u0644\u0643\u0647\u0631\u0628\u0627\u0626\u064A \u0648\u0642\u0627\u0646\u0648\u0646 \u062C\u0627\u0648\u0633 \u2014 \u0627\u0644\u062C\u0632\u0621 \u0627\u0644\u0623\u0648\u0644", en: "Electric Flux & Gauss\u2019s Law \u2014 Part 1" },
+      9: { ar: "\u0627\u0644\u062A\u062F\u0641\u0642 \u0627\u0644\u0643\u0647\u0631\u0628\u0627\u0626\u064A \u0648\u0642\u0627\u0646\u0648\u0646 \u062C\u0627\u0648\u0633 \u2014 \u062A\u0637\u0628\u064A\u0642\u0627\u062A \u0627\u0644\u0633\u0624\u0627\u0644 \u0627\u0644\u062A\u0627\u0633\u0639", en: "Electric Flux & Gauss\u2019s Law \u2014 Question 9 Applications" }
+    }
+  },
+  {
+    id: "12-adv-bri-math-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "12",
+    stream: "adv_bridge",
+    subject: "math",
+    titleAr: "\u0631\u064A\u0627\u0636\u064A\u0627\u062A 12 \u0645\u062A\u0642\u062F\u0645 \u2014 \u0628\u0631\u064A\u062F\u062C",
+    titleEn: "Grade 12 Advanced Mathematics \u2014 Bridge",
+    subtitleAr: "\u0647\u064A\u0643\u0644 \u0627\u0645\u062A\u062D\u0627\u0646 \u0646\u0647\u0627\u064A\u0629 \u0627\u0644\u0641\u0635\u0644 \u0627\u0644\u0623\u0648\u0644 \xB7 \u0627\u0644\u0646\u0647\u0627\u064A\u0627\u062A \u0648\u0627\u0644\u0627\u062A\u0635\u0627\u0644 \u0648\u0627\u0644\u062A\u0641\u0627\u0636\u0644 \u0645\u0642\u0633\u0645 \u062D\u0633\u0628 \u0631\u0642\u0645 \u0627\u0644\u0633\u0624\u0627\u0644",
+    subtitleEn: "Term 1 EOT Exam Structure \xB7 Limits, Continuity & Derivatives per question page",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/12Adv-Bri-math-T1-2026-EOT-Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/12Adv-Bri-math-T1-2026-EOT.Q{q}/",
+      "https://mr-mohammed-hesham.github.io/12Adv-Bri-Math-T1-2026-EOT-Q{q}/"
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20
+  },
+  {
+    id: "12-adv-ins-phy-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "12",
+    stream: "adv_inspire",
+    subject: "physics",
+    titleAr: "\u0641\u064A\u0632\u064A\u0627\u0621 12 \u0645\u062A\u0642\u062F\u0645 \u2014 \u0627\u0646\u0633\u0628\u0627\u064A\u0631",
+    titleEn: "Grade 12 Advanced Physics \u2014 Inspire",
+    subtitleAr: "\u0647\u064A\u0643\u0644 \u0627\u0645\u062A\u062D\u0627\u0646 \u0646\u0647\u0627\u064A\u0629 \u0627\u0644\u0641\u0635\u0644 \u0627\u0644\u0623\u0648\u0644 \u0644\u0645\u0646\u0647\u062C \u0627\u0646\u0633\u0628\u0627\u064A\u0631 \u0627\u0644\u0645\u062A\u0642\u062F\u0645 \xB7 \u0635\u0641\u062D\u0629 \u0645\u0633\u062A\u0642\u0644\u0629 \u0644\u0643\u0644 \u0633\u0624\u0627\u0644",
+    subtitleEn: "Term 1 EOT Exam Structure for Inspire Advanced Physics \xB7 Page per question",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/12Adv-Ins-phy-T1-2026-EOT-Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/12Adv-Ins-Phy-T1-2026-EOT-Q{q}/",
+      "https://mr-mohammed-hesham.github.io/12Adv-Ins-phy-T1-2026-EOT.Q{q}/"
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20
+  },
+  {
+    id: "12-gen-math-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "12",
+    stream: "general",
+    subject: "math",
+    titleAr: "\u0631\u064A\u0627\u0636\u064A\u0627\u062A 12 \u0639\u0627\u0645",
+    titleEn: "Grade 12 General Mathematics",
+    subtitleAr: "\u0647\u064A\u0643\u0644 \u0627\u0645\u062A\u062D\u0627\u0646 \u0646\u0647\u0627\u064A\u0629 \u0627\u0644\u0641\u0635\u0644 \u0627\u0644\u0623\u0648\u0644 \u0644\u0644\u0645\u0633\u0627\u0631 \u0627\u0644\u0639\u0627\u0645 \xB7 \u062A\u062F\u0631\u064A\u0628\u0627\u062A \u0634\u0627\u0645\u0644\u0629 \u0644\u0643\u0644 \u0633\u0624\u0627\u0644 \u0641\u064A \u0635\u0641\u062D\u0629 \u0645\u0646\u0641\u0635\u0644\u0629",
+    subtitleEn: "Term 1 EOT Exam Structure for General Stream \xB7 Dedicated page per question",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/12Jen-math-T1-2026-EOT.Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/12Jen-math-T1-2026-EOT-Q{q}/",
+      "https://mr-mohammed-hesham.github.io/12Gen-math-T1-2026-EOT-Q{q}/"
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20
+  },
+  {
+    id: "11-adv-bri-math-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "11",
+    stream: "adv_bridge",
+    subject: "math",
+    titleAr: "\u0631\u064A\u0627\u0636\u064A\u0627\u062A 11 \u0645\u062A\u0642\u062F\u0645 \u2014 \u0628\u0631\u064A\u062F\u062C",
+    titleEn: "Grade 11 Advanced Mathematics \u2014 Bridge",
+    subtitleAr: "\u0647\u064A\u0643\u0644 \u0627\u0645\u062A\u062D\u0627\u0646 \u0646\u0647\u0627\u064A\u0629 \u0627\u0644\u0641\u0635\u0644 \u0627\u0644\u0623\u0648\u0644 \xB7 \u0645\u0631\u0627\u062C\u0639\u0629 \u0645\u0631\u0643\u0632\u0629 \u0648\u062A\u062F\u0631\u064A\u0628 \u062A\u0641\u0627\u0639\u0644\u064A \u0644\u0643\u0644 \u0633\u0624\u0627\u0644 \u0648\u0632\u0627\u0631\u064A",
+    subtitleEn: "Term 1 EOT Exam Structure \xB7 Focused practice page for every exam question",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/11Adv-Bri-math-T1-2026-EOT-Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/11Adv-Bri-math-T1-2026-EOT.Q{q}/",
+      "https://mr-mohammed-hesham.github.io/11Adv-Bri-Math-T1-2026-EOT-Q{q}/"
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20
+  },
+  {
+    id: "11-adv-bri-phy-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "11",
+    stream: "adv_bridge",
+    subject: "physics",
+    titleAr: "\u0641\u064A\u0632\u064A\u0627\u0621 11 \u0645\u062A\u0642\u062F\u0645 \u2014 \u0628\u0631\u064A\u062F\u062C",
+    titleEn: "Grade 11 Advanced Physics \u2014 Bridge",
+    subtitleAr: "\u0647\u064A\u0643\u0644 \u0627\u0645\u062A\u062D\u0627\u0646 \u0646\u0647\u0627\u064A\u0629 \u0627\u0644\u0641\u0635\u0644 \u0627\u0644\u0623\u0648\u0644 \xB7 \u0627\u0644\u0645\u062A\u062C\u0647\u0627\u062A \u0648\u0627\u0644\u0645\u064A\u0643\u0627\u0646\u064A\u0643\u0627 \u0645\u0642\u0633\u0645\u0629 \u0635\u0641\u062D\u0629 \u0644\u0643\u0644 \u0633\u0624\u0627\u0644",
+    subtitleEn: "Term 1 EOT Exam Structure \xB7 Vectors & Mechanics structured per question page",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/11Adv-Bri-phy-T1-2026-EOT-Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/11Adv-Bri-Phy-T1-2026-EOT-Q{q}/",
+      "https://mr-mohammed-hesham.github.io/11Adv-Bri-phy-T1-2026-EOT.Q{q}/"
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20
+  },
+  {
+    id: "11-gen-math-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "11",
+    stream: "general",
+    subject: "math",
+    titleAr: "\u0631\u064A\u0627\u0636\u064A\u0627\u062A 11 \u0639\u0627\u0645",
+    titleEn: "Grade 11 General Mathematics",
+    subtitleAr: "\u0647\u064A\u0643\u0644 \u0627\u0645\u062A\u062D\u0627\u0646 \u0646\u0647\u0627\u064A\u0629 \u0627\u0644\u0641\u0635\u0644 \u0627\u0644\u0623\u0648\u0644 \u0644\u0644\u0645\u0633\u0627\u0631 \u0627\u0644\u0639\u0627\u0645 \xB7 \u062A\u0635\u0641\u062D \u0645\u0628\u0627\u0634\u0631 \u0644\u0635\u0641\u062D\u0627\u062A \u0627\u0644\u0623\u0633\u0626\u0644\u0629 \u0628\u0627\u0644\u062A\u0631\u062A\u064A\u0628",
+    subtitleEn: "Term 1 EOT Exam Structure for General Stream \xB7 Sequential question pages",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/11Jen-math-T1-2026-EOT-Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/11Jen-math-T1-2026-EOT.Q{q}/",
+      "https://mr-mohammed-hesham.github.io/11Gen-math-T1-2026-EOT-Q{q}/"
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20
+  },
+  {
+    id: "10-gen-math-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "10",
+    stream: "general",
+    subject: "math",
+    titleAr: "\u0631\u064A\u0627\u0636\u064A\u0627\u062A 10 \u0639\u0627\u0645",
+    titleEn: "Grade 10 General Mathematics",
+    subtitleAr: "\u0647\u064A\u0643\u0644 \u0627\u0645\u062A\u062D\u0627\u0646 \u0646\u0647\u0627\u064A\u0629 \u0627\u0644\u0641\u0635\u0644 \u0627\u0644\u0623\u0648\u0644 \u0644\u0644\u0635\u0641 \u0627\u0644\u0639\u0627\u0634\u0631 \u0627\u0644\u0639\u0627\u0645 \xB7 \u0635\u0641\u062D\u0629 \u0645\u062E\u0635\u0635\u0629 \u0644\u0643\u0644 \u0633\u0624\u0627\u0644",
+    subtitleEn: "Term 1 EOT Exam Structure for Grade 10 General \xB7 Dedicated page per question",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/10Jen-math-T1-2026-EOT-Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/10Jen-math-T1-2026-EOT.Q{q}/",
+      "https://mr-mohammed-hesham.github.io/10Gen-math-T1-2026-EOT-Q{q}/"
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20
+  },
+  {
+    id: "10-adv-bri-phy-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "10",
+    stream: "adv_bridge",
+    subject: "physics",
+    titleAr: "\u0641\u064A\u0632\u064A\u0627\u0621 10 \u0645\u062A\u0642\u062F\u0645 \u2014 \u0628\u0631\u064A\u062F\u062C",
+    titleEn: "Grade 10 Advanced Physics \u2014 Bridge",
+    subtitleAr: "\u0647\u064A\u0643\u0644 \u0627\u0645\u062A\u062D\u0627\u0646 \u0646\u0647\u0627\u064A\u0629 \u0627\u0644\u0641\u0635\u0644 \u0627\u0644\u0623\u0648\u0644 \u0644\u0644\u0635\u0641 \u0627\u0644\u0639\u0627\u0634\u0631 \u0627\u0644\u0645\u062A\u0642\u062F\u0645 \u0628\u0631\u064A\u062F\u062C \xB7 \u0643\u0644 \u0633\u0624\u0627\u0644 \u0641\u064A \u0635\u0641\u062D\u0629 \u062A\u0641\u0627\u0639\u0644\u064A\u0629",
+    subtitleEn: "Term 1 EOT Exam Structure for Grade 10 Advanced Bridge \xB7 Interactive page per question",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/10Adv-Bri-Phy-T1-2026-EOT-Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/10Adv-Bri-phy-T1-2026-EOT-Q{q}/",
+      "https://mr-mohammed-hesham.github.io/10Adv-Bri-Phy-T1-2026-EOT.Q{q}/"
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20
+  }
+];
+var eot2026CurriculaCache = null;
+var eot2026QuestionCache = /* @__PURE__ */ new Map();
+var eot2026SharedSettingsFile = import_path.default.join(examsDataDir, "eot2026_shared_config.json");
+function readEot2026SharedSettings() {
+  ensureExamsFile();
+  try {
+    if (import_fs.default.existsSync(eot2026SharedSettingsFile)) {
+      const parsed = JSON.parse(import_fs.default.readFileSync(eot2026SharedSettingsFile, "utf8"));
+      return {
+        totalQuestionsByCurriculum: parsed?.totalQuestionsByCurriculum || {}
+      };
+    }
+  } catch {
+  }
+  return { totalQuestionsByCurriculum: {} };
+}
+function writeEot2026SharedSettings(data) {
+  ensureExamsFile();
+  try {
+    import_fs.default.writeFileSync(eot2026SharedSettingsFile, JSON.stringify(data, null, 2), "utf8");
+  } catch (err) {
+    console.warn("[EOT 2026 Settings] Write error:", err);
+  }
+}
+function expandEot2026Terms(baseList) {
+  const result = [];
+  const terms = ["T1", "T2", "T3"];
+  for (const termId of terms) {
+    for (const base of baseList) {
+      if (base.term === termId && base.year === "2026") {
+        if (!result.some((r) => r.id === base.id)) result.push(base);
+        continue;
+      }
+      if (base.term !== "T1") continue;
+      const replaceTermYear = (tpl) => tpl.replace(/-T1-2026-/gi, `-${termId}-2026-`);
+      const id = base.id.replace("-t1-2026", `-${termId.toLowerCase()}-2026`);
+      if (result.some((r) => r.id === id)) continue;
+      const termNameAr = termId === "T1" ? "\u0627\u0644\u0641\u0635\u0644 \u0627\u0644\u0623\u0648\u0644" : termId === "T2" ? "\u0627\u0644\u0641\u0635\u0644 \u0627\u0644\u062B\u0627\u0646\u064A" : "\u0627\u0644\u0641\u0635\u0644 \u0627\u0644\u062B\u0627\u0644\u062B";
+      const termNameEn = termId === "T1" ? "Term 1" : termId === "T2" ? "Term 2" : "Term 3";
+      result.push({
+        ...base,
+        id,
+        year: "2026",
+        term: termId,
+        subtitleAr: `\u0647\u064A\u0643\u0644 \u0627\u0645\u062A\u062D\u0627\u0646 \u0646\u0647\u0627\u064A\u0629 ${termNameAr} 2026 \xB7 \u0645\u0642\u0633\u0645 \u0635\u0641\u062D\u0629 \u0644\u0643\u0644 \u0633\u0624\u0627\u0644 \u0648\u0632\u0627\u0631\u064A`,
+        subtitleEn: `${termNameEn} 2026 EOT Exam Structure \xB7 Dedicated interactive page per question`,
+        primaryUrlTemplate: replaceTermYear(base.primaryUrlTemplate),
+        fallbackUrlTemplates: (base.fallbackUrlTemplates || []).map(replaceTermYear),
+        knownQuestionTitles: void 0
+      });
+    }
+  }
+  return result;
+}
+async function resolveEot2026Curricula(forceRefresh = false) {
+  const now = Date.now();
+  const cacheFile = import_path.default.join(examsDataDir, "eot2026_curricula_cache.json");
+  if (!forceRefresh && eot2026CurriculaCache && now - eot2026CurriculaCache.timestamp < 6e4) {
+    return eot2026CurriculaCache.all;
+  }
+  let baseCurricula = [];
+  try {
+    const rawUrl = `https://raw.githubusercontent.com/Mr-Mohammed-Hesham/EOT/main/src/data/eotCurricula.ts?_t=${now}`;
+    const abortCtrl = new AbortController();
+    const timeout = setTimeout(() => abortCtrl.abort(), 6e3);
+    const upstreamRes = await fetch(rawUrl, {
+      signal: abortCtrl.signal,
+      headers: { "User-Agent": "4U-Platform" }
+    });
+    clearTimeout(timeout);
+    if (upstreamRes.ok) {
+      const code = await upstreamRes.text();
+      const parsed = parseTsArray(code, "BASE_2026_T1_CURRICULA");
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        baseCurricula = parsed.map((item) => ({
+          id: String(item.id),
+          year: String(item.year || "2026"),
+          term: String(item.term || "T1"),
+          grade: String(item.grade),
+          stream: String(item.stream),
+          subject: String(item.subject),
+          titleAr: String(item.titleAr),
+          titleEn: String(item.titleEn),
+          subtitleAr: String(item.subtitleAr || ""),
+          subtitleEn: String(item.subtitleEn || ""),
+          primaryUrlTemplate: String(item.primaryUrlTemplate),
+          fallbackUrlTemplates: Array.isArray(item.fallbackUrlTemplates) ? item.fallbackUrlTemplates.map(String) : [],
+          defaultTotalQuestions: Number(item.defaultTotalQuestions) || 25,
+          mcqQuestionsEnd: Number(item.mcqQuestionsEnd) || 20,
+          knownQuestionTitles: item.knownQuestionTitles
+        }));
+      }
+    }
+  } catch (err) {
+    console.warn("[EOT 2026 Sync] Upstream curricula fetch warning:", err?.message || err);
+  }
+  if (baseCurricula.length === 0 && import_fs.default.existsSync(cacheFile)) {
+    try {
+      const disk = JSON.parse(import_fs.default.readFileSync(cacheFile, "utf8"));
+      if (Array.isArray(disk) && disk.length > 0) baseCurricula = disk;
+    } catch {
+    }
+  }
+  if (baseCurricula.length === 0) {
+    baseCurricula = DEFAULT_EOT2026_BASE_T1;
+  }
+  let expanded = expandEot2026Terms(baseCurricula);
+  try {
+    const repoCtrl = new AbortController();
+    const repoTimeout = setTimeout(() => repoCtrl.abort(), 5e3);
+    const reposRes = await fetch(
+      "https://api.github.com/users/Mr-Mohammed-Hesham/repos?per_page=100&sort=updated",
+      {
+        signal: repoCtrl.signal,
+        headers: { "User-Agent": "4U-Platform", Accept: "application/vnd.github+json" }
+      }
+    );
+    clearTimeout(repoTimeout);
+    if (reposRes.ok) {
+      const repos = await reposRes.json();
+      if (Array.isArray(repos)) {
+        const pattern = /^(\d+)(Adv-Bri|Adv-Ins|Jen|Gen)-(phy|math|chem|bio)-(T[123])-(2026)-EOT([-.])Q(\d+)$/i;
+        for (const repo of repos) {
+          const name = String(repo?.name || "");
+          const m = name.match(pattern);
+          if (!m) continue;
+          const [, gradeRaw, streamRaw, subRaw, termRaw, , sep, qStr] = m;
+          const qNum = Number(qStr) || 1;
+          const term = termRaw.toUpperCase();
+          const stream = streamRaw.toLowerCase() === "adv-bri" ? "adv_bridge" : streamRaw.toLowerCase() === "adv-ins" ? "adv_inspire" : "general";
+          const subject = subRaw.toLowerCase() === "phy" ? "physics" : subRaw.toLowerCase() === "math" ? "math" : subRaw.toLowerCase() === "chem" ? "chemistry" : "biology";
+          const existing = expanded.find(
+            (c) => c.year === "2026" && c.term === term && c.grade === gradeRaw && c.stream === stream && c.subject === subject
+          );
+          if (existing) {
+            if (qNum > existing.defaultTotalQuestions) {
+              existing.defaultTotalQuestions = qNum;
+            }
+          } else {
+            const subAr = subject === "physics" ? "\u0641\u064A\u0632\u064A\u0627\u0621" : subject === "math" ? "\u0631\u064A\u0627\u0636\u064A\u0627\u062A" : subject === "chemistry" ? "\u0643\u064A\u0645\u064A\u0627\u0621" : "\u0623\u062D\u064A\u0627\u0621";
+            const subEn = subject === "physics" ? "Physics" : subject === "math" ? "Mathematics" : subject === "chemistry" ? "Chemistry" : "Biology";
+            const streamAr = stream === "adv_bridge" ? "\u0645\u062A\u0642\u062F\u0645 \u2014 \u0628\u0631\u064A\u062F\u062C" : stream === "adv_inspire" ? "\u0645\u062A\u0642\u062F\u0645 \u2014 \u0627\u0646\u0633\u0628\u0627\u064A\u0631" : "\u0639\u0627\u0645";
+            const streamEn = stream === "adv_bridge" ? "Advanced \u2014 Bridge" : stream === "adv_inspire" ? "Advanced \u2014 Inspire" : "General";
+            const prefixBeforeQ = name.replace(/([-.])Q\d+$/i, "$1Q{q}");
+            expanded.push({
+              id: `${gradeRaw}-${stream.replace("_", "-")}-${subRaw.toLowerCase()}-${term.toLowerCase()}-2026`,
+              year: "2026",
+              term,
+              grade: gradeRaw,
+              stream,
+              subject,
+              titleAr: `${subAr} ${gradeRaw} ${streamAr}`,
+              titleEn: `Grade ${gradeRaw} ${streamEn} ${subEn}`,
+              subtitleAr: "\u0647\u064A\u0643\u0644 \u0627\u0645\u062A\u062D\u0627\u0646 \u0646\u0647\u0627\u064A\u0629 \u0627\u0644\u0641\u0635\u0644 \xB7 \u0645\u0642\u0633\u0645 \u0635\u0641\u062D\u0629 \u0644\u0643\u0644 \u0633\u0624\u0627\u0644 \u0648\u0632\u0627\u0631\u064A \u0645\u0639 \u0627\u0644\u062A\u062F\u0631\u064A\u0628 \u0627\u0644\u062A\u0641\u0627\u0639\u0644\u064A",
+              subtitleEn: "EOT Exam Structure \xB7 Dedicated interactive page per exam question",
+              primaryUrlTemplate: `https://mr-mohammed-hesham.github.io/${prefixBeforeQ}/`,
+              fallbackUrlTemplates: [
+                `https://mr-mohammed-hesham.github.io/${prefixBeforeQ.replace(sep + "Q{q}", (sep === "-" ? "." : "-") + "Q{q}")}/`
+              ],
+              defaultTotalQuestions: Math.max(25, qNum),
+              mcqQuestionsEnd: 20
+            });
+          }
+        }
+      }
+    }
+  } catch {
+  }
+  try {
+    ensureExamsFile();
+    import_fs.default.writeFileSync(cacheFile, JSON.stringify(baseCurricula, null, 2), "utf8");
+  } catch {
+  }
+  eot2026CurriculaCache = { all: expanded, timestamp: now };
+  return expanded;
+}
+function cleanEotTitle(rawTitle) {
+  return rawTitle.replace(/\s*\|\s*Mr\.?\s*Mohammed\s*Hesham.*$/i, "").replace(/^[⚡⚛️📐📚🎯🏆🔥✨\s]+/u, "").trim();
+}
+function prepareSafeSrcDocHtml(rawHtml) {
+  let html = rawHtml.replace(/<link[^>]+rel=["']canonical["'][^>]*>/gi, "").replace(/<meta[^>]+property=["']og:url["'][^>]*>/gi, "");
+  const protectionScript = `<script>
+(function(){
+  try {
+    window.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'u' || e.key.toLowerCase() === 's')) {
+        e.preventDefault();
+      }
+    });
+    window.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+    });
+  } catch(e) {}
+})();
+</script>`;
+  if (html.includes("</head>")) {
+    html = html.replace("</head>", `${protectionScript}</head>`);
+  } else {
+    html = `${protectionScript}${html}`;
+  }
+  return html;
+}
+async function probeAndFetchEotQuestion(curriculum, q, forceRefresh = false) {
+  const key = `${curriculum.id}__Q${q}`;
+  const now = Date.now();
+  const cached = eot2026QuestionCache.get(key);
+  if (!forceRefresh && cached && now - cached.checkedAt < 12e4) {
+    return cached;
+  }
+  const qStr = String(q);
+  const candidates = Array.from(
+    /* @__PURE__ */ new Set([
+      curriculum.primaryUrlTemplate.replace("{q}", qStr),
+      ...(curriculum.fallbackUrlTemplates || []).map((t) => t.replace("{q}", qStr))
+    ])
+  );
+  for (const candidateUrl of candidates) {
+    try {
+      const targetUrl = forceRefresh ? `${candidateUrl}${candidateUrl.includes("?") ? "&" : "?"}v=${now}` : candidateUrl;
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 5e3);
+      const upstream = await fetch(targetUrl, {
+        signal: ctrl.signal,
+        headers: { "User-Agent": "4U-Platform" }
+      });
+      clearTimeout(timer);
+      if (upstream.ok) {
+        const text = await upstream.text();
+        if (text && text.length > 200 && !text.includes("<title>Page not found") && !text.includes("There isn't a GitHub Pages site here")) {
+          let liveTitle;
+          const m = text.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+          if (m && m[1]) {
+            const cleaned = cleanEotTitle(m[1]);
+            if (cleaned) liveTitle = cleaned;
+          }
+          const hit = {
+            status: "live",
+            liveTitle,
+            html: prepareSafeSrcDocHtml(text),
+            checkedAt: now
+          };
+          eot2026QuestionCache.set(key, hit);
+          return hit;
+        }
+      }
+    } catch {
+    }
+  }
+  const pending = { status: "pending", checkedAt: now };
+  eot2026QuestionCache.set(key, pending);
+  return pending;
+}
+app.get("/api/external-banks/eot2026", async (req, res) => {
+  try {
+    const forceRefresh = req.query.refresh === "true";
+    const allCurricula = await resolveEot2026Curricula(forceRefresh);
+    const sharedSettings = readEot2026SharedSettings();
+    const sanitized = allCurricula.map((c) => ({
+      id: c.id,
+      year: c.year,
+      term: c.term,
+      grade: c.grade,
+      stream: c.stream,
+      subject: c.subject,
+      titleAr: c.titleAr,
+      titleEn: c.titleEn,
+      subtitleAr: c.subtitleAr,
+      subtitleEn: c.subtitleEn,
+      defaultTotalQuestions: sharedSettings.totalQuestionsByCurriculum[c.id] || c.defaultTotalQuestions,
+      mcqQuestionsEnd: c.mcqQuestionsEnd,
+      knownQuestionTitles: c.knownQuestionTitles
+    }));
+    return res.json({
+      success: true,
+      count: sanitized.length,
+      curricula: sanitized,
+      sharedSettings,
+      syncedAt: Date.now()
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err?.message || "Failed to sync EOT 2026" });
+  }
+});
+app.post("/api/external-banks/eot2026/probe-batch", async (req, res) => {
+  try {
+    const { curriculumIds, maxQuestions = 25, forceRefresh = false } = req.body || {};
+    const allCurricula = await resolveEot2026Curricula(Boolean(forceRefresh));
+    const sharedSettings = readEot2026SharedSettings();
+    const targets = Array.isArray(curriculumIds) && curriculumIds.length > 0 ? allCurricula.filter((c) => curriculumIds.includes(c.id)) : allCurricula.filter((c) => c.year === "2026" && c.term === "T1");
+    const probes = {};
+    const tasks = [];
+    for (const curr of targets) {
+      probes[curr.id] = {};
+      const limit = Math.min(
+        Number(maxQuestions) || 25,
+        sharedSettings.totalQuestionsByCurriculum[curr.id] || curr.defaultTotalQuestions
+      );
+      for (let q = 1; q <= limit; q++) {
+        tasks.push({ curr, q });
+      }
+    }
+    const concurrency = 10;
+    async function worker() {
+      while (tasks.length > 0) {
+        const item = tasks.shift();
+        if (!item) break;
+        const result = await probeAndFetchEotQuestion(item.curr, item.q, Boolean(forceRefresh));
+        probes[item.curr.id][item.q] = {
+          status: result.status,
+          liveTitle: result.liveTitle,
+          checkedAt: result.checkedAt
+        };
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(concurrency, Math.max(1, tasks.length)) }, () => worker()));
+    return res.json({ success: true, probes });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err?.message || "Batch probe failed" });
+  }
+});
+app.get("/api/external-banks/eot2026/question", async (req, res) => {
+  try {
+    const curriculumId = String(req.query.curriculumId || "");
+    const q = Math.max(1, Number(req.query.q) || 1);
+    const forceRefresh = req.query.refresh === "true";
+    if (!curriculumId) {
+      return res.status(400).json({ success: false, error: "curriculumId is required" });
+    }
+    const allCurricula = await resolveEot2026Curricula(false);
+    const curr = allCurricula.find((c) => c.id === curriculumId);
+    if (!curr) {
+      return res.status(404).json({ success: false, status: "pending" });
+    }
+    const result = await probeAndFetchEotQuestion(curr, q, forceRefresh);
+    return res.json({
+      success: true,
+      status: result.status,
+      liveTitle: result.liveTitle,
+      html: result.html || "",
+      checkedAt: result.checkedAt
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, status: "pending", error: err?.message });
+  }
+});
+app.post("/api/external-banks/eot2026/shared-settings", (req, res) => {
+  try {
+    const { curriculumId, totalQuestions } = req.body || {};
+    if (!curriculumId || !totalQuestions) {
+      return res.status(400).json({ success: false, error: "curriculumId and totalQuestions are required" });
+    }
+    const current = readEot2026SharedSettings();
+    current.totalQuestionsByCurriculum[String(curriculumId)] = Math.max(1, Math.min(60, Number(totalQuestions) || 25));
+    writeEot2026SharedSettings(current);
+    return res.json({ success: true, sharedSettings: current });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
 });
 function transformHtmlForSocialPreviews(rawHtml, req) {
   const forwardedProto = req.headers["x-forwarded-proto"] || "";
