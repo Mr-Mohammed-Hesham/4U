@@ -46,7 +46,7 @@ try {
 var lessonTextCache = /* @__PURE__ */ new Map();
 import_dotenv.default.config();
 var app = (0, import_express.default)();
-var PORT = 3e3;
+var PORT = Number(process.env.PORT) || 3e3;
 app.use((0, import_cors.default)({
   origin: true,
   // Dynamically mirrors the requesting origin (e.g. GitHub Pages), bypassing browser wildcard restrictions
@@ -1283,12 +1283,18 @@ async function initServer() {
   } else {
     console.log("Starting server in PRODUCTION mode...");
     const distPath = import_path.default.join(process.cwd(), "dist");
-    app.use(import_express.default.static(distPath, {
+    const staticOpts = {
       setHeaders: (res) => {
         res.setHeader("Access-Control-Allow-Origin", "*");
       }
-    }));
+    };
+    app.use(import_express.default.static(distPath, staticOpts));
+    app.use("/4U", import_express.default.static(distPath, staticOpts));
+    app.use("/4U", import_express.default.static(publicDir, staticOpts));
     app.get("*", (req, res) => {
+      if (req.path.startsWith("/api/")) {
+        return res.status(404).json({ error: "API route not found" });
+      }
       const indexPath = import_path.default.join(distPath, "index.html");
       if (import_fs.default.existsSync(indexPath)) {
         const rawHtml = import_fs.default.readFileSync(indexPath, "utf8");
