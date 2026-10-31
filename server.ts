@@ -659,14 +659,39 @@ function parseTsArray(code: string, variableName: string): any[] {
     let arrEnd = -1;
     let inString = false;
     let stringChar = "";
+    let inLineComment = false;
+    let inBlockComment = false;
 
     for (let i = arrStart; i < code.length; i++) {
       const ch = code[i];
+      const next = code[i + 1];
       const prev = code[i - 1];
+
+      if (inLineComment) {
+        if (ch === "\n") inLineComment = false;
+        continue;
+      }
+      if (inBlockComment) {
+        if (ch === "*" && next === "/") {
+          inBlockComment = false;
+          i++;
+        }
+        continue;
+      }
       if (inString) {
         if (ch === stringChar && prev !== "\\") inString = false;
       } else {
-        if (ch === '"' || ch === "'" || ch === '`') {
+        if (ch === "/" && next === "/") {
+          inLineComment = true;
+          i++;
+          continue;
+        }
+        if (ch === "/" && next === "*") {
+          inBlockComment = true;
+          i++;
+          continue;
+        }
+        if (ch === '"' || ch === "'" || ch === "`") {
           inString = true;
           stringChar = ch;
         } else if (ch === "[") depth++;
@@ -792,6 +817,645 @@ app.get("/api/external-banks/sat", async (req, res) => {
 
   return res.json({ success: true, count: 0, revisionExams: [], source: "empty" });
 });
+
+// -------------------------------------------------------------
+// 🏛️ EOT 2026 Live Connector & Anti-Theft Content Proxy
+// Real-time synchronization with Mr-Mohammed-Hesham/EOT without
+// exposing any repository slugs or external URLs to end users.
+// -------------------------------------------------------------
+interface InternalEotCurriculum {
+  id: string;
+  year: string;
+  term: string;
+  grade: string;
+  stream: string;
+  subject: string;
+  titleAr: string;
+  titleEn: string;
+  subtitleAr: string;
+  subtitleEn: string;
+  primaryUrlTemplate: string;
+  fallbackUrlTemplates: string[];
+  defaultTotalQuestions: number;
+  mcqQuestionsEnd: number;
+  knownQuestionTitles?: Record<number, { ar: string; en: string }>;
+}
+
+const DEFAULT_EOT2026_BASE_T1: InternalEotCurriculum[] = [
+  {
+    id: "12-adv-bri-phy-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "12",
+    stream: "adv_bridge",
+    subject: "physics",
+    titleAr: "فيزياء 12 متقدم — بريدج",
+    titleEn: "Grade 12 Advanced Physics — Bridge",
+    subtitleAr: "هيكل امتحان نهاية الفصل الأول · مقسم صفحة لكل سؤال وزاري مع الحل والتدريب التفاعلي",
+    subtitleEn: "Term 1 EOT Exam Structure · Dedicated interactive page per exam question",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/12Adv-Bri-phy-T1-2026-EOT-Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/12Adv-Bri-Phy-T1-2026-EOT-Q{q}/",
+      "https://mr-mohammed-hesham.github.io/12Adv-Bri-phy-T1-2026-EOT.Q{q}/",
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20,
+    knownQuestionTitles: {
+      1: { ar: "الكهرباء الساكنة والشحنات الكهربائية — المراجعة التأسيسية", en: "Electrostatics & Electric Charges — Core Review" },
+      2: { ar: "القسم 1.2: الشحنات الكهربائية وقانون حفظ الشحنة", en: "Section 1.2: Electric Charges & Conservation" },
+      3: { ar: "الموصلات والعوازل والموصلات الفائقة", en: "Conductors, Insulators & Superconductors" },
+      4: { ar: "الشحن الكهربائي وتطبيقات الكشاف الكهربائي", en: "Charging Processes & Electroscope Applications" },
+      5: { ar: "القوة الكهروستاتيكية داخل الذرة وقانون كولوم", en: "Electrostatic Force Inside the Atom & Coulomb’s Law" },
+      6: { ar: "خطوط المجال الكهربائي وتمثيل الشحنات", en: "Electric Field Lines & Charge Configurations" },
+      7: { ar: "التوزيعات المتصلة للشحنات الكهربائية", en: "Continuous Charge Distributions" },
+      8: { ar: "التدفق الكهربائي وقانون جاوس — الجزء الأول", en: "Electric Flux & Gauss’s Law — Part 1" },
+      9: { ar: "التدفق الكهربائي وقانون جاوس — تطبيقات السؤال التاسع", en: "Electric Flux & Gauss’s Law — Question 9 Applications" },
+    },
+  },
+  {
+    id: "12-adv-bri-math-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "12",
+    stream: "adv_bridge",
+    subject: "math",
+    titleAr: "رياضيات 12 متقدم — بريدج",
+    titleEn: "Grade 12 Advanced Mathematics — Bridge",
+    subtitleAr: "هيكل امتحان نهاية الفصل الأول · النهايات والاتصال والتفاضل مقسم حسب رقم السؤال",
+    subtitleEn: "Term 1 EOT Exam Structure · Limits, Continuity & Derivatives per question page",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/12Adv-Bri-math-T1-2026-EOT-Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/12Adv-Bri-math-T1-2026-EOT.Q{q}/",
+      "https://mr-mohammed-hesham.github.io/12Adv-Bri-Math-T1-2026-EOT-Q{q}/",
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20,
+  },
+  {
+    id: "12-adv-ins-phy-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "12",
+    stream: "adv_inspire",
+    subject: "physics",
+    titleAr: "فيزياء 12 متقدم — انسباير",
+    titleEn: "Grade 12 Advanced Physics — Inspire",
+    subtitleAr: "هيكل امتحان نهاية الفصل الأول لمنهج انسباير المتقدم · صفحة مستقلة لكل سؤال",
+    subtitleEn: "Term 1 EOT Exam Structure for Inspire Advanced Physics · Page per question",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/12Adv-Ins-phy-T1-2026-EOT-Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/12Adv-Ins-Phy-T1-2026-EOT-Q{q}/",
+      "https://mr-mohammed-hesham.github.io/12Adv-Ins-phy-T1-2026-EOT.Q{q}/",
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20,
+  },
+  {
+    id: "12-gen-math-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "12",
+    stream: "general",
+    subject: "math",
+    titleAr: "رياضيات 12 عام",
+    titleEn: "Grade 12 General Mathematics",
+    subtitleAr: "هيكل امتحان نهاية الفصل الأول للمسار العام · تدريبات شاملة لكل سؤال في صفحة منفصلة",
+    subtitleEn: "Term 1 EOT Exam Structure for General Stream · Dedicated page per question",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/12Jen-math-T1-2026-EOT.Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/12Jen-math-T1-2026-EOT-Q{q}/",
+      "https://mr-mohammed-hesham.github.io/12Gen-math-T1-2026-EOT-Q{q}/",
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20,
+  },
+  {
+    id: "11-adv-bri-math-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "11",
+    stream: "adv_bridge",
+    subject: "math",
+    titleAr: "رياضيات 11 متقدم — بريدج",
+    titleEn: "Grade 11 Advanced Mathematics — Bridge",
+    subtitleAr: "هيكل امتحان نهاية الفصل الأول · مراجعة مركزة وتدريب تفاعلي لكل سؤال وزاري",
+    subtitleEn: "Term 1 EOT Exam Structure · Focused practice page for every exam question",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/11Adv-Bri-math-T1-2026-EOT-Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/11Adv-Bri-math-T1-2026-EOT.Q{q}/",
+      "https://mr-mohammed-hesham.github.io/11Adv-Bri-Math-T1-2026-EOT-Q{q}/",
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20,
+  },
+  {
+    id: "11-adv-bri-phy-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "11",
+    stream: "adv_bridge",
+    subject: "physics",
+    titleAr: "فيزياء 11 متقدم — بريدج",
+    titleEn: "Grade 11 Advanced Physics — Bridge",
+    subtitleAr: "هيكل امتحان نهاية الفصل الأول · المتجهات والميكانيكا مقسمة صفحة لكل سؤال",
+    subtitleEn: "Term 1 EOT Exam Structure · Vectors & Mechanics structured per question page",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/11Adv-Bri-phy-T1-2026-EOT-Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/11Adv-Bri-Phy-T1-2026-EOT-Q{q}/",
+      "https://mr-mohammed-hesham.github.io/11Adv-Bri-phy-T1-2026-EOT.Q{q}/",
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20,
+  },
+  {
+    id: "11-gen-math-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "11",
+    stream: "general",
+    subject: "math",
+    titleAr: "رياضيات 11 عام",
+    titleEn: "Grade 11 General Mathematics",
+    subtitleAr: "هيكل امتحان نهاية الفصل الأول للمسار العام · تصفح مباشر لصفحات الأسئلة بالترتيب",
+    subtitleEn: "Term 1 EOT Exam Structure for General Stream · Sequential question pages",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/11Jen-math-T1-2026-EOT-Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/11Jen-math-T1-2026-EOT.Q{q}/",
+      "https://mr-mohammed-hesham.github.io/11Gen-math-T1-2026-EOT-Q{q}/",
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20,
+  },
+  {
+    id: "10-gen-math-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "10",
+    stream: "general",
+    subject: "math",
+    titleAr: "رياضيات 10 عام",
+    titleEn: "Grade 10 General Mathematics",
+    subtitleAr: "هيكل امتحان نهاية الفصل الأول للصف العاشر العام · صفحة مخصصة لكل سؤال",
+    subtitleEn: "Term 1 EOT Exam Structure for Grade 10 General · Dedicated page per question",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/10Jen-math-T1-2026-EOT-Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/10Jen-math-T1-2026-EOT.Q{q}/",
+      "https://mr-mohammed-hesham.github.io/10Gen-math-T1-2026-EOT-Q{q}/",
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20,
+  },
+  {
+    id: "10-adv-bri-phy-t1-2026",
+    year: "2026",
+    term: "T1",
+    grade: "10",
+    stream: "adv_bridge",
+    subject: "physics",
+    titleAr: "فيزياء 10 متقدم — بريدج",
+    titleEn: "Grade 10 Advanced Physics — Bridge",
+    subtitleAr: "هيكل امتحان نهاية الفصل الأول للصف العاشر المتقدم بريدج · كل سؤال في صفحة تفاعلية",
+    subtitleEn: "Term 1 EOT Exam Structure for Grade 10 Advanced Bridge · Interactive page per question",
+    primaryUrlTemplate: "https://mr-mohammed-hesham.github.io/10Adv-Bri-Phy-T1-2026-EOT-Q{q}/",
+    fallbackUrlTemplates: [
+      "https://mr-mohammed-hesham.github.io/10Adv-Bri-phy-T1-2026-EOT-Q{q}/",
+      "https://mr-mohammed-hesham.github.io/10Adv-Bri-Phy-T1-2026-EOT.Q{q}/",
+    ],
+    defaultTotalQuestions: 25,
+    mcqQuestionsEnd: 20,
+  },
+];
+
+let eot2026CurriculaCache: { all: InternalEotCurriculum[]; timestamp: number } | null = null;
+const eot2026QuestionCache = new Map<
+  string,
+  { status: "live" | "pending"; liveTitle?: string; html?: string; checkedAt: number }
+>();
+
+const eot2026SharedSettingsFile = path.join(examsDataDir, "eot2026_shared_config.json");
+
+function readEot2026SharedSettings(): { totalQuestionsByCurriculum: Record<string, number> } {
+  ensureExamsFile();
+  try {
+    if (fs.existsSync(eot2026SharedSettingsFile)) {
+      const parsed = JSON.parse(fs.readFileSync(eot2026SharedSettingsFile, "utf8"));
+      return {
+        totalQuestionsByCurriculum: parsed?.totalQuestionsByCurriculum || {},
+      };
+    }
+  } catch {}
+  return { totalQuestionsByCurriculum: {} };
+}
+
+function writeEot2026SharedSettings(data: { totalQuestionsByCurriculum: Record<string, number> }): void {
+  ensureExamsFile();
+  try {
+    fs.writeFileSync(eot2026SharedSettingsFile, JSON.stringify(data, null, 2), "utf8");
+  } catch (err) {
+    console.warn("[EOT 2026 Settings] Write error:", err);
+  }
+}
+
+function expandEot2026Terms(baseList: InternalEotCurriculum[]): InternalEotCurriculum[] {
+  const result: InternalEotCurriculum[] = [];
+  const terms: ("T1" | "T2" | "T3")[] = ["T1", "T2", "T3"];
+  for (const termId of terms) {
+    for (const base of baseList) {
+      if (base.term === termId && base.year === "2026") {
+        if (!result.some((r) => r.id === base.id)) result.push(base);
+        continue;
+      }
+      if (base.term !== "T1") continue;
+      const replaceTermYear = (tpl: string) => tpl.replace(/-T1-2026-/gi, `-${termId}-2026-`);
+      const id = base.id.replace("-t1-2026", `-${termId.toLowerCase()}-2026`);
+      if (result.some((r) => r.id === id)) continue;
+      const termNameAr = termId === "T1" ? "الفصل الأول" : termId === "T2" ? "الفصل الثاني" : "الفصل الثالث";
+      const termNameEn = termId === "T1" ? "Term 1" : termId === "T2" ? "Term 2" : "Term 3";
+      result.push({
+        ...base,
+        id,
+        year: "2026",
+        term: termId,
+        subtitleAr: `هيكل امتحان نهاية ${termNameAr} 2026 · مقسم صفحة لكل سؤال وزاري`,
+        subtitleEn: `${termNameEn} 2026 EOT Exam Structure · Dedicated interactive page per question`,
+        primaryUrlTemplate: replaceTermYear(base.primaryUrlTemplate),
+        fallbackUrlTemplates: (base.fallbackUrlTemplates || []).map(replaceTermYear),
+        knownQuestionTitles: undefined,
+      });
+    }
+  }
+  return result;
+}
+
+async function resolveEot2026Curricula(forceRefresh = false): Promise<InternalEotCurriculum[]> {
+  const now = Date.now();
+  const cacheFile = path.join(examsDataDir, "eot2026_curricula_cache.json");
+
+  if (!forceRefresh && eot2026CurriculaCache && now - eot2026CurriculaCache.timestamp < 60000) {
+    return eot2026CurriculaCache.all;
+  }
+
+  let baseCurricula: InternalEotCurriculum[] = [];
+
+  try {
+    const rawUrl = `https://raw.githubusercontent.com/Mr-Mohammed-Hesham/EOT/main/src/data/eotCurricula.ts?_t=${now}`;
+    const abortCtrl = new AbortController();
+    const timeout = setTimeout(() => abortCtrl.abort(), 6000);
+    const upstreamRes = await fetch(rawUrl, {
+      signal: abortCtrl.signal,
+      headers: { "User-Agent": "4U-Platform" },
+    });
+    clearTimeout(timeout);
+
+    if (upstreamRes.ok) {
+      const code = await upstreamRes.text();
+      const parsed = parseTsArray(code, "BASE_2026_T1_CURRICULA");
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        baseCurricula = parsed.map((item: any) => ({
+          id: String(item.id),
+          year: String(item.year || "2026"),
+          term: String(item.term || "T1"),
+          grade: String(item.grade),
+          stream: String(item.stream),
+          subject: String(item.subject),
+          titleAr: String(item.titleAr),
+          titleEn: String(item.titleEn),
+          subtitleAr: String(item.subtitleAr || ""),
+          subtitleEn: String(item.subtitleEn || ""),
+          primaryUrlTemplate: String(item.primaryUrlTemplate),
+          fallbackUrlTemplates: Array.isArray(item.fallbackUrlTemplates) ? item.fallbackUrlTemplates.map(String) : [],
+          defaultTotalQuestions: Number(item.defaultTotalQuestions) || 25,
+          mcqQuestionsEnd: Number(item.mcqQuestionsEnd) || 20,
+          knownQuestionTitles: item.knownQuestionTitles,
+        }));
+      }
+    }
+  } catch (err: any) {
+    console.warn("[EOT 2026 Sync] Upstream curricula fetch warning:", err?.message || err);
+  }
+
+  if (baseCurricula.length === 0 && fs.existsSync(cacheFile)) {
+    try {
+      const disk = JSON.parse(fs.readFileSync(cacheFile, "utf8"));
+      if (Array.isArray(disk) && disk.length > 0) baseCurricula = disk;
+    } catch {}
+  }
+
+  if (baseCurricula.length === 0) {
+    baseCurricula = DEFAULT_EOT2026_BASE_T1;
+  }
+
+  let expanded = expandEot2026Terms(baseCurricula);
+
+  // Auto-discover any newly created 2026 EOT repositories on GitHub even before eotCurricula.ts is edited
+  try {
+    const repoCtrl = new AbortController();
+    const repoTimeout = setTimeout(() => repoCtrl.abort(), 5000);
+    const reposRes = await fetch(
+      "https://api.github.com/users/Mr-Mohammed-Hesham/repos?per_page=100&sort=updated",
+      {
+        signal: repoCtrl.signal,
+        headers: { "User-Agent": "4U-Platform", Accept: "application/vnd.github+json" },
+      }
+    );
+    clearTimeout(repoTimeout);
+
+    if (reposRes.ok) {
+      const repos = await reposRes.json();
+      if (Array.isArray(repos)) {
+        const pattern = /^(\d+)(Adv-Bri|Adv-Ins|Jen|Gen)-(phy|math|chem|bio)-(T[123])-(2026)-EOT([-.])Q(\d+)$/i;
+        for (const repo of repos) {
+          const name = String(repo?.name || "");
+          const m = name.match(pattern);
+          if (!m) continue;
+          const [, gradeRaw, streamRaw, subRaw, termRaw, , sep, qStr] = m;
+          const qNum = Number(qStr) || 1;
+          const term = termRaw.toUpperCase();
+          const stream =
+            streamRaw.toLowerCase() === "adv-bri"
+              ? "adv_bridge"
+              : streamRaw.toLowerCase() === "adv-ins"
+              ? "adv_inspire"
+              : "general";
+          const subject =
+            subRaw.toLowerCase() === "phy"
+              ? "physics"
+              : subRaw.toLowerCase() === "math"
+              ? "math"
+              : subRaw.toLowerCase() === "chem"
+              ? "chemistry"
+              : "biology";
+
+          const existing = expanded.find(
+            (c) => c.year === "2026" && c.term === term && c.grade === gradeRaw && c.stream === stream && c.subject === subject
+          );
+
+          if (existing) {
+            if (qNum > existing.defaultTotalQuestions) {
+              existing.defaultTotalQuestions = qNum;
+            }
+          } else {
+            const subAr = subject === "physics" ? "فيزياء" : subject === "math" ? "رياضيات" : subject === "chemistry" ? "كيمياء" : "أحياء";
+            const subEn = subject === "physics" ? "Physics" : subject === "math" ? "Mathematics" : subject === "chemistry" ? "Chemistry" : "Biology";
+            const streamAr = stream === "adv_bridge" ? "متقدم — بريدج" : stream === "adv_inspire" ? "متقدم — انسباير" : "عام";
+            const streamEn = stream === "adv_bridge" ? "Advanced — Bridge" : stream === "adv_inspire" ? "Advanced — Inspire" : "General";
+            const prefixBeforeQ = name.replace(/([-.])Q\d+$/i, "$1Q{q}");
+            expanded.push({
+              id: `${gradeRaw}-${stream.replace("_", "-")}-${subRaw.toLowerCase()}-${term.toLowerCase()}-2026`,
+              year: "2026",
+              term,
+              grade: gradeRaw,
+              stream,
+              subject,
+              titleAr: `${subAr} ${gradeRaw} ${streamAr}`,
+              titleEn: `Grade ${gradeRaw} ${streamEn} ${subEn}`,
+              subtitleAr: "هيكل امتحان نهاية الفصل · مقسم صفحة لكل سؤال وزاري مع التدريب التفاعلي",
+              subtitleEn: "EOT Exam Structure · Dedicated interactive page per exam question",
+              primaryUrlTemplate: `https://mr-mohammed-hesham.github.io/${prefixBeforeQ}/`,
+              fallbackUrlTemplates: [
+                `https://mr-mohammed-hesham.github.io/${prefixBeforeQ.replace(sep + "Q{q}", (sep === "-" ? "." : "-") + "Q{q}")}/`,
+              ],
+              defaultTotalQuestions: Math.max(25, qNum),
+              mcqQuestionsEnd: 20,
+            });
+          }
+        }
+      }
+    }
+  } catch {}
+
+  try {
+    ensureExamsFile();
+    fs.writeFileSync(cacheFile, JSON.stringify(baseCurricula, null, 2), "utf8");
+  } catch {}
+
+  eot2026CurriculaCache = { all: expanded, timestamp: now };
+  return expanded;
+}
+
+function cleanEotTitle(rawTitle: string): string {
+  return rawTitle
+    .replace(/\s*\|\s*Mr\.?\s*Mohammed\s*Hesham.*$/i, "")
+    .replace(/^[⚡⚛️📐📚🎯🏆🔥✨\s]+/u, "")
+    .trim();
+}
+
+function prepareSafeSrcDocHtml(rawHtml: string): string {
+  let html = rawHtml
+    .replace(/<link[^>]+rel=["']canonical["'][^>]*>/gi, "")
+    .replace(/<meta[^>]+property=["']og:url["'][^>]*>/gi, "");
+
+  const protectionScript = `<script>
+(function(){
+  try {
+    window.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'u' || e.key.toLowerCase() === 's')) {
+        e.preventDefault();
+      }
+    });
+    window.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+    });
+  } catch(e) {}
+})();
+</script>`;
+
+  if (html.includes("</head>")) {
+    html = html.replace("</head>", `${protectionScript}</head>`);
+  } else {
+    html = `${protectionScript}${html}`;
+  }
+  return html;
+}
+
+async function probeAndFetchEotQuestion(
+  curriculum: InternalEotCurriculum,
+  q: number,
+  forceRefresh = false
+): Promise<{ status: "live" | "pending"; liveTitle?: string; html?: string; checkedAt: number }> {
+  const key = `${curriculum.id}__Q${q}`;
+  const now = Date.now();
+  const cached = eot2026QuestionCache.get(key);
+  if (!forceRefresh && cached && now - cached.checkedAt < 120000) {
+    return cached;
+  }
+
+  const qStr = String(q);
+  const candidates = Array.from(
+    new Set([
+      curriculum.primaryUrlTemplate.replace("{q}", qStr),
+      ...(curriculum.fallbackUrlTemplates || []).map((t) => t.replace("{q}", qStr)),
+    ])
+  );
+
+  for (const candidateUrl of candidates) {
+    try {
+      const targetUrl = forceRefresh
+        ? `${candidateUrl}${candidateUrl.includes("?") ? "&" : "?"}v=${now}`
+        : candidateUrl;
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 5000);
+      const upstream = await fetch(targetUrl, {
+        signal: ctrl.signal,
+        headers: { "User-Agent": "4U-Platform" },
+      });
+      clearTimeout(timer);
+
+      if (upstream.ok) {
+        const text = await upstream.text();
+        if (text && text.length > 200 && !text.includes("<title>Page not found") && !text.includes("There isn't a GitHub Pages site here")) {
+          let liveTitle: string | undefined;
+          const m = text.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+          if (m && m[1]) {
+            const cleaned = cleanEotTitle(m[1]);
+            if (cleaned) liveTitle = cleaned;
+          }
+          const hit = {
+            status: "live" as const,
+            liveTitle,
+            html: prepareSafeSrcDocHtml(text),
+            checkedAt: now,
+          };
+          eot2026QuestionCache.set(key, hit);
+          return hit;
+        }
+      }
+    } catch {}
+  }
+
+  const pending = { status: "pending" as const, checkedAt: now };
+  eot2026QuestionCache.set(key, pending);
+  return pending;
+}
+
+// 1. Live Curricula Metadata Endpoint (Zero URLs or Repo Slugs returned to UI)
+app.get("/api/external-banks/eot2026", async (req, res) => {
+  try {
+    const forceRefresh = req.query.refresh === "true";
+    const allCurricula = await resolveEot2026Curricula(forceRefresh);
+    const sharedSettings = readEot2026SharedSettings();
+
+    const sanitized = allCurricula.map((c) => ({
+      id: c.id,
+      year: c.year,
+      term: c.term,
+      grade: c.grade,
+      stream: c.stream,
+      subject: c.subject,
+      titleAr: c.titleAr,
+      titleEn: c.titleEn,
+      subtitleAr: c.subtitleAr,
+      subtitleEn: c.subtitleEn,
+      defaultTotalQuestions: sharedSettings.totalQuestionsByCurriculum[c.id] || c.defaultTotalQuestions,
+      mcqQuestionsEnd: c.mcqQuestionsEnd,
+      knownQuestionTitles: c.knownQuestionTitles,
+    }));
+
+    return res.json({
+      success: true,
+      count: sanitized.length,
+      curricula: sanitized,
+      sharedSettings,
+      syncedAt: Date.now(),
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || "Failed to sync EOT 2026" });
+  }
+});
+
+// 2. Fast Server-Side Batch Availability Probe
+app.post("/api/external-banks/eot2026/probe-batch", async (req, res) => {
+  try {
+    const { curriculumIds, maxQuestions = 25, forceRefresh = false } = req.body || {};
+    const allCurricula = await resolveEot2026Curricula(Boolean(forceRefresh));
+    const sharedSettings = readEot2026SharedSettings();
+
+    const targets = Array.isArray(curriculumIds) && curriculumIds.length > 0
+      ? allCurricula.filter((c) => curriculumIds.includes(c.id))
+      : allCurricula.filter((c) => c.year === "2026" && c.term === "T1");
+
+    const probes: Record<string, Record<number, { status: "live" | "pending"; liveTitle?: string; checkedAt: number }>> = {};
+
+    const tasks: { curr: InternalEotCurriculum; q: number }[] = [];
+    for (const curr of targets) {
+      probes[curr.id] = {};
+      const limit = Math.min(
+        Number(maxQuestions) || 25,
+        sharedSettings.totalQuestionsByCurriculum[curr.id] || curr.defaultTotalQuestions
+      );
+      for (let q = 1; q <= limit; q++) {
+        tasks.push({ curr, q });
+      }
+    }
+
+    const concurrency = 10;
+    async function worker() {
+      while (tasks.length > 0) {
+        const item = tasks.shift();
+        if (!item) break;
+        const result = await probeAndFetchEotQuestion(item.curr, item.q, Boolean(forceRefresh));
+        probes[item.curr.id][item.q] = {
+          status: result.status,
+          liveTitle: result.liveTitle,
+          checkedAt: result.checkedAt,
+        };
+      }
+    }
+
+    await Promise.all(Array.from({ length: Math.min(concurrency, Math.max(1, tasks.length)) }, () => worker()));
+
+    return res.json({ success: true, probes });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || "Batch probe failed" });
+  }
+});
+
+// 3. Single Question Live HTML Content Delivery (for protected srcDoc rendering)
+app.get("/api/external-banks/eot2026/question", async (req, res) => {
+  try {
+    const curriculumId = String(req.query.curriculumId || "");
+    const q = Math.max(1, Number(req.query.q) || 1);
+    const forceRefresh = req.query.refresh === "true";
+
+    if (!curriculumId) {
+      return res.status(400).json({ success: false, error: "curriculumId is required" });
+    }
+
+    const allCurricula = await resolveEot2026Curricula(false);
+    const curr = allCurricula.find((c) => c.id === curriculumId);
+    if (!curr) {
+      return res.status(404).json({ success: false, status: "pending" });
+    }
+
+    const result = await probeAndFetchEotQuestion(curr, q, forceRefresh);
+    return res.json({
+      success: true,
+      status: result.status,
+      liveTitle: result.liveTitle,
+      html: result.html || "",
+      checkedAt: result.checkedAt,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, status: "pending", error: err?.message });
+  }
+});
+
+// 4. Shared EOT 2026 Settings Sync (persists question count updates across sessions)
+app.post("/api/external-banks/eot2026/shared-settings", (req, res) => {
+  try {
+    const { curriculumId, totalQuestions } = req.body || {};
+    if (!curriculumId || !totalQuestions) {
+      return res.status(400).json({ success: false, error: "curriculumId and totalQuestions are required" });
+    }
+    const current = readEot2026SharedSettings();
+    current.totalQuestionsByCurriculum[String(curriculumId)] = Math.max(1, Math.min(60, Number(totalQuestions) || 25));
+    writeEot2026SharedSettings(current);
+    return res.json({ success: true, sharedSettings: current });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
 
 // Helper function to inject the dynamic host URL for WhatsApp and social media bots
 function transformHtmlForSocialPreviews(rawHtml: string, req: express.Request): string {

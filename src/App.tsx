@@ -3934,8 +3934,58 @@ export default function App() {
             {appState.country === 'UAE' && activePlatformSection === 'eot' && (
               <EotSpecsView 
                 language={language}
-                selectedAcademicYear={appState.academicYear === '2026' ? '2026' : '2025'}
+                selectedAcademicYear={appState.academicYear === '2025' ? '2025' : '2026'}
                 onAcademicYearChange={(yr) => setAppState(prev => ({ ...prev, academicYear: yr }))}
+                externalFilters={{
+                  term: appState.term?.id === 2 ? 'T2' : appState.term?.id === 3 ? 'T3' : 'T1',
+                  grade: appState.grade?.id ? String(appState.grade.id) : undefined,
+                  subject: appState.subject?.id || undefined,
+                  stream: appState.stream?.id === 'general'
+                    ? 'general'
+                    : appState.program?.id === 'inspire'
+                    ? 'adv_inspire'
+                    : appState.stream?.id === 'advanced'
+                    ? 'adv_bridge'
+                    : undefined,
+                }}
+                onExternalFilterChange={(f) => {
+                  setAppState(prev => {
+                    const next = { ...prev };
+                    if (f.term) {
+                      const tId = f.term === 'T2' ? 2 : f.term === 'T3' ? 3 : 1;
+                      const foundTerm = DB.terms.find(item => item.id === tId);
+                      if (foundTerm) next.term = foundTerm;
+                    }
+                    if (f.grade === 'all') {
+                      next.grade = null;
+                    } else if (f.grade) {
+                      const foundGrade = DB.grades.find(item => String(item.id) === String(f.grade));
+                      if (foundGrade) next.grade = foundGrade;
+                    }
+                    if (f.subject === 'all') {
+                      next.subject = null;
+                    } else if (f.subject) {
+                      const foundSub = DB.subjects.find(item => item.id === f.subject);
+                      if (foundSub) next.subject = foundSub;
+                    }
+                    if (f.stream === 'all') {
+                      next.stream = null;
+                      next.program = null;
+                    } else if (f.stream) {
+                      if (f.stream === 'general') {
+                        next.stream = DB.streams.find(s => s.id === 'general') || prev.stream;
+                        next.program = null;
+                      } else if (f.stream === 'adv_inspire') {
+                        next.stream = DB.streams.find(s => s.id === 'advanced') || prev.stream;
+                        next.program = DB.programs.find(p => p.id === 'inspire') || prev.program;
+                      } else if (f.stream === 'adv_bridge') {
+                        next.stream = DB.streams.find(s => s.id === 'advanced') || prev.stream;
+                        next.program = DB.programs.find(p => p.id === 'bridge') || prev.program;
+                      }
+                    }
+                    return next;
+                  });
+                }}
                 onSwitchToCurriculum={() => {
                   setActivePlatformSection('curriculum');
                   setCurriculumSubView('terms');
@@ -4048,8 +4098,8 @@ export default function App() {
                         {language === 'en' ? 'EOT Specs & Exams' : 'قسم الهياكل (EOT)'}
                       </h3>
                       <div className="flex items-center justify-center gap-1.5 text-[10px] font-bold">
+                        <span className="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">هياكل 2026 ✅</span>
                         <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">هياكل 2025 ✅</span>
-                        <span className="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">هياكل 2026 ⏳</span>
                       </div>
                     </div>
                   </div>

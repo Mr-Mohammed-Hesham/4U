@@ -1,0 +1,211 @@
+[
+  {
+    "id": "12-adv-bri-phy-t1-2026",
+    "year": "2026",
+    "term": "T1",
+    "grade": "12",
+    "stream": "adv_bridge",
+    "subject": "physics",
+    "titleAr": "فيزياء 12 متقدم — بريدج",
+    "titleEn": "Grade 12 Advanced Physics — Bridge",
+    "subtitleAr": "هيكل امتحان نهاية الفصل الأول · مقسم صفحة لكل سؤال وزاري مع الحل والتدريب التفاعلي",
+    "subtitleEn": "Term 1 EOT Exam Structure · Dedicated interactive page per exam question",
+    "primaryUrlTemplate": "https://mr-mohammed-hesham.github.io/12Adv-Bri-phy-T1-2026-EOT-Q{q}/",
+    "fallbackUrlTemplates": [
+      "https://mr-mohammed-hesham.github.io/12Adv-Bri-Phy-T1-2026-EOT-Q{q}/",
+      "https://mr-mohammed-hesham.github.io/12Adv-Bri-phy-T1-2026-EOT.Q{q}/"
+    ],
+    "defaultTotalQuestions": 25,
+    "mcqQuestionsEnd": 20,
+    "knownQuestionTitles": {
+      "1": {
+        "ar": "الكهرباء الساكنة والشحنات الكهربائية — المراجعة التأسيسية",
+        "en": "Electrostatics & Electric Charges — Core Review"
+      },
+      "2": {
+        "ar": "القسم 1.2: الشحنات الكهربائية وقانون حفظ الشحنة",
+        "en": "Section 1.2: Electric Charges & Conservation"
+      },
+      "3": {
+        "ar": "الموصلات والعوازل والموصلات الفائقة",
+        "en": "Conductors, Insulators & Superconductors"
+      },
+      "4": {
+        "ar": "الشحن الكهربائي وتطبيقات الكشاف الكهربائي",
+        "en": "Charging Processes & Electroscope Applications"
+      },
+      "5": {
+        "ar": "القوة الكهروستاتيكية داخل الذرة وقانون كولوم",
+        "en": "Electrostatic Force Inside the Atom & Coulomb’s Law"
+      },
+      "6": {
+        "ar": "خطوط المجال الكهربائي وتمثيل الشحنات",
+        "en": "Electric Field Lines & Charge Configurations"
+      },
+      "7": {
+        "ar": "التوزيعات المتصلة للشحنات الكهربائية",
+        "en": "Continuous Charge Distributions"
+      },
+      "8": {
+        "ar": "التدفق الكهربائي وقانون جاوس — الجزء الأول",
+        "en": "Electric Flux & Gauss’s Law — Part 1"
+      },
+      "9": {
+        "ar": "التدفق الكهربائي وقانون جاوس — تطبيقات السؤال التاسع",
+        "en": "Electric Flux & Gauss’s Law — Question 9 Applications"
+      }
+    }
+  },
+  {
+    "id": "12-adv-bri-math-t1-2026",
+    "year": "2026",
+    "term": "T1",
+    "grade": "12",
+    "stream": "adv_bridge",
+    "subject": "math",
+    "titleAr": "رياضيات 12 متقدم — بريدج",
+    "titleEn": "Grade 12 Advanced Mathematics — Bridge",
+    "subtitleAr": "هيكل امتحان نهاية الفصل الأول · النهايات والاتصال والتفاضل مقسم حسب رقم السؤال",
+    "subtitleEn": "Term 1 EOT Exam Structure · Limits, Continuity & Derivatives per question page",
+    "primaryUrlTemplate": "https://mr-mohammed-hesham.github.io/12Adv-Bri-math-T1-2026-EOT-Q{q}/",
+    "fallbackUrlTemplates": [
+      "https://mr-mohammed-hesham.github.io/12Adv-Bri-math-T1-2026-EOT.Q{q}/",
+      "https://mr-mohammed-hesham.github.io/12Adv-Bri-Math-T1-2026-EOT-Q{q}/"
+    ],
+    "defaultTotalQuestions": 25,
+    "mcqQuestionsEnd": 20
+  },
+  {
+    "id": "12-adv-ins-phy-t1-2026",
+    "year": "2026",
+    "term": "T1",
+    "grade": "12",
+    "stream": "adv_inspire",
+    "subject": "physics",
+    "titleAr": "فيزياء 12 متقدم — انسباير",
+    "titleEn": "Grade 12 Advanced Physics — Inspire",
+    "subtitleAr": "هيكل امتحان نهاية الفصل الأول لمنهج انسباير المتقدم · صفحة مستقلة لكل سؤال",
+    "subtitleEn": "Term 1 EOT Exam Structure for Inspire Advanced Physics · Page per question",
+    "primaryUrlTemplate": "https://mr-mohammed-hesham.github.io/12Adv-Ins-phy-T1-2026-EOT-Q{q}/",
+    "fallbackUrlTemplates": [
+      "https://mr-mohammed-hesham.github.io/12Adv-Ins-Phy-T1-2026-EOT-Q{q}/",
+      "https://mr-mohammed-hesham.github.io/12Adv-Ins-phy-T1-2026-EOT.Q{q}/"
+    ],
+    "defaultTotalQuestions": 25,
+    "mcqQuestionsEnd": 20
+  },
+  {
+    "id": "12-gen-math-t1-2026",
+    "year": "2026",
+    "term": "T1",
+    "grade": "12",
+    "stream": "general",
+    "subject": "math",
+    "titleAr": "رياضيات 12 عام",
+    "titleEn": "Grade 12 General Mathematics",
+    "subtitleAr": "هيكل امتحان نهاية الفصل الأول للمسار العام · تدريبات شاملة لكل سؤال في صفحة منفصلة",
+    "subtitleEn": "Term 1 EOT Exam Structure for General Stream · Dedicated page per question",
+    "primaryUrlTemplate": "https://mr-mohammed-hesham.github.io/12Jen-math-T1-2026-EOT.Q{q}/",
+    "fallbackUrlTemplates": [
+      "https://mr-mohammed-hesham.github.io/12Jen-math-T1-2026-EOT-Q{q}/",
+      "https://mr-mohammed-hesham.github.io/12Gen-math-T1-2026-EOT-Q{q}/"
+    ],
+    "defaultTotalQuestions": 25,
+    "mcqQuestionsEnd": 20
+  },
+  {
+    "id": "11-adv-bri-math-t1-2026",
+    "year": "2026",
+    "term": "T1",
+    "grade": "11",
+    "stream": "adv_bridge",
+    "subject": "math",
+    "titleAr": "رياضيات 11 متقدم — بريدج",
+    "titleEn": "Grade 11 Advanced Mathematics — Bridge",
+    "subtitleAr": "هيكل امتحان نهاية الفصل الأول · مراجعة مركزة وتدريب تفاعلي لكل سؤال وزاري",
+    "subtitleEn": "Term 1 EOT Exam Structure · Focused practice page for every exam question",
+    "primaryUrlTemplate": "https://mr-mohammed-hesham.github.io/11Adv-Bri-math-T1-2026-EOT-Q{q}/",
+    "fallbackUrlTemplates": [
+      "https://mr-mohammed-hesham.github.io/11Adv-Bri-math-T1-2026-EOT.Q{q}/",
+      "https://mr-mohammed-hesham.github.io/11Adv-Bri-Math-T1-2026-EOT-Q{q}/"
+    ],
+    "defaultTotalQuestions": 25,
+    "mcqQuestionsEnd": 20
+  },
+  {
+    "id": "11-adv-bri-phy-t1-2026",
+    "year": "2026",
+    "term": "T1",
+    "grade": "11",
+    "stream": "adv_bridge",
+    "subject": "physics",
+    "titleAr": "فيزياء 11 متقدم — بريدج",
+    "titleEn": "Grade 11 Advanced Physics — Bridge",
+    "subtitleAr": "هيكل امتحان نهاية الفصل الأول · المتجهات والميكانيكا مقسمة صفحة لكل سؤال",
+    "subtitleEn": "Term 1 EOT Exam Structure · Vectors & Mechanics structured per question page",
+    "primaryUrlTemplate": "https://mr-mohammed-hesham.github.io/11Adv-Bri-phy-T1-2026-EOT-Q{q}/",
+    "fallbackUrlTemplates": [
+      "https://mr-mohammed-hesham.github.io/11Adv-Bri-Phy-T1-2026-EOT-Q{q}/",
+      "https://mr-mohammed-hesham.github.io/11Adv-Bri-phy-T1-2026-EOT.Q{q}/"
+    ],
+    "defaultTotalQuestions": 25,
+    "mcqQuestionsEnd": 20
+  },
+  {
+    "id": "11-gen-math-t1-2026",
+    "year": "2026",
+    "term": "T1",
+    "grade": "11",
+    "stream": "general",
+    "subject": "math",
+    "titleAr": "رياضيات 11 عام",
+    "titleEn": "Grade 11 General Mathematics",
+    "subtitleAr": "هيكل امتحان نهاية الفصل الأول للمسار العام · تصفح مباشر لصفحات الأسئلة بالترتيب",
+    "subtitleEn": "Term 1 EOT Exam Structure for General Stream · Sequential question pages",
+    "primaryUrlTemplate": "https://mr-mohammed-hesham.github.io/11Jen-math-T1-2026-EOT-Q{q}/",
+    "fallbackUrlTemplates": [
+      "https://mr-mohammed-hesham.github.io/11Jen-math-T1-2026-EOT.Q{q}/",
+      "https://mr-mohammed-hesham.github.io/11Gen-math-T1-2026-EOT-Q{q}/"
+    ],
+    "defaultTotalQuestions": 25,
+    "mcqQuestionsEnd": 20
+  },
+  {
+    "id": "10-gen-math-t1-2026",
+    "year": "2026",
+    "term": "T1",
+    "grade": "10",
+    "stream": "general",
+    "subject": "math",
+    "titleAr": "رياضيات 10 عام",
+    "titleEn": "Grade 10 General Mathematics",
+    "subtitleAr": "هيكل امتحان نهاية الفصل الأول للصف العاشر العام · صفحة مخصصة لكل سؤال",
+    "subtitleEn": "Term 1 EOT Exam Structure for Grade 10 General · Dedicated page per question",
+    "primaryUrlTemplate": "https://mr-mohammed-hesham.github.io/10Jen-math-T1-2026-EOT-Q{q}/",
+    "fallbackUrlTemplates": [
+      "https://mr-mohammed-hesham.github.io/10Jen-math-T1-2026-EOT.Q{q}/",
+      "https://mr-mohammed-hesham.github.io/10Gen-math-T1-2026-EOT-Q{q}/"
+    ],
+    "defaultTotalQuestions": 25,
+    "mcqQuestionsEnd": 20
+  },
+  {
+    "id": "10-adv-bri-phy-t1-2026",
+    "year": "2026",
+    "term": "T1",
+    "grade": "10",
+    "stream": "adv_bridge",
+    "subject": "physics",
+    "titleAr": "فيزياء 10 متقدم — بريدج",
+    "titleEn": "Grade 10 Advanced Physics — Bridge",
+    "subtitleAr": "هيكل امتحان نهاية الفصل الأول للصف العاشر المتقدم بريدج · كل سؤال في صفحة تفاعلية",
+    "subtitleEn": "Term 1 EOT Exam Structure for Grade 10 Advanced Bridge · Interactive page per question",
+    "primaryUrlTemplate": "https://mr-mohammed-hesham.github.io/10Adv-Bri-Phy-T1-2026-EOT-Q{q}/",
+    "fallbackUrlTemplates": [
+      "https://mr-mohammed-hesham.github.io/10Adv-Bri-phy-T1-2026-EOT-Q{q}/",
+      "https://mr-mohammed-hesham.github.io/10Adv-Bri-Phy-T1-2026-EOT.Q{q}/"
+    ],
+    "defaultTotalQuestions": 25,
+    "mcqQuestionsEnd": 20
+  }
+]

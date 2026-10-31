@@ -52,7 +52,6 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="bg-gradient-to-r from-indigo-950 via-slate-900 to-purple-950 border-b border-indigo-900/50 py-1.5 px-4 text-xs text-slate-300">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span className="font-bold text-white">منصة الهياكل الامتحانية المعتمدة</span>
             <span className="text-slate-400">|</span>
             <span className="text-amber-300 font-semibold">Mr. Mohammed Hesham</span>
@@ -234,14 +233,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
                 <button
                   onClick={() => setSelectedAcademicYear('2026')}
-                  className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                     selectedAcademicYear === '2026'
-                      ? 'bg-amber-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-amber-500 text-slate-950 shadow-sm'
+                      : 'text-amber-300 hover:bg-slate-800'
                   }`}
-                  title="هياكل 2026 ستتوفر قريباً إن شاء الله"
+                  title="الانتقال إلى بوابة هياكل 2026 التفاعلية الجديدة"
                 >
-                  2026 (قريباً)
+                  2026
                 </button>
               </div>
             )}

@@ -18,13 +18,12 @@ import { QuestionCard } from '../eot/components/QuestionCard';
 import { ExamTable } from '../eot/components/ExamTable';
 import { QuizMode } from '../eot/components/QuizMode';
 import { AiTutorModal } from '../eot/components/AiTutorModal';
+import { Eot2026Portal, Eot2026ExternalSyncFilters } from '../eot2026/components/Eot2026Portal';
+import { Eot2026TermId } from '../eot2026/types';
 import {
-  Printer,
-  Sparkles,
   GraduationCap,
   Mail,
   Phone,
-  Layers,
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
@@ -33,8 +32,8 @@ import {
   Atom,
   FlaskConical,
   Dna,
-  Search,
-  Filter
+  Filter,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface EotSpecsViewProps {
@@ -42,31 +41,32 @@ interface EotSpecsViewProps {
   language?: 'ar' | 'en';
   selectedAcademicYear?: '2025' | '2026';
   onAcademicYearChange?: (year: '2025' | '2026') => void;
+  externalFilters?: Eot2026ExternalSyncFilters;
+  onExternalFilterChange?: (filters: Eot2026ExternalSyncFilters) => void;
 }
 
 export type SubjectType = 'math' | 'physics' | 'chemistry' | 'biology';
 
 const SUBJECT_OPTIONS = [
-  { id: 'math', name: 'الرياضيات', nameEn: 'Mathematics', icon: BookOpen, color: 'from-indigo-600 to-blue-600' },
-  { id: 'physics', name: 'الفيزياء', nameEn: 'Physics', icon: Atom, color: 'from-amber-500 to-orange-600' },
-  { id: 'chemistry', name: 'الكيمياء', nameEn: 'Chemistry', icon: FlaskConical, color: 'from-emerald-500 to-teal-600' },
-  { id: 'biology', name: 'الأحياء', nameEn: 'Biology', icon: Dna, color: 'from-rose-500 to-pink-600' },
+  { id: 'math', name: 'الرياضيات', nameEn: 'Mathematics', icon: BookOpen },
+  { id: 'physics', name: 'الفيزياء', nameEn: 'Physics', icon: Atom },
+  { id: 'chemistry', name: 'الكيمياء', nameEn: 'Chemistry', icon: FlaskConical },
+  { id: 'biology', name: 'الأحياء', nameEn: 'Biology', icon: Dna },
 ];
 
-export const EotSpecsView: React.FC<EotSpecsViewProps> = ({ 
-  onSwitchToCurriculum, 
+export const EotSpecsView: React.FC<EotSpecsViewProps> = ({
+  onSwitchToCurriculum,
   language = 'ar',
   selectedAcademicYear: propYear,
-  onAcademicYearChange
+  onAcademicYearChange,
+  externalFilters,
+  onExternalFilterChange,
 }) => {
   const isEn = language === 'en';
-  // Navigation View Mode: 'selection' (step 1) or 'exam' (step 2)
   const [viewMode, setViewMode] = useState<'selection' | 'exam'>('selection');
-
   const [activeTab, setActiveTab] = useState<'all' | 'mcq' | 'paper' | 'matrix' | 'quiz' | 'tutor'>('all');
 
-  // Framework Selection States (Default to 2025)
-  const [selectedAcademicYear, setInternalYear] = useState<'2025' | '2026'>(propYear || '2025');
+  const [selectedAcademicYear, setInternalYear] = useState<'2025' | '2026'>(propYear || '2026');
 
   useEffect(() => {
     if (propYear && (propYear === '2025' || propYear === '2026')) {
@@ -78,30 +78,72 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({
     setInternalYear(yr);
     onAcademicYearChange?.(yr);
   };
+
   const [selectedSubject, setSelectedSubject] = useState<SubjectType>('math');
   const [selectedStream, setSelectedStream] = useState<StreamType>('advanced');
   const [selectedGrade, setSelectedGrade] = useState<GradeType>('12');
   const [selectedTerm, setSelectedTerm] = useState<TermType>('EOT1');
 
-  // Interactive Loader State
+  // Sync external SmartNavigatorBar filters into 2025 EOT state too
+  useEffect(() => {
+    if (!externalFilters) return;
+    if (externalFilters.subject && ['math', 'physics', 'chemistry', 'biology'].includes(externalFilters.subject)) {
+      setSelectedSubject(externalFilters.subject as SubjectType);
+    }
+    if (externalFilters.grade && ['12', '11', '10', '9', '8', '7', '5'].includes(externalFilters.grade)) {
+      setSelectedGrade(externalFilters.grade as GradeType);
+    }
+    if (externalFilters.term) {
+      const mappedTerm: TermType =
+        externalFilters.term === 'T2' ? 'EOT2' : externalFilters.term === 'T3' ? 'EOT3' : 'EOT1';
+      setSelectedTerm(mappedTerm);
+    }
+    if (externalFilters.stream) {
+      if (externalFilters.stream === 'general') setSelectedStream('general');
+      else if (externalFilters.stream === 'adv_inspire') setSelectedStream('advanced_inspire');
+      else if (externalFilters.stream === 'adv_bridge') setSelectedStream('advanced_bridge');
+    }
+  }, [
+    externalFilters?.subject,
+    externalFilters?.grade,
+    externalFilters?.term,
+    externalFilters?.stream,
+  ]);
+
+  const sync2025ToExternal = (
+    next: Partial<{ subject: SubjectType; grade: GradeType; stream: StreamType; term: TermType }>
+  ) => {
+    const sub = next.subject || selectedSubject;
+    const gr = next.grade || selectedGrade;
+    const st = next.stream || selectedStream;
+    const tr = next.term || selectedTerm;
+    const mappedTerm: Eot2026TermId = tr === 'EOT2' ? 'T2' : tr === 'EOT3' ? 'T3' : 'T1';
+    const mappedStream =
+      st === 'general' ? 'general' : st === 'advanced_inspire' ? 'adv_inspire' : 'adv_bridge';
+    onExternalFilterChange?.({
+      subject: sub,
+      grade: gr,
+      stream: mappedStream,
+      term: mappedTerm,
+    });
+  };
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Filter States
+  // Filter States for 2025 Bank
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedUnit, setSelectedUnit] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>('all');
 
-  // AI Tutor Modal
+  // AI Tutor Modal for 2025 Bank
   const [aiModalQuestion, setAiModalQuestion] = useState<QuestionItem | null>(null);
 
-  // Active dataset based on academicYear, subject, grade, stream, term
+  // Active 2025 dataset
   const activeDataset = useMemo(() => {
-    // 2026 specifications will be available soon Insha'Allah
-    if (selectedAcademicYear === '2026') return [];
+    if (selectedAcademicYear !== '2025') return [];
     if (selectedTerm !== 'EOT1') return [];
-    
-    // Math
+
     if (selectedSubject === 'math') {
       if (selectedGrade === '12') {
         if (selectedStream === 'general') return mathG12GeneralQuestions;
@@ -117,30 +159,19 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({
       }
       if (selectedGrade === '9') return mathG9Questions;
     }
-    
-    // Physics (Grade 12 General, Grade 12 Inspire, Grade 12 Bridge, Grade 11 Bridge, Grade 10, Grade 9)
+
     if (selectedSubject === 'physics') {
       if (selectedGrade === '12') {
-        if (selectedStream === 'general') {
-          return physicsG12GeneralQuestions;
-        }
-        if (selectedStream === 'advanced_inspire') {
-          return physicsG12InspireQuestions;
-        }
+        if (selectedStream === 'general') return physicsG12GeneralQuestions;
+        if (selectedStream === 'advanced_inspire') return physicsG12InspireQuestions;
         return physicsG12BridgeQuestions;
       }
       if (selectedGrade === '11') {
-        if (selectedStream === 'advanced_inspire') {
-          return physicsG12InspireQuestions;
-        }
+        if (selectedStream === 'advanced_inspire') return physicsG12InspireQuestions;
         return physicsG11BridgeQuestions;
       }
-      if (selectedGrade === '10') {
-        return physicsG10Questions;
-      }
-      if (selectedGrade === '9') {
-        return physicsG9Questions;
-      }
+      if (selectedGrade === '10') return physicsG10Questions;
+      if (selectedGrade === '9') return physicsG9Questions;
     }
 
     return [];
@@ -148,27 +179,23 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({
 
   const hasExamQuestions = activeDataset.length > 0;
 
-  // Enter Exam Handler
   const handleEnterExam = () => {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
       setViewMode('exam');
-    }, 400);
+    }, 300);
   };
 
-  // Back to Selection Handler
   const handleBackToSelection = () => {
     setViewMode('selection');
   };
 
-  // Handle outcome click from Exam Table
   const handleSelectOutcome = (qNum: string) => {
     setActiveTab('all');
     setSearchTerm(qNum);
   };
 
-  // Reset Filters
   const handleResetFilters = () => {
     setSearchTerm('');
     setSelectedUnit('all');
@@ -176,26 +203,34 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({
     setSelectedYear('all');
   };
 
-  // Filter questions logic
+  const availableUnits = useMemo(() => {
+    return Array.from(new Set<number>(activeDataset.map((q) => Number(q.unit)))).sort((a, b) => a - b);
+  }, [activeDataset]);
+
+  const availableYears = useMemo(() => {
+    return Array.from(new Set(activeDataset.map((q) => q.examYear).filter(Boolean) as string[]));
+  }, [activeDataset]);
+
   const filteredQuestions = useMemo(() => {
     if (!hasExamQuestions) return [];
     return activeDataset.filter((q) => {
-      // Tab filter constraint
       if (activeTab === 'mcq' && q.type !== 'mcq') return false;
       if (activeTab === 'paper' && q.type !== 'paper') return false;
 
-      // Dropdown filters
       if (selectedUnit !== 'all' && q.unit.toString() !== selectedUnit) return false;
       if (selectedType !== 'all' && q.type !== selectedType) return false;
       if (selectedYear !== 'all' && q.examYear !== selectedYear) return false;
 
-      // Search term
       if (searchTerm.trim()) {
         const term = searchTerm.toLowerCase();
         const matchesNum = q.qNumber.toString().toLowerCase().includes(term);
         const matchesTitle = q.titleAr.toLowerCase().includes(term) || q.title.toLowerCase().includes(term);
-        const matchesOutcome = q.learningOutcomeAr.toLowerCase().includes(term) || q.learningOutcome.toLowerCase().includes(term);
-        const matchesText = q.questionText.toLowerCase().includes(term) || (q.questionTextAr && q.questionTextAr.toLowerCase().includes(term));
+        const matchesOutcome =
+          q.learningOutcomeAr.toLowerCase().includes(term) ||
+          q.learningOutcome.toLowerCase().includes(term);
+        const matchesText =
+          q.questionText.toLowerCase().includes(term) ||
+          (q.questionTextAr && q.questionTextAr.toLowerCase().includes(term));
         const matchesRef = q.exerciseRef.toLowerCase().includes(term) || q.lesson.toLowerCase().includes(term);
         return matchesNum || matchesTitle || matchesOutcome || matchesText || matchesRef;
       }
@@ -208,97 +243,134 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({
   const paperCount = activeDataset.filter((q) => q.type === 'paper').length;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-['Cairo',sans-serif]">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-['Cairo',sans-serif] rounded-3xl">
+      {/* Top Unified EOT Branch Year Switcher (2026 Live Portal <-> 2025 Archive Bank) */}
+      <div className="max-w-[1360px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-5">
+        <div className="bg-slate-900 text-white rounded-2xl p-2.5 sm:p-3 border border-slate-800 shadow-md flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 px-2">
+            <GraduationCap className="w-5 h-5 text-amber-400 shrink-0" />
+            <span className="text-xs sm:text-sm font-black text-white">
+              {isEn ? 'Ministry EOT Specifications Portal' : 'قسم الهياكل الوزارية المعتمدة (EOT)'}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
+            <button
+              type="button"
+              onClick={() => setSelectedAcademicYear('2026')}
+              className={`px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                selectedAcademicYear === '2026'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-sm'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              <span>{isEn ? '2026 Structures (New Portal)' : 'هياكل 2026 (البوابة التفاعلية الجديدة)'}</span>
+              <ShieldCheck className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedAcademicYear('2025')}
+              className={`px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                selectedAcademicYear === '2025'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              <span>{isEn ? '2025 Structures (Solved Bank)' : 'هياكل 2025 (بنك الأسئلة المحلولة)'}</span>
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* ================= STEP 1: SELECTION SCREEN ================= */}
-        {viewMode === 'selection' && (
-          <div className="space-y-6 max-w-4xl mx-auto py-4 animate-fadeIn">
-            {/* Header Banner - Teacher & Course Info */}
-            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-indigo-900/40 relative overflow-hidden text-center sm:text-right">
-              <div className="absolute left-0 top-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -ml-20 -mt-20"></div>
+      <main className="flex-1 max-w-[1360px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {selectedAcademicYear === '2026' ? (
+          /* ================= 2026 INTEGRATED LIVE EOT PORTAL ================= */
+          <Eot2026Portal
+            language={language}
+            onSwitchTo2025={() => setSelectedAcademicYear('2025')}
+            onSwitchToCurriculum={onSwitchToCurriculum}
+            externalFilters={externalFilters}
+            onExternalFilterChange={onExternalFilterChange}
+          />
+        ) : (
+          /* ================= 2025 EXISTING EOT BRANCH ================= */
+          <>
+            {viewMode === 'selection' && (
+              <div className="space-y-6 max-w-4xl mx-auto py-2 animate-fadeIn">
+                {/* Header Banner - Teacher & Course Info */}
+                <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-indigo-900/40 relative overflow-hidden text-center sm:text-right">
+                  <div className="absolute left-0 top-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -ml-20 -mt-20"></div>
 
-              <div className="relative z-10 space-y-4">
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                  <span className="inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-300 px-3.5 py-1 rounded-full text-xs font-bold border border-amber-500/30">
-                    <GraduationCap className="w-4 h-4 text-amber-400" />
-                    Mr. Mohammed Hesham
-                  </span>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
-                    selectedAcademicYear === '2025'
-                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                      : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                  }`}>
-                    {selectedAcademicYear === '2025' 
-                      ? (isEn ? '📅 2025 Specifications (2024-2025)' : '📅 هياكل 2025 (2024-2025)') 
-                      : (isEn ? '📅 2026 Specifications (Coming Soon)' : '📅 هياكل 2026 (ستتوفر قريباً)')}
-                  </span>
-                  {onSwitchToCurriculum && (
-                    <button
-                      onClick={onSwitchToCurriculum}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1 rounded-full transition flex items-center gap-1 cursor-pointer"
+                  <div className="relative z-10 space-y-4">
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                      <span className="inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-300 px-3.5 py-1 rounded-full text-xs font-bold border border-amber-500/30">
+                        <GraduationCap className="w-4 h-4 text-amber-400" />
+                        Mr. Mohammed Hesham
+                      </span>
+                      <span className="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+                        {isEn ? '2025 Specifications (2024-2025)' : 'هياكل 2025 (العام الدراسي 2024-2025)'}
+                      </span>
+                      {onSwitchToCurriculum && (
+                        <button
+                          onClick={onSwitchToCurriculum}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1 rounded-full transition flex items-center gap-1 cursor-pointer"
+                        >
+                          <ArrowLeft className="w-3.5 h-3.5" />
+                          <span>{isEn ? 'Curriculum & Lessons' : 'قسم المناهج والدروس'}</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
+                      {isEn
+                        ? '2025 EOT Exam Specifications & Solved Questions Bank'
+                        : 'أرشيف وبنك أسئلة هياكل 2025 المحلولة بالكامل'}
+                    </h2>
+
+                    <p className="text-slate-300 text-xs sm:text-sm leading-relaxed max-w-2xl">
+                      {isEn
+                        ? 'Please select the subject, grade, stream, and term to access the 2025 solved questions bank directly, or switch to the new 2026 portal.'
+                        : 'يرجى تحديد المادة، والصف، والمسار التعليمي، والفصل الدراسي للانتقال مباشرة إلى صفحة الامتحان وبنك أسئلة هياكل 2025 المحلولة بالكامل.'}
+                    </p>
+
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs pt-3 border-t border-slate-800/80 text-slate-300 font-mono">
+                      <a
+                        href="mailto:mohammedhesham872@gmail.com"
+                        className="flex items-center gap-1.5 hover:text-indigo-300 transition"
+                      >
+                        <Mail className="w-4 h-4 text-indigo-400" />
+                        <span>mohammedhesham872@gmail.com</span>
+                      </a>
+                      <a
+                        href="tel:+971555642674"
+                        className="flex items-center gap-1.5 hover:text-emerald-300 transition"
+                      >
+                        <Phone className="w-4 h-4 text-emerald-400" />
+                        <span dir="ltr">+971555642674</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Selection Dropdowns Card */}
+                <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-lg space-y-6">
+                  <h3 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <Filter className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                    {isEn
+                      ? 'Select Year, Subject, Grade, and Stream'
+                      : 'قائمة اختيار السنة الدراسية والمادة والصف والمسار'}
+                  </h3>
+
+                  {/* 1. Academic Year Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div
+                      onClick={() => setSelectedAcademicYear('2025')}
+                      className="p-4 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between gap-3 text-right bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-500 shadow-md ring-2 ring-emerald-500/30"
                     >
-                      <ArrowLeft className="w-3.5 h-3.5" />
-                      <span>{isEn ? 'Curriculum & Lessons 📚' : 'قسم المناهج والدروس 📚'}</span>
-                    </button>
-                  )}
-                </div>
-
-                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
-                  {isEn ? 'EOT Exam Specifications & Solved Questions Bank' : 'منصة تحديد ورؤية الهياكل الامتحانية'}
-                </h2>
-
-                <p className="text-slate-300 text-xs sm:text-sm leading-relaxed max-w-2xl">
-                  {isEn ? 'Please select the subject, grade, stream, and term to access the solved questions bank directly.' : 'يرجى تحديد المادة، والصف، والمسار التعليمي، والفصل الدراسي للانتقال مباشرة إلى صفحة الامتحان وبنك الأسئلة المحلولة بالكامل.'}
-                </p>
-
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs pt-3 border-t border-slate-800/80 text-slate-300 font-mono">
-                  <a href="mailto:mohammedhesham872@gmail.com" className="flex items-center gap-1.5 hover:text-indigo-300 transition">
-                    <Mail className="w-4 h-4 text-indigo-400" />
-                    <span>mohammedhesham872@gmail.com</span>
-                  </a>
-                  <a href="tel:+971555642674" className="flex items-center gap-1.5 hover:text-emerald-300 transition">
-                    <Phone className="w-4 h-4 text-emerald-400" />
-                    <span dir="ltr">+971555642674</span>
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Selection Dropdowns Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-lg space-y-6">
-              <h3 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-                <Filter className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                {isEn ? 'Select Year, Subject, Grade, and Stream' : 'قائمة اختيار السنة الدراسية والمادة والصف والمسار'}
-              </h3>
-
-              {/* 1. Academic Year Selection for EOT (تقسيم السنوات) */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-                    <span>📅</span>
-                    <span>{isEn ? 'Select Exam Specifications Year:' : 'تحديد السنة الدراسية للهيكل الامتحاني:'}</span>
-                  </label>
-                  <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
-                    {selectedAcademicYear === '2025' ? (isEn ? '2025 Specs Selected (Available)' : 'هياكل 2025 (متاحة حالياً بالكامل)') : (isEn ? '2026 Specs Selected (Coming Soon)' : 'هياكل 2026 (ستتوفر قريباً إن شاء الله)')}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  {/* 2025 Specs Option */}
-                  <div
-                    onClick={() => setSelectedAcademicYear('2025')}
-                    className={`p-4 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between gap-3 text-right ${
-                      selectedAcademicYear === '2025'
-                        ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-500 shadow-md ring-2 ring-emerald-500/30'
-                        : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/80 hover:border-emerald-400'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl p-2 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
-                          📜
-                        </span>
+                      <div className="flex items-start justify-between gap-2">
                         <div>
                           <span className="block font-black text-sm text-slate-900 dark:text-white">
                             {isEn ? '2025 Exam Specifications' : 'هياكل 2025'}
@@ -307,472 +379,475 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({
                             {isEn ? 'Academic Year 2024 - 2025' : 'العام الدراسي 2024 - 2025'}
                           </span>
                         </div>
-                      </div>
-                      <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-700 shrink-0">
-                        {isEn ? '✅ Available Now' : '✅ متاح حالياً بالكامل'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                      {isEn
-                        ? 'All official EOT specifications, MCQ questions, paper questions, and verified model answers.'
-                        : 'جميع مواصفات الهيكل الوزاري المعتمدة، أسئلة الاختيار من متعدد، والأسئلة المقالية والحلول النموذجية.'}
-                    </p>
-                  </div>
-
-                  {/* 2026 Specs Option */}
-                  <div
-                    onClick={() => setSelectedAcademicYear('2026')}
-                    className={`p-4 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between gap-3 text-right ${
-                      selectedAcademicYear === '2026'
-                        ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-500 shadow-md ring-2 ring-amber-500/30'
-                        : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/80 hover:border-amber-400'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl p-2 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-xl">
-                          ⏳
+                        <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-700 shrink-0">
+                          {isEn ? 'Selected' : 'محدد حالياً'}
                         </span>
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        {isEn
+                          ? 'All official 2025 EOT specifications, MCQ questions, paper questions, and verified model answers.'
+                          : 'جميع مواصفات الهيكل الوزاري لعام 2025، أسئلة الاختيار من متعدد، والأسئلة المقالية والحلول النموذجية.'}
+                      </p>
+                    </div>
+
+                    <div
+                      onClick={() => setSelectedAcademicYear('2026')}
+                      className="p-4 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between gap-3 text-right bg-amber-50/60 dark:bg-amber-950/25 border-amber-400/70 hover:border-amber-500 shadow-sm"
+                    >
+                      <div className="flex items-start justify-between gap-2">
                         <div>
                           <span className="block font-black text-sm text-slate-900 dark:text-white">
-                            {isEn ? '2026 Exam Specifications' : 'هياكل 2026'}
+                            {isEn ? '2026 Exam Specifications' : 'هياكل 2026 (البوابة الجديدة)'}
                           </span>
                           <span className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
                             {isEn ? 'Academic Year 2025 - 2026' : 'العام الدراسي 2025 - 2026'}
                           </span>
                         </div>
+                        <span className="bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-amber-300 dark:border-amber-700 shrink-0">
+                          {isEn ? 'Available Now' : 'متاح الآن — اضغط للفتح'}
+                        </span>
                       </div>
-                      <span className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-amber-300 dark:border-amber-700 shrink-0">
-                        {isEn ? '⏳ Coming Soon' : '⏳ ستتوفر قريباً إن شاء الله'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                      {isEn
-                        ? 'Exam specifications for the 2026 academic year will be available soon Insha\'Allah once officially released.'
-                        : 'هياكل ونماذج اختبارات 2026 ستتوفر قريباً إن شاء الله فور صدورها واعتمادها رسمياً من الوزارة.'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 2. Subjects Grid */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-600 dark:text-slate-300">{isEn ? 'Select Subject:' : 'اختر المادة الدراسية:'}</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {SUBJECT_OPTIONS.map((sub) => {
-                    const IconComp = sub.icon;
-                    const isSelected = selectedSubject === sub.id;
-                    return (
-                      <button
-                        key={sub.id}
-                        onClick={() => setSelectedSubject(sub.id as SubjectType)}
-                        className={`p-4 rounded-2xl border text-right transition-all cursor-pointer flex items-center gap-3 ${
-                          isSelected
-                            ? `bg-indigo-600 text-white border-indigo-600 shadow-md ring-2 ring-indigo-500/30`
-                            : `bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700/80 hover:border-indigo-400`
-                        }`}
-                      >
-                        <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
-                            isSelected ? 'bg-white/20 text-white' : 'bg-indigo-100 dark:bg-slate-700 text-indigo-600 dark:text-indigo-400'
-                          }`}
-                        >
-                          <IconComp className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <span className="block font-black text-sm">{isEn ? (sub as any).nameEn || sub.name : sub.name}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* 3. Dropdown selectors: Grade, Stream, Term */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                {/* Grade Select */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-300">{isEn ? 'Academic Grade' : 'الصف الدراسي'}</label>
-                  <select
-                    value={selectedGrade}
-                    onChange={(e) => setSelectedGrade(e.target.value as GradeType)}
-                    className="bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
-                  >
-                    <option value="12">{isEn ? 'Grade 12' : 'الصف 12 (Grade 12)'}</option>
-                    <option value="11">{isEn ? 'Grade 11' : 'الصف 11 (Grade 11)'}</option>
-                    <option value="10">{isEn ? 'Grade 10' : 'الصف 10 (Grade 10)'}</option>
-                    <option value="9">{isEn ? 'Grade 9' : 'الصف 9 (Grade 9)'}</option>
-                    <option value="8">{isEn ? 'Grade 8' : 'الصف 8 (Grade 8)'}</option>
-                    <option value="7">{isEn ? 'Grade 7' : 'الصف 7 (Grade 7)'}</option>
-                    <option value="5">{isEn ? 'Grade 5' : 'الصف 5 (Grade 5)'}</option>
-                  </select>
-                </div>
-
-                {/* Stream Select */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-300">{isEn ? 'Academic Stream' : 'المسار التعليمي'}</label>
-                  <select
-                    value={selectedStream}
-                    onChange={(e) => setSelectedStream(e.target.value as StreamType)}
-                    className="bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
-                  >
-                    <option value="advanced">{isEn ? 'Advanced Stream' : 'المسار المتقدم (Advanced)'}</option>
-                    <option value="advanced_bridge">{isEn ? 'Advanced Bridge' : 'متقدم بريدج (Advanced Bridge)'}</option>
-                    <option value="advanced_inspire">{isEn ? 'Advanced Inspire' : 'متقدم انسباير (Advanced Inspire)'}</option>
-                    <option value="general">{isEn ? 'General Stream' : 'المسار العام (General)'}</option>
-                  </select>
-                </div>
-
-                {/* Term Select */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-300">{isEn ? 'Term' : 'الفصل الدراسي'}</label>
-                  <select
-                    value={selectedTerm}
-                    onChange={(e) => setSelectedTerm(e.target.value as TermType)}
-                    className="bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
-                  >
-                    <option value="EOT1">{isEn ? 'Term 1 (EOT1)' : 'الفصل الأول (EOT1)'}</option>
-                    <option value="EOT2">{isEn ? 'Term 2 (EOT2)' : 'الفصل الثاني (EOT2)'}</option>
-                    <option value="EOT3">{isEn ? 'Term 3 (EOT3)' : 'الفصل الثالث (EOT3)'}</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Action Button to Enter Exam / Notice for 2026 */}
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col items-center gap-3">
-                {selectedAcademicYear === '2026' ? (
-                  <div className="text-center space-y-4 py-8 px-6 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border-2 border-dashed border-amber-400/40 rounded-3xl w-full">
-                    <div className="w-16 h-16 mx-auto rounded-3xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-3xl font-black shadow-inner">
-                      ⏳
-                    </div>
-                    <div className="space-y-1.5">
-                      <h4 className="text-xl font-black text-slate-900 dark:text-slate-100">
-                        {isEn ? '2026 Exam Specifications Coming Soon Insha\'Allah' : 'هياكل 2026 ستتوفر قريباً إن شاء الله'}
-                      </h4>
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-lg mx-auto leading-relaxed">
+                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                         {isEn
-                          ? 'The 2026 exam specifications are currently being audited and will be uploaded here as soon as officially issued. You can explore the fully solved 2025 specifications in the meantime.'
-                          : 'يجري العمل على إعداد وتدقيق هياكل ونماذج اختبارات 2026 للعام الدراسي الجديد، وستتوفر هنا بالكامل فور اعتمادها وصدورها رسمياً إن شاء الله. يمكنك الاطلاع على هياكل 2025 المتاحة حالياً.'}
+                          ? 'Open the new interactive 2026 EOT portal divided into dedicated pages for every exam question.'
+                          : 'انتقل إلى بوابة هياكل 2026 التفاعلية الجديدة المقسمة إلى صفحات مستقلة لكل سؤال وزاري.'}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedAcademicYear('2025')}
-                      className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm rounded-2xl shadow-lg shadow-emerald-600/25 transition cursor-pointer inline-flex items-center gap-2 active:scale-95"
-                    >
-                      <span>{isEn ? 'Switch to Available 2025 Specs' : 'الانتقال إلى هياكل 2025 المتاحة الآن'}</span>
-                      <span>✓</span>
-                    </button>
                   </div>
-                ) : hasExamQuestions ? (
-                  <button
-                    onClick={handleEnterExam}
-                    disabled={isLoading}
-                    className="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-3 cursor-pointer"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>{isEn ? 'Loading...' : 'جاري التحميل...'}</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>{isEn ? 'View 2025 Exam Specifications & Solved Questions 🚀' : 'الانتقال لصفحة امتحان وهيكل 2025 🚀'}</span>
-                        <ArrowLeft className="w-5 h-5" />
-                      </>
-                    )}
-                  </button>
-                ) : (
-                  <div className="text-center space-y-3 py-2">
-                    <span className="text-xs font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-200 px-4 py-1.5 rounded-full border border-amber-200 dark:border-amber-800 inline-block">
-                      {isEn ? 'Exam specs coming soon' : 'قريبا إن شاء الله سيتوفر الإمتحان'}
-                    </span>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      هيكل هذا الصف والمادة قيد الرفع والتدقيق النهائي. يمكنك اختيار إحدى المواد المتاحة حالياً للبدء فوراً:
-                    </p>
-                    <div className="flex flex-wrap justify-center gap-2">
-                      <button
-                        onClick={() => {
-                          setSelectedSubject('math');
-                          setSelectedGrade('12');
-                          setSelectedStream('advanced');
-                          setSelectedTerm('EOT1');
-                        }}
-                        className="px-4 py-2 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-xs font-bold rounded-xl hover:bg-indigo-100 transition cursor-pointer"
-                      >
-                        هيكل الرياضيات 12 متقدم
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedSubject('math');
-                          setSelectedGrade('9');
-                          setSelectedStream('advanced');
-                          setSelectedTerm('EOT1');
-                        }}
-                        className="px-4 py-2 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-xs font-bold rounded-xl hover:bg-indigo-100 transition cursor-pointer"
-                      >
-                        رياضيات 9 متقدم (بريدج وانسباير) 📐
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedSubject('math');
-                          setSelectedGrade('10');
-                          setSelectedStream('general');
-                          setSelectedTerm('EOT1');
-                        }}
-                        className="px-4 py-2 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-xs font-bold rounded-xl hover:bg-amber-100 transition cursor-pointer"
-                      >
-                        رياضيات 10 عام 📐
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedSubject('math');
-                          setSelectedGrade('10');
-                          setSelectedStream('advanced');
-                          setSelectedTerm('EOT1');
-                        }}
-                        className="px-4 py-2 bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 text-xs font-bold rounded-xl hover:bg-purple-100 transition cursor-pointer"
-                      >
-                        رياضيات 10 متقدم (بريدج وانسباير)
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedSubject('math');
-                          setSelectedGrade('12');
-                          setSelectedStream('general');
-                          setSelectedTerm('EOT1');
-                        }}
-                        className="px-4 py-2 bg-fuchsia-50 dark:bg-fuchsia-950 text-fuchsia-700 dark:text-fuchsia-300 text-xs font-bold rounded-xl hover:bg-fuchsia-100 transition cursor-pointer"
-                      >
-                        رياضيات 12 عام 📐
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedSubject('math');
-                          setSelectedGrade('11');
-                          setSelectedStream('general');
-                          setSelectedTerm('EOT1');
-                        }}
-                        className="px-4 py-2 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-xl hover:bg-emerald-100 transition cursor-pointer"
-                      >
-                        رياضيات 11 عام 📐
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedSubject('math');
-                          setSelectedGrade('11');
-                          setSelectedStream('advanced');
-                          setSelectedTerm('EOT1');
-                        }}
-                        className="px-4 py-2 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-xs font-bold rounded-xl hover:bg-blue-100 transition cursor-pointer"
-                      >
-                        هيكل الرياضيات 11 متقدم
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedSubject('physics');
-                          setSelectedGrade('9');
-                          setSelectedStream('advanced');
-                          setSelectedTerm('EOT1');
-                        }}
-                        className="px-4 py-2 bg-cyan-50 dark:bg-cyan-950 text-cyan-800 dark:text-cyan-300 text-xs font-bold rounded-xl hover:bg-cyan-100 transition cursor-pointer"
-                      >
-                        فيزياء 9 متقدم (بريدج وانسباير) ⚛️
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedSubject('physics');
-                          setSelectedGrade('10');
-                          setSelectedStream('advanced');
-                          setSelectedTerm('EOT1');
-                        }}
-                        className="px-4 py-2 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-xs font-bold rounded-xl hover:bg-emerald-100 transition cursor-pointer"
-                      >
-                        فيزياء 10 متقدم (بريدج وانسباير)
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedSubject('physics');
-                          setSelectedGrade('11');
-                          setSelectedStream('advanced_bridge');
-                          setSelectedTerm('EOT1');
-                        }}
-                        className="px-4 py-2 bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300 text-xs font-bold rounded-xl hover:bg-teal-100 transition cursor-pointer"
-                      >
-                        فيزياء 11 متقدم بريدج
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedSubject('physics');
-                          setSelectedGrade('12');
-                          setSelectedStream('advanced_inspire');
-                          setSelectedTerm('EOT1');
-                        }}
-                        className="px-4 py-2 bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 text-xs font-bold rounded-xl hover:bg-purple-100 transition cursor-pointer"
-                      >
-                        فيزياء 12 انسباير (11 انسباير)
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedSubject('physics');
-                          setSelectedGrade('12');
-                          setSelectedStream('general');
-                          setSelectedTerm('EOT1');
-                        }}
-                        className="px-4 py-2 bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-xs font-bold rounded-xl hover:bg-rose-100 transition cursor-pointer"
-                      >
-                        فيزياء 12 عام ⚡
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedSubject('physics');
-                          setSelectedGrade('12');
-                          setSelectedStream('advanced_bridge');
-                          setSelectedTerm('EOT1');
-                        }}
-                        className="px-4 py-2 bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 text-xs font-bold rounded-xl hover:bg-amber-100 transition cursor-pointer"
-                      >
-                        فيزياء 12 متقدم بريدج
-                      </button>
+
+                  {/* 2. Subjects Grid */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                      {isEn ? 'Select Subject:' : 'اختر المادة الدراسية:'}
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {SUBJECT_OPTIONS.map((sub) => {
+                        const IconComp = sub.icon;
+                        const isSelected = selectedSubject === sub.id;
+                        return (
+                          <button
+                            key={sub.id}
+                            onClick={() => {
+                              const nextSub = sub.id as SubjectType;
+                              setSelectedSubject(nextSub);
+                              sync2025ToExternal({ subject: nextSub });
+                            }}
+                            className={`p-4 rounded-2xl border text-right transition-all cursor-pointer flex items-center gap-3 ${
+                              isSelected
+                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md ring-2 ring-indigo-500/30'
+                                : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700/80 hover:border-indigo-400'
+                            }`}
+                          >
+                            <div
+                              className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
+                                isSelected
+                                  ? 'bg-white/20 text-white'
+                                  : 'bg-indigo-100 dark:bg-slate-700 text-indigo-600 dark:text-indigo-400'
+                              }`}
+                            >
+                              <IconComp className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <span className="block font-black text-sm">
+                                {isEn ? sub.nameEn : sub.name}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* ================= STEP 2: EXAM PAGE ================= */}
-        {viewMode === 'exam' && (
-          <div className="space-y-6 animate-fadeIn">
-            {/* Exam View Top Control Banner */}
-            <div className="bg-slate-900 text-white rounded-3xl p-4 sm:p-5 shadow-lg flex flex-wrap items-center justify-between gap-4 border border-slate-800">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={handleBackToSelection}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-md"
-                >
-                  <ArrowRight className="w-4 h-4" />
-                  <span>تغيير المادة والصف (العودة للاختيار)</span>
-                </button>
+                  {/* 3. Dropdown selectors: Grade, Stream, Term */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                        {isEn ? 'Academic Grade' : 'الصف الدراسي'}
+                      </label>
+                      <select
+                        value={selectedGrade}
+                        onChange={(e) => {
+                          const nextGrade = e.target.value as GradeType;
+                          setSelectedGrade(nextGrade);
+                          sync2025ToExternal({ grade: nextGrade });
+                        }}
+                        className="bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
+                      >
+                        <option value="12">{isEn ? 'Grade 12' : 'الصف 12 (Grade 12)'}</option>
+                        <option value="11">{isEn ? 'Grade 11' : 'الصف 11 (Grade 11)'}</option>
+                        <option value="10">{isEn ? 'Grade 10' : 'الصف 10 (Grade 10)'}</option>
+                        <option value="9">{isEn ? 'Grade 9' : 'الصف 9 (Grade 9)'}</option>
+                        <option value="8">{isEn ? 'Grade 8' : 'الصف 8 (Grade 8)'}</option>
+                        <option value="7">{isEn ? 'Grade 7' : 'الصف 7 (Grade 7)'}</option>
+                        <option value="5">{isEn ? 'Grade 5' : 'الصف 5 (Grade 5)'}</option>
+                      </select>
+                    </div>
 
-                <div className="hidden md:flex items-center gap-2 text-xs">
-                  <span className="bg-slate-800 text-amber-300 font-bold px-3 py-1 rounded-lg">
-                    {SUBJECT_OPTIONS.find((s) => s.id === selectedSubject)?.name}
-                  </span>
-                  <span className="bg-slate-800 text-emerald-300 font-bold px-3 py-1 rounded-lg">
-                    الصف {selectedGrade} ({
-                      selectedStream === 'advanced' ? 'متقدم' :
-                      selectedStream === 'advanced_bridge' ? 'متقدم بريدج' :
-                      selectedStream === 'advanced_inspire' ? 'متقدم انسباير' : 'عام'
-                    })
-                  </span>
-                  <span className="bg-slate-800 text-indigo-300 font-bold px-3 py-1 rounded-lg">
-                    {selectedTerm}
-                  </span>
-                  <span className="bg-emerald-950 text-emerald-300 border border-emerald-800 font-bold px-3 py-1 rounded-lg">
-                    📅 {selectedAcademicYear === '2025' ? 'هيكل 2025' : 'هيكل 2026'}
-                  </span>
-                </div>
-              </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                        {isEn ? 'Academic Stream' : 'المسار التعليمي'}
+                      </label>
+                      <select
+                        value={selectedStream}
+                        onChange={(e) => {
+                          const nextStream = e.target.value as StreamType;
+                          setSelectedStream(nextStream);
+                          sync2025ToExternal({ stream: nextStream });
+                        }}
+                        className="bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
+                      >
+                        <option value="advanced">
+                          {isEn ? 'Advanced Stream' : 'المسار المتقدم (Advanced)'}
+                        </option>
+                        <option value="advanced_bridge">
+                          {isEn ? 'Advanced Bridge' : 'متقدم بريدج (Advanced Bridge)'}
+                        </option>
+                        <option value="advanced_inspire">
+                          {isEn ? 'Advanced Inspire' : 'متقدم انسباير (Advanced Inspire)'}
+                        </option>
+                        <option value="general">
+                          {isEn ? 'General Stream' : 'المسار العام (General)'}
+                        </option>
+                      </select>
+                    </div>
 
-              <div className="flex items-center gap-3 text-xs font-bold">
-                <span className="text-slate-300">إعداد: Mr. Mohammed Hesham</span>
-              </div>
-            </div>
-
-            {/* Exam Navigation Tabs */}
-            <Navbar
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              totalQuestions={activeDataset.length}
-              mcqCount={mcqCount}
-              paperCount={paperCount}
-              selectedSubject={selectedSubject}
-              setSelectedSubject={setSelectedSubject}
-              selectedStream={selectedStream}
-              setSelectedStream={setSelectedStream}
-              selectedGrade={selectedGrade}
-              setSelectedGrade={setSelectedGrade}
-              selectedTerm={selectedTerm}
-              setSelectedTerm={setSelectedTerm}
-              selectedAcademicYear={selectedAcademicYear}
-              setSelectedAcademicYear={setSelectedAcademicYear}
-            />
-
-            {/* Exam Views based on activeTab / 2026 Coming Soon guard */}
-            {selectedAcademicYear === '2026' ? (
-              <div className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-amber-400/40 p-12 text-center space-y-4 shadow-sm">
-                <div className="w-16 h-16 mx-auto rounded-3xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-3xl font-black">
-                  ⏳
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">
-                    {isEn ? '2026 Exam Specifications Coming Soon Insha\'Allah' : 'هياكل 2026 ستتوفر قريباً إن شاء الله'}
-                  </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 max-w-lg mx-auto leading-relaxed">
-                    {isEn
-                      ? 'The exam specifications for the 2026 academic year are currently being audited and will be uploaded here as soon as approved. You can explore the fully solved 2025 specifications in the meantime.'
-                      : 'يجري العمل على إعداد وتدقيق هياكل ونماذج اختبارات 2026 للعام الدراسي الجديد، وستتوفر هنا بالكامل فور اعتمادها وصدورها رسمياً إن شاء الله. يمكنك مراجعة هياكل 2025 المحلولة بالكامل حالياً.'}
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                  <button
-                    onClick={() => setSelectedAcademicYear('2025')}
-                    className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm rounded-2xl shadow-lg shadow-emerald-600/25 transition cursor-pointer inline-flex items-center gap-2"
-                  >
-                    <span>{isEn ? 'Switch to Available 2025 Specs' : 'الانتقال إلى هياكل 2025 المتاحة الآن'}</span>
-                    <span>✓</span>
-                  </button>
-                  <button
-                    onClick={handleBackToSelection}
-                    className="px-5 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm rounded-2xl transition cursor-pointer"
-                  >
-                    {isEn ? 'Back to Selection' : 'العودة لاختيار الصف والمادة'}
-                  </button>
-                </div>
-              </div>
-            ) : activeTab === 'matrix' ? (
-              <ExamTable onSelectOutcome={handleSelectOutcome} />
-            ) : activeTab === 'quiz' ? (
-              <QuizMode
-                questions={activeDataset}
-                onAskAi={(q) => setAiModalQuestion(q)}
-              />
-            ) : (
-              <div>
-                {/* Questions List */}
-                {filteredQuestions.length === 0 ? (
-                  <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3">
-                    <CheckCircle2 className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto" />
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">لم يتم العثور على أسئلة مطابقة</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">جرب تغيير شروط التصفية أو كلمة البحث.</p>
-                    <button
-                      onClick={handleResetFilters}
-                      className="px-4 py-2 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-xs font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-all cursor-pointer"
-                    >
-                      إعادة ضبط البحث
-                    </button>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                        {isEn ? 'Term' : 'الفصل الدراسي'}
+                      </label>
+                      <select
+                        value={selectedTerm}
+                        onChange={(e) => {
+                          const nextTerm = e.target.value as TermType;
+                          setSelectedTerm(nextTerm);
+                          sync2025ToExternal({ term: nextTerm });
+                        }}
+                        className="bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
+                      >
+                        <option value="EOT1">{isEn ? 'Term 1 (EOT1)' : 'الفصل الأول (EOT1)'}</option>
+                        <option value="EOT2">{isEn ? 'Term 2 (EOT2)' : 'الفصل الثاني (EOT2)'}</option>
+                        <option value="EOT3">{isEn ? 'Term 3 (EOT3)' : 'الفصل الثالث (EOT3)'}</option>
+                      </select>
+                    </div>
                   </div>
+
+                  {/* Action Button to Enter 2025 Exam */}
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col items-center gap-3">
+                    {hasExamQuestions ? (
+                      <button
+                        onClick={handleEnterExam}
+                        disabled={isLoading}
+                        className="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-3 cursor-pointer"
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <span>{isEn ? 'Loading...' : 'جاري التحميل...'}</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>
+                              {isEn
+                                ? 'View 2025 Exam Specifications & Solved Questions'
+                                : 'الانتقال لصفحة امتحان وهيكل 2025'}
+                            </span>
+                            <ArrowLeft className="w-5 h-5" />
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <div className="text-center space-y-3 py-2">
+                        <span className="text-xs font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-200 px-4 py-1.5 rounded-full border border-amber-200 dark:border-amber-800 inline-block">
+                          {isEn ? 'Exam specs coming soon' : 'قريبا إن شاء الله سيتوفر الإمتحان'}
+                        </span>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          يمكنك اختيار إحدى مواد هياكل 2025 المتاحة حالياً للبدء فوراً:
+                        </p>
+                        <div className="flex flex-wrap justify-center gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedSubject('math');
+                              setSelectedGrade('12');
+                              setSelectedStream('advanced');
+                              setSelectedTerm('EOT1');
+                            }}
+                            className="px-4 py-2 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-xs font-bold rounded-xl hover:bg-indigo-100 transition cursor-pointer"
+                          >
+                            هيكل الرياضيات 12 متقدم
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedSubject('math');
+                              setSelectedGrade('9');
+                              setSelectedStream('advanced');
+                              setSelectedTerm('EOT1');
+                            }}
+                            className="px-4 py-2 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-xs font-bold rounded-xl hover:bg-indigo-100 transition cursor-pointer"
+                          >
+                            رياضيات 9 متقدم (بريدج وانسباير)
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedSubject('math');
+                              setSelectedGrade('10');
+                              setSelectedStream('general');
+                              setSelectedTerm('EOT1');
+                            }}
+                            className="px-4 py-2 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-xs font-bold rounded-xl hover:bg-amber-100 transition cursor-pointer"
+                          >
+                            رياضيات 10 عام
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedSubject('math');
+                              setSelectedGrade('10');
+                              setSelectedStream('advanced');
+                              setSelectedTerm('EOT1');
+                            }}
+                            className="px-4 py-2 bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 text-xs font-bold rounded-xl hover:bg-purple-100 transition cursor-pointer"
+                          >
+                            رياضيات 10 متقدم (بريدج وانسباير)
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedSubject('math');
+                              setSelectedGrade('12');
+                              setSelectedStream('general');
+                              setSelectedTerm('EOT1');
+                            }}
+                            className="px-4 py-2 bg-fuchsia-50 dark:bg-fuchsia-950 text-fuchsia-700 dark:text-fuchsia-300 text-xs font-bold rounded-xl hover:bg-fuchsia-100 transition cursor-pointer"
+                          >
+                            رياضيات 12 عام
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedSubject('math');
+                              setSelectedGrade('11');
+                              setSelectedStream('general');
+                              setSelectedTerm('EOT1');
+                            }}
+                            className="px-4 py-2 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-xl hover:bg-emerald-100 transition cursor-pointer"
+                          >
+                            رياضيات 11 عام
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedSubject('math');
+                              setSelectedGrade('11');
+                              setSelectedStream('advanced');
+                              setSelectedTerm('EOT1');
+                            }}
+                            className="px-4 py-2 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-xs font-bold rounded-xl hover:bg-blue-100 transition cursor-pointer"
+                          >
+                            هيكل الرياضيات 11 متقدم
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedSubject('physics');
+                              setSelectedGrade('9');
+                              setSelectedStream('advanced');
+                              setSelectedTerm('EOT1');
+                            }}
+                            className="px-4 py-2 bg-cyan-50 dark:bg-cyan-950 text-cyan-800 dark:text-cyan-300 text-xs font-bold rounded-xl hover:bg-cyan-100 transition cursor-pointer"
+                          >
+                            فيزياء 9 متقدم (بريدج وانسباير)
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedSubject('physics');
+                              setSelectedGrade('10');
+                              setSelectedStream('advanced');
+                              setSelectedTerm('EOT1');
+                            }}
+                            className="px-4 py-2 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-xs font-bold rounded-xl hover:bg-emerald-100 transition cursor-pointer"
+                          >
+                            فيزياء 10 متقدم (بريدج وانسباير)
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedSubject('physics');
+                              setSelectedGrade('11');
+                              setSelectedStream('advanced_bridge');
+                              setSelectedTerm('EOT1');
+                            }}
+                            className="px-4 py-2 bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300 text-xs font-bold rounded-xl hover:bg-teal-100 transition cursor-pointer"
+                          >
+                            فيزياء 11 متقدم بريدج
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedSubject('physics');
+                              setSelectedGrade('12');
+                              setSelectedStream('advanced_inspire');
+                              setSelectedTerm('EOT1');
+                            }}
+                            className="px-4 py-2 bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 text-xs font-bold rounded-xl hover:bg-purple-100 transition cursor-pointer"
+                          >
+                            فيزياء 12 انسباير (11 انسباير)
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedSubject('physics');
+                              setSelectedGrade('12');
+                              setSelectedStream('general');
+                              setSelectedTerm('EOT1');
+                            }}
+                            className="px-4 py-2 bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-xs font-bold rounded-xl hover:bg-rose-100 transition cursor-pointer"
+                          >
+                            فيزياء 12 عام
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedSubject('physics');
+                              setSelectedGrade('12');
+                              setSelectedStream('advanced_bridge');
+                              setSelectedTerm('EOT1');
+                            }}
+                            className="px-4 py-2 bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 text-xs font-bold rounded-xl hover:bg-amber-100 transition cursor-pointer"
+                          >
+                            فيزياء 12 متقدم بريدج
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {viewMode === 'exam' && (
+              <div className="space-y-6 animate-fadeIn">
+                <div className="bg-slate-900 text-white rounded-3xl p-4 sm:p-5 shadow-lg flex flex-wrap items-center justify-between gap-4 border border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleBackToSelection}
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-md"
+                    >
+                      <ArrowRight className="w-4 h-4" />
+                      <span>تغيير المادة والصف (العودة للاختيار)</span>
+                    </button>
+
+                    <div className="hidden md:flex items-center gap-2 text-xs">
+                      <span className="bg-slate-800 text-amber-300 font-bold px-3 py-1 rounded-lg">
+                        {SUBJECT_OPTIONS.find((s) => s.id === selectedSubject)?.name}
+                      </span>
+                      <span className="bg-slate-800 text-emerald-300 font-bold px-3 py-1 rounded-lg">
+                        الصف {selectedGrade} (
+                        {selectedStream === 'advanced'
+                          ? 'متقدم'
+                          : selectedStream === 'advanced_bridge'
+                          ? 'متقدم بريدج'
+                          : selectedStream === 'advanced_inspire'
+                          ? 'متقدم انسباير'
+                          : 'عام'}
+                        )
+                      </span>
+                      <span className="bg-slate-800 text-indigo-300 font-bold px-3 py-1 rounded-lg">
+                        {selectedTerm}
+                      </span>
+                      <span className="bg-emerald-950 text-emerald-300 border border-emerald-800 font-bold px-3 py-1 rounded-lg">
+                        هيكل 2025
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 text-xs font-bold">
+                    <span className="text-slate-300">إعداد: Mr. Mohammed Hesham</span>
+                  </div>
+                </div>
+
+                <Navbar
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  totalQuestions={activeDataset.length}
+                  mcqCount={mcqCount}
+                  paperCount={paperCount}
+                  selectedSubject={selectedSubject}
+                  setSelectedSubject={(s) => {
+                    const nextSub = s as SubjectType;
+                    setSelectedSubject(nextSub);
+                    sync2025ToExternal({ subject: nextSub });
+                  }}
+                  selectedStream={selectedStream}
+                  setSelectedStream={(st) => {
+                    setSelectedStream(st);
+                    sync2025ToExternal({ stream: st });
+                  }}
+                  selectedGrade={selectedGrade}
+                  setSelectedGrade={(gr) => {
+                    setSelectedGrade(gr);
+                    sync2025ToExternal({ grade: gr });
+                  }}
+                  selectedTerm={selectedTerm}
+                  setSelectedTerm={(tr) => {
+                    setSelectedTerm(tr);
+                    sync2025ToExternal({ term: tr });
+                  }}
+                  selectedAcademicYear={selectedAcademicYear}
+                  setSelectedAcademicYear={setSelectedAcademicYear}
+                />
+
+                {activeTab === 'matrix' ? (
+                  <ExamTable onSelectOutcome={handleSelectOutcome} />
+                ) : activeTab === 'quiz' ? (
+                  <QuizMode
+                    questions={activeDataset}
+                    onAskAi={(q) => setAiModalQuestion(q)}
+                  />
                 ) : (
                   <div className="space-y-6">
-                    {filteredQuestions.map((question) => (
-                      <QuestionCard
-                        key={question.id}
-                        question={question}
-                        onAskAi={(q) => setAiModalQuestion(q)}
-                      />
-                    ))}
+                    <FilterBar
+                      searchTerm={searchTerm}
+                      setSearchTerm={setSearchTerm}
+                      selectedUnit={selectedUnit}
+                      setSelectedUnit={setSelectedUnit}
+                      selectedType={selectedType}
+                      setSelectedType={setSelectedType}
+                      selectedYear={selectedYear}
+                      setSelectedYear={setSelectedYear}
+                      availableUnits={availableUnits}
+                      availableYears={availableYears}
+                      totalMatching={filteredQuestions.length}
+                      onReset={handleResetFilters}
+                    />
+
+                    {filteredQuestions.length === 0 ? (
+                      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3">
+                        <CheckCircle2 className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto" />
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                          لم يتم العثور على أسئلة مطابقة
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          جرب تغيير شروط التصفية أو كلمة البحث.
+                        </p>
+                        <button
+                          onClick={handleResetFilters}
+                          className="px-4 py-2 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-xs font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-all cursor-pointer"
+                        >
+                          إعادة ضبط البحث
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {filteredQuestions.map((question) => (
+                          <QuestionCard
+                            key={question.id}
+                            question={question}
+                            onAskAi={(q) => setAiModalQuestion(q)}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             )}
-          </div>
+          </>
         )}
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-8 border-t border-slate-800 text-center text-xs mt-auto">
+      <footer className="bg-slate-900 text-slate-400 py-8 border-t border-slate-800 text-center text-xs mt-auto rounded-b-3xl">
         <div className="max-w-7xl mx-auto px-4 space-y-3">
           <div className="flex flex-wrap items-center justify-center gap-2 text-slate-300 font-bold dir-ltr">
             <span className="text-amber-400">Mr. Mohammed Hesham</span>
@@ -784,7 +859,7 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({
         </div>
       </footer>
 
-      {/* AI Tutor Modal */}
+      {/* AI Tutor Modal (2025 Bank) */}
       {aiModalQuestion && (
         <AiTutorModal
           question={aiModalQuestion}

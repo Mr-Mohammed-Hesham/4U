@@ -369,8 +369,8 @@ export const SmartNavigatorBar: React.FC<SmartNavigatorBarProps> = ({
               >
                 {activePlatformSection === 'eot' ? (
                   <>
-                    <option value="2025">هياكل 2025 (متاحة بالكامل) ✅</option>
-                    <option value="2026">هياكل 2026 (ستتوفر قريباً إن شاء الله) ⏳</option>
+                    <option value="2026">هياكل 2026 (البوابة التفاعلية الجديدة) ✅</option>
+                    <option value="2025">هياكل 2025 (الأرشيف الكامل المحلول) ✅</option>
                   </>
                 ) : (
                   <>
