@@ -861,6 +861,7 @@ var DEFAULT_EOT2026_BASE_T1 = [
   }
 ];
 var eot2026CurriculaCache = null;
+var eot2026KnownReposLower = null;
 var eot2026QuestionCache = /* @__PURE__ */ new Map();
 var eot2026SharedSettingsFile = import_path.default.join(examsDataDir, "eot2026_shared_config.json");
 function readEot2026SharedSettings() {
@@ -968,61 +969,73 @@ async function resolveEot2026Curricula(forceRefresh = false) {
   }
   let expanded = expandEot2026Terms(baseCurricula);
   try {
-    const repoCtrl = new AbortController();
-    const repoTimeout = setTimeout(() => repoCtrl.abort(), 5e3);
-    const reposRes = await fetch(
-      "https://api.github.com/users/Mr-Mohammed-Hesham/repos?per_page=100&sort=updated",
-      {
-        signal: repoCtrl.signal,
-        headers: { "User-Agent": "4U-Platform", Accept: "application/vnd.github+json" }
+    const allRepos = [];
+    for (let page = 1; page <= 5; page++) {
+      const repoCtrl = new AbortController();
+      const repoTimeout = setTimeout(() => repoCtrl.abort(), 5e3);
+      const reposRes = await fetch(
+        `https://api.github.com/users/Mr-Mohammed-Hesham/repos?per_page=100&page=${page}&sort=updated`,
+        {
+          signal: repoCtrl.signal,
+          headers: { "User-Agent": "4U-Platform", Accept: "application/vnd.github+json" }
+        }
+      );
+      clearTimeout(repoTimeout);
+      if (!reposRes.ok) break;
+      const batch = await reposRes.json();
+      if (!Array.isArray(batch) || batch.length === 0) break;
+      allRepos.push(...batch);
+      if (batch.length < 100) break;
+    }
+    if (allRepos.length > 0) {
+      const lowerSet = /* @__PURE__ */ new Set();
+      for (const r of allRepos) {
+        if (r && r.name) lowerSet.add(String(r.name).toLowerCase());
       }
-    );
-    clearTimeout(repoTimeout);
-    if (reposRes.ok) {
-      const repos = await reposRes.json();
-      if (Array.isArray(repos)) {
-        const pattern = /^(\d+)(Adv-Bri|Adv-Ins|Jen|Gen)-(phy|math|chem|bio)-(T[123])-(2026)-EOT([-.])Q(\d+)$/i;
-        for (const repo of repos) {
-          const name = String(repo?.name || "");
-          const m = name.match(pattern);
-          if (!m) continue;
-          const [, gradeRaw, streamRaw, subRaw, termRaw, , sep, qStr] = m;
-          const qNum = Number(qStr) || 1;
-          const term = termRaw.toUpperCase();
-          const stream = streamRaw.toLowerCase() === "adv-bri" ? "adv_bridge" : streamRaw.toLowerCase() === "adv-ins" ? "adv_inspire" : "general";
-          const subject = subRaw.toLowerCase() === "phy" ? "physics" : subRaw.toLowerCase() === "math" ? "math" : subRaw.toLowerCase() === "chem" ? "chemistry" : "biology";
-          const existing = expanded.find(
-            (c) => c.year === "2026" && c.term === term && c.grade === gradeRaw && c.stream === stream && c.subject === subject
-          );
-          if (existing) {
-            if (qNum > existing.defaultTotalQuestions) {
-              existing.defaultTotalQuestions = qNum;
-            }
-          } else {
-            const subAr = subject === "physics" ? "\u0641\u064A\u0632\u064A\u0627\u0621" : subject === "math" ? "\u0631\u064A\u0627\u0636\u064A\u0627\u062A" : subject === "chemistry" ? "\u0643\u064A\u0645\u064A\u0627\u0621" : "\u0623\u062D\u064A\u0627\u0621";
-            const subEn = subject === "physics" ? "Physics" : subject === "math" ? "Mathematics" : subject === "chemistry" ? "Chemistry" : "Biology";
-            const streamAr = stream === "adv_bridge" ? "\u0645\u062A\u0642\u062F\u0645 \u2014 \u0628\u0631\u064A\u062F\u062C" : stream === "adv_inspire" ? "\u0645\u062A\u0642\u062F\u0645 \u2014 \u0627\u0646\u0633\u0628\u0627\u064A\u0631" : "\u0639\u0627\u0645";
-            const streamEn = stream === "adv_bridge" ? "Advanced \u2014 Bridge" : stream === "adv_inspire" ? "Advanced \u2014 Inspire" : "General";
-            const prefixBeforeQ = name.replace(/([-.])Q\d+$/i, "$1Q{q}");
-            expanded.push({
-              id: `${gradeRaw}-${stream.replace("_", "-")}-${subRaw.toLowerCase()}-${term.toLowerCase()}-2026`,
-              year: "2026",
-              term,
-              grade: gradeRaw,
-              stream,
-              subject,
-              titleAr: `${subAr} ${gradeRaw} ${streamAr}`,
-              titleEn: `Grade ${gradeRaw} ${streamEn} ${subEn}`,
-              subtitleAr: "\u0647\u064A\u0643\u0644 \u0627\u0645\u062A\u062D\u0627\u0646 \u0646\u0647\u0627\u064A\u0629 \u0627\u0644\u0641\u0635\u0644 \xB7 \u0645\u0642\u0633\u0645 \u0635\u0641\u062D\u0629 \u0644\u0643\u0644 \u0633\u0624\u0627\u0644 \u0648\u0632\u0627\u0631\u064A \u0645\u0639 \u0627\u0644\u062A\u062F\u0631\u064A\u0628 \u0627\u0644\u062A\u0641\u0627\u0639\u0644\u064A",
-              subtitleEn: "EOT Exam Structure \xB7 Dedicated interactive page per exam question",
-              primaryUrlTemplate: `https://mr-mohammed-hesham.github.io/${prefixBeforeQ}/`,
-              fallbackUrlTemplates: [
-                `https://mr-mohammed-hesham.github.io/${prefixBeforeQ.replace(sep + "Q{q}", (sep === "-" ? "." : "-") + "Q{q}")}/`
-              ],
-              defaultTotalQuestions: Math.max(25, qNum),
-              mcqQuestionsEnd: 20
-            });
+      eot2026KnownReposLower = lowerSet;
+      const pattern = /^(\d+)(Adv-Bri|Adv-Ins|Adv-Rev|Jen|Gen)-(phy|math|chem|bio)-(T[123])-(2026)-EOT([-._]?)Q(\d+)$/i;
+      for (const repo of allRepos) {
+        if (!repo || !repo.name) continue;
+        const name = String(repo.name || "");
+        const m = name.match(pattern);
+        if (!m) continue;
+        const [, gradeRaw, streamRaw, subRaw, termRaw, , sepRaw, qStr] = m;
+        const sep = sepRaw || "-";
+        const qNum = Number(qStr) || 1;
+        const term = termRaw.toUpperCase();
+        const stream = streamRaw.toLowerCase() === "adv-bri" ? "adv_bridge" : streamRaw.toLowerCase() === "adv-ins" || streamRaw.toLowerCase() === "adv-rev" ? "adv_inspire" : "general";
+        const subject = subRaw.toLowerCase() === "phy" ? "physics" : subRaw.toLowerCase() === "math" ? "math" : subRaw.toLowerCase() === "chem" ? "chemistry" : "biology";
+        const existing = expanded.find(
+          (c) => c.year === "2026" && c.term === term && c.grade === gradeRaw && c.stream === stream && c.subject === subject
+        );
+        if (existing) {
+          if (qNum > existing.defaultTotalQuestions) {
+            existing.defaultTotalQuestions = qNum;
           }
+        } else {
+          const subAr = subject === "physics" ? "\u0641\u064A\u0632\u064A\u0627\u0621" : subject === "math" ? "\u0631\u064A\u0627\u0636\u064A\u0627\u062A" : subject === "chemistry" ? "\u0643\u064A\u0645\u064A\u0627\u0621" : "\u0623\u062D\u064A\u0627\u0621";
+          const subEn = subject === "physics" ? "Physics" : subject === "math" ? "Mathematics" : subject === "chemistry" ? "Chemistry" : "Biology";
+          const streamAr = stream === "adv_bridge" ? "\u0645\u062A\u0642\u062F\u0645 \u2014 \u0628\u0631\u064A\u062F\u062C" : stream === "adv_inspire" ? "\u0645\u062A\u0642\u062F\u0645 \u2014 \u0627\u0646\u0633\u0628\u0627\u064A\u0631" : "\u0639\u0627\u0645";
+          const streamEn = stream === "adv_bridge" ? "Advanced \u2014 Bridge" : stream === "adv_inspire" ? "Advanced \u2014 Inspire" : "General";
+          const prefixBeforeQ = name.replace(/([-._]?)Q\d+$/i, "$1Q{q}");
+          expanded.push({
+            id: `${gradeRaw}-${stream.replace("_", "-")}-${subRaw.toLowerCase()}-${term.toLowerCase()}-2026`,
+            year: "2026",
+            term,
+            grade: gradeRaw,
+            stream,
+            subject,
+            titleAr: `${subAr} ${gradeRaw} ${streamAr}`,
+            titleEn: `Grade ${gradeRaw} ${streamEn} ${subEn}`,
+            subtitleAr: "\u0647\u064A\u0643\u0644 \u0627\u0645\u062A\u062D\u0627\u0646 \u0646\u0647\u0627\u064A\u0629 \u0627\u0644\u0641\u0635\u0644 \xB7 \u0645\u0642\u0633\u0645 \u0635\u0641\u062D\u0629 \u0644\u0643\u0644 \u0633\u0624\u0627\u0644 \u0648\u0632\u0627\u0631\u064A \u0645\u0639 \u0627\u0644\u062A\u062F\u0631\u064A\u0628 \u0627\u0644\u062A\u0641\u0627\u0639\u0644\u064A",
+            subtitleEn: "EOT Exam Structure \xB7 Dedicated interactive page per exam question",
+            primaryUrlTemplate: `https://mr-mohammed-hesham.github.io/${prefixBeforeQ}/`,
+            fallbackUrlTemplates: [
+              `https://mr-mohammed-hesham.github.io/${prefixBeforeQ.replace(sep + "Q{q}", (sep === "-" ? "." : "-") + "Q{q}")}/`
+            ],
+            defaultTotalQuestions: Math.max(25, qNum),
+            mcqQuestionsEnd: 20
+          });
         }
       }
     }
@@ -1037,7 +1050,7 @@ async function resolveEot2026Curricula(forceRefresh = false) {
   return expanded;
 }
 function cleanEotTitle(rawTitle) {
-  return rawTitle.replace(/\s*\|\s*Mr\.?\s*Mohammed\s*Hesham.*$/i, "").replace(/^[⚡⚛️📐📚🎯🏆🔥✨\s]+/u, "").trim();
+  return rawTitle.replace(/\s*\|\s*Mr\.?\s*Mohammed\s*Hesham.*$/i, "").replace(/^[\p{Extended_Pictographic}\uFE0F\u200D⚡⚛️📐📚🎯🏆🔥✨📊\s]+/u, "").trim();
 }
 function prepareSafeSrcDocHtml(rawHtml) {
   let html = rawHtml.replace(/<link[^>]+rel=["']canonical["'][^>]*>/gi, "").replace(/<meta[^>]+property=["']og:url["'][^>]*>/gi, "");
@@ -1066,16 +1079,35 @@ async function probeAndFetchEotQuestion(curriculum, q, forceRefresh = false) {
   const key = `${curriculum.id}__Q${q}`;
   const now = Date.now();
   const cached = eot2026QuestionCache.get(key);
-  if (!forceRefresh && cached && now - cached.checkedAt < 12e4) {
+  if (!forceRefresh && cached && now - cached.checkedAt < 6e4) {
     return cached;
   }
   const qStr = String(q);
-  const candidates = Array.from(
-    /* @__PURE__ */ new Set([
-      curriculum.primaryUrlTemplate.replace("{q}", qStr),
-      ...(curriculum.fallbackUrlTemplates || []).map((t) => t.replace("{q}", qStr))
-    ])
-  );
+  const rawTemplates = [
+    curriculum.primaryUrlTemplate.replace("{q}", qStr),
+    ...(curriculum.fallbackUrlTemplates || []).map((t) => t.replace("{q}", qStr))
+  ];
+  const expandedCandidates = [];
+  let anySlugExistsInRepoIndex = !eot2026KnownReposLower || eot2026KnownReposLower.size === 0;
+  for (const tplUrl of rawTemplates) {
+    const slugMatch = tplUrl.match(/github\.io\/([^/?#]+)/i);
+    if (slugMatch && slugMatch[1]) {
+      const slug = slugMatch[1];
+      if (eot2026KnownReposLower && eot2026KnownReposLower.has(slug.toLowerCase())) {
+        anySlugExistsInRepoIndex = true;
+      }
+      expandedCandidates.push(
+        `https://raw.githubusercontent.com/Mr-Mohammed-Hesham/${slug}/main/index.html`
+      );
+    }
+    expandedCandidates.push(tplUrl);
+  }
+  if (!anySlugExistsInRepoIndex && !forceRefresh) {
+    const pending2 = { status: "pending", checkedAt: now };
+    eot2026QuestionCache.set(key, pending2);
+    return pending2;
+  }
+  const candidates = Array.from(new Set(expandedCandidates));
   for (const candidateUrl of candidates) {
     try {
       const targetUrl = forceRefresh ? `${candidateUrl}${candidateUrl.includes("?") ? "&" : "?"}v=${now}` : candidateUrl;
