@@ -171,9 +171,14 @@ const teacherLoader = new URL('./assets/images/teacher_loader_1783347042138.jpg'
 const PRIMARY_CLOUD_RUN_BACKEND = "https://ais-pre-zkin4elv7zwqu2e6fa3gzm-684462415759.europe-west2.run.app";
 const BACKUP_CLOUD_RUN_BACKEND = "https://ais-dev-zkin4elv7zwqu2e6fa3gzm-684462415759.europe-west2.run.app";
 
+const isSameOriginBackendHost = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.run.app') || hostname.includes('3000');
+};
+
 const getApiUrl = (path: string): string => {
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  if (hostname === 'localhost' || hostname.endsWith('run.app') || hostname.includes('3000') || !hostname) {
+  if (isSameOriginBackendHost()) {
     return path;
   }
   return `${PRIMARY_CLOUD_RUN_BACKEND}${path}`;
@@ -999,8 +1004,8 @@ export default function App() {
         }
       }
 
-      // Channel 2: Try the local backend server (Cloud Run) - highly robust because it has GEMINI_API_KEY on the server!
-      if (!replyReceived) {
+      // Channel 2: Try the local backend server when running on a backend host
+      if (!replyReceived && !isGitHubPages && isSameOriginBackendHost()) {
         try {
           const response = await fetch(getApiUrl('/api/chat'), {
             method: 'POST',
@@ -1093,11 +1098,9 @@ export default function App() {
     // Step 1: Try the Cloud Run backend servers with fast timeout (Gemini Visual OCR on PDFs)
     if (lesson.lessonUrl) {
       const targetQuery = `?url=${encodeURIComponent(lesson.lessonUrl)}&title=${encodeURIComponent(title)}&subject=${encodeURIComponent(subject)}&grade=${encodeURIComponent(grade)}`;
-      const serverCandidates = [
-        getApiUrl(`/api/fetch-lesson-text${targetQuery}`),
-        `${PRIMARY_CLOUD_RUN_BACKEND}/api/fetch-lesson-text${targetQuery}`,
-        `${BACKUP_CLOUD_RUN_BACKEND}/api/fetch-lesson-text${targetQuery}`
-      ];
+      const serverCandidates = isSameOriginBackendHost()
+        ? [getApiUrl(`/api/fetch-lesson-text${targetQuery}`)]
+        : [];
 
       const uniqueCandidates = Array.from(new Set(serverCandidates));
 
@@ -1754,7 +1757,9 @@ export default function App() {
 
     // Build complete resilient stream list: Direct URLs first, followed by Server Proxy URLs to bypass any firewall/CORS/ORB restrictions
     const directUrls = reciter.urls;
-    const proxiedUrls = directUrls.map((u) => getApiUrl(`/api/quran-stream?url=${encodeURIComponent(u)}`));
+    const proxiedUrls = isSameOriginBackendHost()
+      ? directUrls.map((u) => getApiUrl(`/api/quran-stream?url=${encodeURIComponent(u)}`))
+      : [];
     const allUrls = [...directUrls, ...proxiedUrls];
 
     if (radioStallTimeoutRef.current) {

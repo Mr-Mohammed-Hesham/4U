@@ -1027,6 +1027,7 @@ const DEFAULT_EOT2026_BASE_T1: InternalEotCurriculum[] = [
 ];
 
 let eot2026CurriculaCache: { all: InternalEotCurriculum[]; timestamp: number } | null = null;
+let eot2026KnownReposLower: Set<string> | null = null;
 const eot2026QuestionCache = new Map<
   string,
   { status: "live" | "pending"; liveTitle?: string; html?: string; checkedAt: number }
@@ -1147,78 +1148,91 @@ async function resolveEot2026Curricula(forceRefresh = false): Promise<InternalEo
 
   let expanded = expandEot2026Terms(baseCurricula);
 
-  // Auto-discover any newly created 2026 EOT repositories on GitHub even before eotCurricula.ts is edited
+  // Auto-discover any newly created 2026 EOT repositories across all GitHub repo pages (size > 0)
   try {
-    const repoCtrl = new AbortController();
-    const repoTimeout = setTimeout(() => repoCtrl.abort(), 5000);
-    const reposRes = await fetch(
-      "https://api.github.com/users/Mr-Mohammed-Hesham/repos?per_page=100&sort=updated",
-      {
-        signal: repoCtrl.signal,
-        headers: { "User-Agent": "4U-Platform", Accept: "application/vnd.github+json" },
+    const allRepos: any[] = [];
+    for (let page = 1; page <= 5; page++) {
+      const repoCtrl = new AbortController();
+      const repoTimeout = setTimeout(() => repoCtrl.abort(), 5000);
+      const reposRes = await fetch(
+        `https://api.github.com/users/Mr-Mohammed-Hesham/repos?per_page=100&page=${page}&sort=updated`,
+        {
+          signal: repoCtrl.signal,
+          headers: { "User-Agent": "4U-Platform", Accept: "application/vnd.github+json" },
+        }
+      );
+      clearTimeout(repoTimeout);
+      if (!reposRes.ok) break;
+      const batch = await reposRes.json();
+      if (!Array.isArray(batch) || batch.length === 0) break;
+      allRepos.push(...batch);
+      if (batch.length < 100) break;
+    }
+
+    if (allRepos.length > 0) {
+      const lowerSet = new Set<string>();
+      for (const r of allRepos) {
+        if (r && r.name) lowerSet.add(String(r.name).toLowerCase());
       }
-    );
-    clearTimeout(repoTimeout);
+      eot2026KnownReposLower = lowerSet;
 
-    if (reposRes.ok) {
-      const repos = await reposRes.json();
-      if (Array.isArray(repos)) {
-        const pattern = /^(\d+)(Adv-Bri|Adv-Ins|Jen|Gen)-(phy|math|chem|bio)-(T[123])-(2026)-EOT([-.])Q(\d+)$/i;
-        for (const repo of repos) {
-          const name = String(repo?.name || "");
-          const m = name.match(pattern);
-          if (!m) continue;
-          const [, gradeRaw, streamRaw, subRaw, termRaw, , sep, qStr] = m;
-          const qNum = Number(qStr) || 1;
-          const term = termRaw.toUpperCase();
-          const stream =
-            streamRaw.toLowerCase() === "adv-bri"
-              ? "adv_bridge"
-              : streamRaw.toLowerCase() === "adv-ins"
-              ? "adv_inspire"
-              : "general";
-          const subject =
-            subRaw.toLowerCase() === "phy"
-              ? "physics"
-              : subRaw.toLowerCase() === "math"
-              ? "math"
-              : subRaw.toLowerCase() === "chem"
-              ? "chemistry"
-              : "biology";
+      const pattern = /^(\d+)(Adv-Bri|Adv-Ins|Adv-Rev|Jen|Gen)-(phy|math|chem|bio)-(T[123])-(2026)-EOT([-._]?)Q(\d+)$/i;
+      for (const repo of allRepos) {
+        if (!repo || !repo.name) continue;
+        const name = String(repo.name || "");
+        const m = name.match(pattern);
+        if (!m) continue;
+        const [, gradeRaw, streamRaw, subRaw, termRaw, , sepRaw, qStr] = m;
+        const sep = sepRaw || "-";
+        const qNum = Number(qStr) || 1;
+        const term = termRaw.toUpperCase();
+        const stream =
+          streamRaw.toLowerCase() === "adv-bri"
+            ? "adv_bridge"
+            : streamRaw.toLowerCase() === "adv-ins" || streamRaw.toLowerCase() === "adv-rev"
+            ? "adv_inspire"
+            : "general";
+        const subject =
+          subRaw.toLowerCase() === "phy"
+            ? "physics"
+            : subRaw.toLowerCase() === "math"
+            ? "math"
+            : subRaw.toLowerCase() === "chem"
+            ? "chemistry"
+            : "biology";
 
-          const existing = expanded.find(
-            (c) => c.year === "2026" && c.term === term && c.grade === gradeRaw && c.stream === stream && c.subject === subject
-          );
+        const existing = expanded.find(
+          (c) => c.year === "2026" && c.term === term && c.grade === gradeRaw && c.stream === stream && c.subject === subject
+        );
 
-          if (existing) {
-            if (qNum > existing.defaultTotalQuestions) {
-              existing.defaultTotalQuestions = qNum;
-            }
-          } else {
-            const subAr = subject === "physics" ? "فيزياء" : subject === "math" ? "رياضيات" : subject === "chemistry" ? "كيمياء" : "أحياء";
-            const subEn = subject === "physics" ? "Physics" : subject === "math" ? "Mathematics" : subject === "chemistry" ? "Chemistry" : "Biology";
-            const streamAr = stream === "adv_bridge" ? "متقدم — بريدج" : stream === "adv_inspire" ? "متقدم — انسباير" : "عام";
-            const streamEn = stream === "adv_bridge" ? "Advanced — Bridge" : stream === "adv_inspire" ? "Advanced — Inspire" : "General";
-            const prefixBeforeQ = name.replace(/([-.])Q\d+$/i, "$1Q{q}");
-            expanded.push({
-              id: `${gradeRaw}-${stream.replace("_", "-")}-${subRaw.toLowerCase()}-${term.toLowerCase()}-2026`,
-              year: "2026",
-              term,
-              grade: gradeRaw,
-              stream,
-              subject,
-              titleAr: `${subAr} ${gradeRaw} ${streamAr}`,
-              titleEn: `Grade ${gradeRaw} ${streamEn} ${subEn}`,
-              subtitleAr: "هيكل امتحان نهاية الفصل · مقسم صفحة لكل سؤال وزاري مع التدريب التفاعلي",
-              subtitleEn: "EOT Exam Structure · Dedicated interactive page per exam question",
-              primaryUrlTemplate: `https://mr-mohammed-hesham.github.io/${prefixBeforeQ}/`,
-              fallbackUrlTemplates: [
-                `https://mr-mohammed-hesham.github.io/${prefixBeforeQ.replace(sep + "Q{q}", (sep === "-" ? "." : "-") + "Q{q}")}/`,
-              ],
-              defaultTotalQuestions: Math.max(25, qNum),
-              mcqQuestionsEnd: 20,
-            });
+        if (existing) {
+          if (qNum > existing.defaultTotalQuestions) {
+            existing.defaultTotalQuestions = qNum;
           }
+        } else {
+          const subAr = subject === "physics" ? "فيزياء" : subject === "math" ? "رياضيات" : subject === "chemistry" ? "كيمياء" : "أحياء";
+          const subEn = subject === "physics" ? "Physics" : subject === "math" ? "Mathematics" : subject === "chemistry" ? "Chemistry" : "Biology";
+          const streamAr = stream === "adv_bridge" ? "متقدم — بريدج" : stream === "adv_inspire" ? "متقدم — انسباير" : "عام";
+          const streamEn = stream === "adv_bridge" ? "Advanced — Bridge" : stream === "adv_inspire" ? "Advanced — Inspire" : "General";
+          const prefixBeforeQ = name.replace(/([-._]?)Q\d+$/i, "$1Q{q}");
+          expanded.push({
+            id: `${gradeRaw}-${stream.replace("_", "-")}-${subRaw.toLowerCase()}-${term.toLowerCase()}-2026`,
+            year: "2026",
+            term,
+            grade: gradeRaw,
+            stream,
+            subject,
+            titleAr: `${subAr} ${gradeRaw} ${streamAr}`,
+            titleEn: `Grade ${gradeRaw} ${streamEn} ${subEn}`,
+            subtitleAr: "هيكل امتحان نهاية الفصل · مقسم صفحة لكل سؤال وزاري مع التدريب التفاعلي",
+            subtitleEn: "EOT Exam Structure · Dedicated interactive page per exam question",
+            primaryUrlTemplate: `https://mr-mohammed-hesham.github.io/${prefixBeforeQ}/`,
+            fallbackUrlTemplates: [
+              `https://mr-mohammed-hesham.github.io/${prefixBeforeQ.replace(sep + "Q{q}", (sep === "-" ? "." : "-") + "Q{q}")}/`,
+            ],
+            defaultTotalQuestions: Math.max(25, qNum),
+            mcqQuestionsEnd: 20,
+          });
         }
       }
     }
@@ -1236,7 +1250,7 @@ async function resolveEot2026Curricula(forceRefresh = false): Promise<InternalEo
 function cleanEotTitle(rawTitle: string): string {
   return rawTitle
     .replace(/\s*\|\s*Mr\.?\s*Mohammed\s*Hesham.*$/i, "")
-    .replace(/^[⚡⚛️📐📚🎯🏆🔥✨\s]+/u, "")
+    .replace(/^[\p{Extended_Pictographic}\uFE0F\u200D⚡⚛️📐📚🎯🏆🔥✨📊\s]+/u, "")
     .trim();
 }
 
@@ -1276,17 +1290,41 @@ async function probeAndFetchEotQuestion(
   const key = `${curriculum.id}__Q${q}`;
   const now = Date.now();
   const cached = eot2026QuestionCache.get(key);
-  if (!forceRefresh && cached && now - cached.checkedAt < 120000) {
+  if (!forceRefresh && cached && now - cached.checkedAt < 60000) {
     return cached;
   }
 
   const qStr = String(q);
-  const candidates = Array.from(
-    new Set([
-      curriculum.primaryUrlTemplate.replace("{q}", qStr),
-      ...(curriculum.fallbackUrlTemplates || []).map((t) => t.replace("{q}", qStr)),
-    ])
-  );
+  const rawTemplates = [
+    curriculum.primaryUrlTemplate.replace("{q}", qStr),
+    ...(curriculum.fallbackUrlTemplates || []).map((t) => t.replace("{q}", qStr)),
+  ];
+
+  // Check raw.githubusercontent.com/<slug>/main/index.html first (instant, works even if GitHub Pages is off), then GitHub Pages
+  const expandedCandidates: string[] = [];
+  let anySlugExistsInRepoIndex = !eot2026KnownReposLower || eot2026KnownReposLower.size === 0;
+
+  for (const tplUrl of rawTemplates) {
+    const slugMatch = tplUrl.match(/github\.io\/([^/?#]+)/i);
+    if (slugMatch && slugMatch[1]) {
+      const slug = slugMatch[1];
+      if (eot2026KnownReposLower && eot2026KnownReposLower.has(slug.toLowerCase())) {
+        anySlugExistsInRepoIndex = true;
+      }
+      expandedCandidates.push(
+        `https://raw.githubusercontent.com/Mr-Mohammed-Hesham/${slug}/main/index.html`
+      );
+    }
+    expandedCandidates.push(tplUrl);
+  }
+
+  if (!anySlugExistsInRepoIndex && !forceRefresh) {
+    const pending = { status: "pending" as const, checkedAt: now };
+    eot2026QuestionCache.set(key, pending);
+    return pending;
+  }
+
+  const candidates = Array.from(new Set(expandedCandidates));
 
   for (const candidateUrl of candidates) {
     try {

@@ -483,7 +483,10 @@ export const CurriculaHub2026View: React.FC<CurriculaHub2026ViewProps> = ({
               (p) => p.status === 'live'
             ).length;
             const SubjectIcon = getSubjectIcon(curriculum.subject);
-            const previewNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].filter((n) => n <= totalQ);
+            const previewNumbers =
+              liveCount > 0
+                ? Array.from({ length: totalQ }, (_, idx) => idx + 1)
+                : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].filter((n) => n <= totalQ);
 
             return (
               <article

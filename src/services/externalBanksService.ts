@@ -50,14 +50,10 @@ export interface InteractiveMockExam {
   tags: string[];
 }
 
-const PRIMARY_CLOUD_RUN_BACKEND = "https://ais-pre-zkin4elv7zwqu2e6fa3gzm-684462415759.europe-west2.run.app";
-
-const getApiUrl = (path: string): string => {
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  if (hostname === 'localhost' || hostname.endsWith('run.app') || hostname.includes('3000') || !hostname) {
-    return path;
-  }
-  return `${PRIMARY_CLOUD_RUN_BACKEND}${path}`;
+const isBackendServerHost = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.run.app') || hostname.includes('3000');
 };
 
 // Built-in initial snapshot for IG-Exam-Bank (ensures zero load time even before first network sync)
@@ -541,22 +537,24 @@ export async function fetchLiveIgExamBank(forceRefresh = false): Promise<{
     return { exams: cachedIgExams, fromLive: true, count: cachedIgExams.length };
   }
 
-  // 1. Try Platform Backend API
-  try {
-    const apiUrl = getApiUrl(`/api/external-banks/ig${forceRefresh ? '?refresh=true' : ''}`);
-    const res = await fetch(apiUrl, { cache: 'no-cache' });
-    if (res.ok) {
-      const data = await res.json();
-      if (data && Array.isArray(data.exams) && data.exams.length > 0) {
-        cachedIgExams = data.exams;
-        lastIgFetchTime = now;
-        localStorage.setItem('4u_ig_exams_bank_cache', JSON.stringify(data.exams));
-        localStorage.setItem('4u_ig_exams_bank_synced_at', new Date().toISOString());
-        return { exams: data.exams, fromLive: true, count: data.exams.length };
+  // 1. Try Platform Backend API (only on backend hosts, avoiding cross-origin errors on GitHub Pages)
+  if (isBackendServerHost()) {
+    try {
+      const apiUrl = `/api/external-banks/ig${forceRefresh ? '?refresh=true' : ''}`;
+      const res = await fetch(apiUrl, { cache: 'no-cache' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.exams) && data.exams.length > 0) {
+          cachedIgExams = data.exams;
+          lastIgFetchTime = now;
+          localStorage.setItem('4u_ig_exams_bank_cache', JSON.stringify(data.exams));
+          localStorage.setItem('4u_ig_exams_bank_synced_at', new Date().toISOString());
+          return { exams: data.exams, fromLive: true, count: data.exams.length };
+        }
       }
+    } catch (err) {
+      console.warn("[ExternalBanks] Backend API fetch for IG failed, trying direct GitHub raw:", err);
     }
-  } catch (err) {
-    console.warn("[ExternalBanks] Backend API fetch for IG failed, trying direct GitHub raw:", err);
   }
 
   // 2. Direct GitHub Raw Fallback (for static deployments or client standalone)
@@ -596,22 +594,24 @@ export async function fetchLiveSatExamBank(forceRefresh = false): Promise<{
     return { revisionExams: cachedSatMocks, fromLive: true, count: cachedSatMocks.length };
   }
 
-  // 1. Try Platform Backend API
-  try {
-    const apiUrl = getApiUrl(`/api/external-banks/sat${forceRefresh ? '?refresh=true' : ''}`);
-    const res = await fetch(apiUrl, { cache: 'no-cache' });
-    if (res.ok) {
-      const data = await res.json();
-      if (data && Array.isArray(data.revisionExams) && data.revisionExams.length > 0) {
-        cachedSatMocks = data.revisionExams;
-        lastSatFetchTime = now;
-        localStorage.setItem('4u_sat_exams_bank_cache', JSON.stringify(data.revisionExams));
-        localStorage.setItem('4u_sat_exams_bank_synced_at', new Date().toISOString());
-        return { revisionExams: data.revisionExams, fromLive: true, count: data.revisionExams.length };
+  // 1. Try Platform Backend API (only on backend hosts, avoiding cross-origin errors on GitHub Pages)
+  if (isBackendServerHost()) {
+    try {
+      const apiUrl = `/api/external-banks/sat${forceRefresh ? '?refresh=true' : ''}`;
+      const res = await fetch(apiUrl, { cache: 'no-cache' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.revisionExams) && data.revisionExams.length > 0) {
+          cachedSatMocks = data.revisionExams;
+          lastSatFetchTime = now;
+          localStorage.setItem('4u_sat_exams_bank_cache', JSON.stringify(data.revisionExams));
+          localStorage.setItem('4u_sat_exams_bank_synced_at', new Date().toISOString());
+          return { revisionExams: data.revisionExams, fromLive: true, count: data.revisionExams.length };
+        }
       }
+    } catch (err) {
+      console.warn("[ExternalBanks] Backend API fetch for SAT failed, trying direct GitHub raw:", err);
     }
-  } catch (err) {
-    console.warn("[ExternalBanks] Backend API fetch for SAT failed, trying direct GitHub raw:", err);
   }
 
   // 2. Direct GitHub Raw Fallback (for static deployments or client standalone)

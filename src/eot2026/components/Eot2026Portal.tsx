@@ -179,13 +179,30 @@ export const Eot2026Portal: React.FC<Eot2026PortalProps> = ({
     [curricula, selectedTerm]
   );
 
-  // Initial live sync on mount + automatic periodic live sync every 90s
+  // Initial live sync on mount + automatic periodic live sync every 90s + tab focus sync
   useEffect(() => {
+    let lastSyncAt = Date.now();
     runLiveSync(false, selectedTerm);
+
     const interval = window.setInterval(() => {
+      lastSyncAt = Date.now();
       runLiveSync(false, selectedTerm);
     }, 90000);
-    return () => window.clearInterval(interval);
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible' && Date.now() - lastSyncAt > 30000) {
+        lastSyncAt = Date.now();
+        runLiveSync(true, selectedTerm);
+      }
+    };
+
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+    };
   }, [selectedTerm]);
 
   const curriculaForTerm = useMemo(
@@ -469,7 +486,12 @@ export const Eot2026Portal: React.FC<Eot2026PortalProps> = ({
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => runLiveSync(true, selectedTerm)}
+            onClick={() => {
+              runLiveSync(true, selectedTerm);
+              if (activeView === 'workspace' && activeCurriculum) {
+                loadWorkspaceQuestion(activeCurriculum.id, activeQuestionNumber, true);
+              }
+            }}
             disabled={isSyncing}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-amber-500/35 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-bold transition-colors cursor-pointer disabled:opacity-60"
           >
