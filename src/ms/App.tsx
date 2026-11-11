@@ -18,6 +18,7 @@ import { AnswerKeyModal } from './components/AnswerKeyModal';
 import { ScoreModal } from './components/ScoreModal';
 import { ComingSoonModal } from './components/ComingSoonModal';
 import { getTranslation } from './data/translations';
+import { FooterSocialLinks } from '../components/FooterSocialLinks';
 import { BookOpen, Sparkles, CheckCircle2, Award, Printer, ArrowLeft, Presentation, FileSpreadsheet, Database } from 'lucide-react';
 
 export function App() {
@@ -361,19 +362,22 @@ export function App() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 text-xs py-6 border-t border-slate-800 no-print" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
-            <span className="font-semibold text-slate-300">
-              {language === 'ar' ? 'منصة الاختبارات العملية لمايكروسوفت أوفيس 2026' : 'Microsoft Office Practical Exams Portal 2026'}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-slate-300 font-medium">
-            <span>{language === 'ar' ? 'إعداد وتصميم:' : 'Created by'}</span>
-            <span className="bg-blue-600/20 text-blue-300 px-3 py-1 rounded-lg border border-blue-500/30 font-bold tracking-wide">
-              Mr. Mohammed Hesham
-            </span>
+      <footer className="bg-slate-900 text-slate-400 text-xs py-8 border-t border-slate-800 no-print space-y-5" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
+          <FooterSocialLinks />
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-3 border-t border-slate-800">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
+              <span className="font-semibold text-slate-300">
+                {language === 'ar' ? 'منصة الاختبارات العملية لمايكروسوفت أوفيس 2026' : 'Microsoft Office Practical Exams Portal 2026'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-slate-300 font-medium">
+              <span>{language === 'ar' ? 'إعداد وتصميم:' : 'Created by'}</span>
+              <span className="bg-blue-600/20 text-blue-300 px-3 py-1 rounded-lg border border-blue-500/30 font-bold tracking-wide">
+                Mr. Mohammed Hesham
+              </span>
+            </div>
           </div>
         </div>
       </footer>

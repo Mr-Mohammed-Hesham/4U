@@ -818,6 +818,85 @@ app.get("/api/external-banks/sat", async (req, res) => {
   return res.json({ success: true, count: 0, revisionExams: [], source: "empty" });
 });
 
+// Safe Exam HTML Proxy with anti-theft sanitization
+app.get("/api/external-banks/exam-html", async (req, res) => {
+  const targetUrl = (req.query.url as string) || "";
+  const slugParam = (req.query.slug as string) || "";
+  const ownerParam = (req.query.owner as string) || "Mr-Mohammed-Hesham";
+  const forceRefresh = req.query.refresh === "true";
+  const now = Date.now();
+
+  const slug = (slugParam || targetUrl.replace(/^https?:\/\/[^/]+\//i, '').replace(/\/+$/, '').replace(/[?#].*$/, '')).trim();
+  if (!slug) {
+    return res.status(400).json({ success: false, error: "Missing slug or url" });
+  }
+
+  const candidateUrls = [
+    `https://raw.githubusercontent.com/${ownerParam}/${slug}/main/index.html${forceRefresh ? `?_t=${now}` : ''}`,
+    `https://raw.githubusercontent.com/${ownerParam}/${slug}/master/index.html${forceRefresh ? `?_t=${now}` : ''}`,
+    `https://${ownerParam.toLowerCase()}.github.io/${slug}/${forceRefresh ? `?_t=${now}` : ''}`,
+    `https://raw.githubusercontent.com/Mr-Mohammed-Hesham/${slug}/main/index.html${forceRefresh ? `?_t=${now}` : ''}`,
+    `https://raw.githubusercontent.com/Mr-Mohammed-Hesham/${slug}/master/index.html${forceRefresh ? `?_t=${now}` : ''}`,
+    `https://raw.githubusercontent.com/hesham-afandi/${slug}/master/index.html${forceRefresh ? `?_t=${now}` : ''}`,
+    `https://raw.githubusercontent.com/hesham-afandi/${slug}/main/index.html${forceRefresh ? `?_t=${now}` : ''}`,
+  ];
+
+  for (const url of candidateUrls) {
+    try {
+      const abortCtrl = new AbortController();
+      const timeout = setTimeout(() => abortCtrl.abort(), 6500);
+      const upstreamRes = await fetch(url, {
+        signal: abortCtrl.signal,
+        headers: { "User-Agent": "4U-Platform" },
+      });
+      clearTimeout(timeout);
+
+      if (upstreamRes.ok) {
+        let text = await upstreamRes.text();
+        if (text && text.length > 200 && !text.includes("<title>Page not found") && !text.includes("There isn't a GitHub Pages site here")) {
+          // Sanitize: strip canonical, og:url, twitter:url
+          text = text
+            .replace(/<link[^>]+rel=["']canonical["'][^>]*>/gi, '')
+            .replace(/<meta[^>]+property=["']og:url["'][^>]*>/gi, '')
+            .replace(/<meta[^>]+name=["']twitter:url["'][^>]*>/gi, '');
+
+          // Anti-theft script injection
+          const protectionScript = `<script>
+(function(){
+  try {
+    window.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'u' || e.key.toLowerCase() === 's' || e.key.toLowerCase() === 'p')) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    });
+    window.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+      var links = document.querySelectorAll('a[href*="github.com"], a[href*="github.io"]');
+      links.forEach(function(l){ l.style.display = 'none'; l.removeAttribute('href'); });
+    });
+  } catch(e) {}
+})();
+</script>`;
+
+          if (text.includes('</head>')) {
+            text = text.replace('</head>', `${protectionScript}</head>`);
+          } else {
+            text = `${protectionScript}${text}`;
+          }
+
+          return res.json({ success: true, html: text, slug });
+        }
+      }
+    } catch {}
+  }
+
+  return res.status(404).json({ success: false, error: "Exam HTML could not be loaded from upstream" });
+});
+
 // -------------------------------------------------------------
 // 🏛️ EOT 2026 Live Connector & Anti-Theft Content Proxy
 // Real-time synchronization with Mr-Mohammed-Hesham/EOT without

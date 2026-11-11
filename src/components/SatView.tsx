@@ -36,11 +36,14 @@ import {
   FileCheck,
   GraduationCap,
   RefreshCw,
+  RotateCw,
+  Maximize2,
+  Minimize2,
+  Loader2,
   GitBranch,
-  ExternalLink,
   X
 } from 'lucide-react';
-import { fetchLiveSatExamBank, getSavedSatMocks, InteractiveMockExam } from '../services/externalBanksService';
+import { fetchLiveSatExamBank, getSavedSatMocks, fetchSafeExamHtml, InteractiveMockExam } from '../services/externalBanksService';
 
 interface SatViewProps {
   onSwitchToCurriculum?: () => void;
@@ -97,6 +100,12 @@ export const SatView: React.FC<SatViewProps> = ({
   const [mockSearchQuery, setMockSearchQuery] = useState<string>('');
   const [mockDifficultyFilter, setMockDifficultyFilter] = useState<string>('all');
 
+  // Safe srcDoc State for Mock Runner (Zero Link Exposure)
+  const [modalExamHtml, setModalExamHtml] = useState<string | null>(null);
+  const [isLoadingModalHtml, setIsLoadingModalHtml] = useState<boolean>(false);
+  const [modalLoadError, setModalLoadError] = useState<string | null>(null);
+  const [isModalFullScreen, setIsModalFullScreen] = useState<boolean>(false);
+
   const handleSyncSatBank = async (force = false) => {
     setIsSyncingSat(true);
     try {
@@ -114,7 +123,74 @@ export const SatView: React.FC<SatViewProps> = ({
 
   useEffect(() => {
     handleSyncSatBank(false);
+
+    // Auto-sync on window focus and every 60 seconds
+    const onFocus = () => {
+      handleSyncSatBank(false);
+    };
+    window.addEventListener('focus', onFocus);
+    const interval = setInterval(() => {
+      handleSyncSatBank(false);
+    }, 60000);
+
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      clearInterval(interval);
+    };
   }, []);
+
+  // Fetch safe protected HTML whenever an exam is selected
+  useEffect(() => {
+    if (!selectedMockExam) {
+      setModalExamHtml(null);
+      setIsLoadingModalHtml(false);
+      setModalLoadError(null);
+      return;
+    }
+
+    let isMounted = true;
+    setIsLoadingModalHtml(true);
+    setModalLoadError(null);
+
+    fetchSafeExamHtml(selectedMockExam.url, false)
+      .then((html) => {
+        if (!isMounted) return;
+        if (html) {
+          setModalExamHtml(html);
+        } else {
+          setModalLoadError(lang === 'ar' ? 'تعذر جلب الامتحان مباشرة، يرجى الضغط على زر إعادة المحاولة.' : 'Could not fetch exam directly, please click retry.');
+        }
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setModalLoadError(lang === 'ar' ? 'حدث خطأ في جلب الامتحان التفاعلي' : 'Error loading interactive exam');
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingModalHtml(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedMockExam, lang]);
+
+  const handleReloadExamModal = async () => {
+    if (!selectedMockExam) return;
+    setIsLoadingModalHtml(true);
+    setModalLoadError(null);
+    try {
+      const html = await fetchSafeExamHtml(selectedMockExam.url, true);
+      if (html) {
+        setModalExamHtml(html);
+      } else {
+        setModalLoadError(lang === 'ar' ? 'فشل التحديث، يرجى المحاولة لاحقاً' : 'Refresh failed, please try again');
+      }
+    } catch {
+      setModalLoadError(lang === 'ar' ? 'حدث خطأ أثناء التحديث' : 'Error during refresh');
+    } finally {
+      setIsLoadingModalHtml(false);
+    }
+  };
 
   // Selected Exam Model (Model 1, Model 2, Model 3, or All Bank)
   const [selectedModelId, setSelectedModelId] = useState<string>('model-1');
@@ -687,23 +763,14 @@ export const SatView: React.FC<SatViewProps> = ({
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div>
                           <button
                             onClick={() => setSelectedMockExam(mock)}
-                            className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-black text-xs transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-black text-xs transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
                           >
                             <Play className="w-3.5 h-3.5 fill-current" />
                             <span>{lang === 'ar' ? 'بدء المحاكاة التفاعلية' : 'Launch Mock Exam'}</span>
                           </button>
-                          <a
-                            href={mock.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-indigo-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
-                            title={lang === 'ar' ? 'فتح في علامة تبويب جديدة' : 'Open in new tab'}
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
                         </div>
                       </div>
                     </div>
@@ -1079,61 +1146,126 @@ export const SatView: React.FC<SatViewProps> = ({
         </>
       )}
 
-      {/* FULLSCREEN / EMBEDDED MODAL RUNNER FOR LIVE SAT MOCK EXAM */}
+      {/* PROTECTED MODAL RUNNER FOR LIVE SAT MOCK EXAM (Zero Repository URL Leaks) */}
       {selectedMockExam && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-2 md:p-6"
+          className={`fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-md ${isModalFullScreen ? 'p-0' : 'p-2 md:p-6'}`}
           onClick={() => setSelectedMockExam(null)}
         >
           <div
-            className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-6xl h-[92vh] flex flex-col overflow-hidden shadow-2xl"
+            className={`bg-slate-900 border border-slate-800 flex flex-col overflow-hidden shadow-2xl transition-all ${
+              isModalFullScreen ? 'w-full h-full rounded-none' : 'w-full max-w-6xl h-[92vh] rounded-3xl'
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="p-4 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <span className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400 text-lg">
+            <div className="p-3.5 md:p-4 bg-slate-950/95 border-b border-slate-800 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400 text-lg shrink-0">
                   🎓
                 </span>
-                <div>
-                  <h3 className="font-black text-white text-sm md:text-base">
+                <div className="min-w-0">
+                  <h3 className="font-black text-white text-xs md:text-sm truncate">
                     {lang === 'ar' ? selectedMockExam.titleAr : selectedMockExam.title}
                   </h3>
-                  <p className="text-[11px] text-slate-400 font-mono">
-                    {selectedMockExam.code} • {selectedMockExam.durationMinutes} {lang === 'ar' ? 'دقيقة' : 'Mins'} • {selectedMockExam.totalQuestions} {lang === 'ar' ? 'سؤالاً' : 'Questions'}
+                  <p className="text-[11px] text-slate-400 font-mono truncate">
+                    {selectedMockExam.code} • {selectedMockExam.durationMinutes} {lang === 'ar' ? 'دقيقة' : 'Mins'} • {selectedMockExam.totalQuestions} {lang === 'ar' ? 'سؤالاً' : 'Questions'} • <span className="text-emerald-400 font-bold">{lang === 'ar' ? 'ربط حي مباشر ⚡' : 'Live Sync ⚡'}</span>
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <a
-                  href={selectedMockExam.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition flex items-center gap-1.5"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">{lang === 'ar' ? 'نافذة جديدة' : 'New Tab'}</span>
-                </a>
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Refresh Live Content Button */}
                 <button
-                  onClick={() => setSelectedMockExam(null)}
+                  onClick={handleReloadExamModal}
+                  disabled={isLoadingModalHtml}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  title={lang === 'ar' ? 'تحديث فوري من المستودع' : 'Live Reload'}
+                >
+                  <RotateCw className={`w-3.5 h-3.5 ${isLoadingModalHtml ? 'animate-spin text-indigo-400' : ''}`} />
+                  <span className="hidden sm:inline">{lang === 'ar' ? 'تحديث' : 'Refresh'}</span>
+                </button>
+
+                {/* Fullscreen Toggle */}
+                <button
+                  onClick={() => setIsModalFullScreen(!isModalFullScreen)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer"
+                  title={isModalFullScreen ? (lang === 'ar' ? 'تصغير' : 'Exit Fullscreen') : (lang === 'ar' ? 'ملء الشاشة' : 'Fullscreen')}
+                >
+                  {isModalFullScreen ? (
+                    <>
+                      <Minimize2 className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">{lang === 'ar' ? 'تصغير' : 'Exit'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Maximize2 className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">{lang === 'ar' ? 'ملء الشاشة' : 'Fullscreen'}</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Close Button */}
+                <button
+                  onClick={() => {
+                    setSelectedMockExam(null);
+                    setIsModalFullScreen(false);
+                  }}
                   className="p-2 rounded-xl bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-400 transition cursor-pointer"
                   title={lang === 'ar' ? 'إغلاق' : 'Close'}
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            {/* Interactive Iframe */}
-            <div className="flex-1 w-full bg-white relative">
-              <iframe
-                src={selectedMockExam.url}
-                title={selectedMockExam.title}
-                className="w-full h-full border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+            {/* Interactive Protected Iframe Runner */}
+            <div className="flex-1 w-full bg-slate-950 relative overflow-hidden flex flex-col">
+              {isLoadingModalHtml && !modalExamHtml && (
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950/90 text-white gap-3 p-4 text-center">
+                  <Loader2 className="w-9 h-9 text-indigo-500 animate-spin" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-black text-indigo-300">
+                      {lang === 'ar' ? 'جاري تجهيز بيئة الامتحان التفاعلية المباشرة...' : 'Loading live interactive mock exam...'}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {lang === 'ar' ? 'تشفير وحماية كاملة للمحتوى والأسئلة' : 'Protected sandbox environment'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {modalLoadError && !modalExamHtml ? (
+                <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-4">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-xl">
+                    ⚠️
+                  </div>
+                  <div className="space-y-1 max-w-md">
+                    <p className="text-sm font-bold text-white">{modalLoadError}</p>
+                    <p className="text-xs text-slate-400">
+                      {lang === 'ar'
+                        ? 'يرجى التحقق من الاتصال بالإنترنت والضغط على زر إعادة المحاولة.'
+                        : 'Please check your connection and click retry.'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleReloadExamModal}
+                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-lg transition cursor-pointer flex items-center gap-2"
+                  >
+                    <RotateCw className="w-3.5 h-3.5" />
+                    <span>{lang === 'ar' ? 'إعادة المحاولة الآن' : 'Retry Now'}</span>
+                  </button>
+                </div>
+              ) : modalExamHtml ? (
+                <iframe
+                  key={selectedMockExam.id}
+                  srcDoc={modalExamHtml}
+                  title={selectedMockExam.title}
+                  className="w-full h-full border-0 bg-white"
+                  sandbox="allow-scripts allow-forms allow-same-origin allow-modals"
+                  allow="fullscreen"
+                />
+              ) : null}
             </div>
           </div>
         </div>

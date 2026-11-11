@@ -1,14 +1,19 @@
 // =========================================================================
-// 🌐 External GitHub Banks Service: IG-Exam-Bank & SAT-Math-Bank
-// Connects live with:
-// 1. https://github.com/Mr-Mohammed-Hesham/IG-Exam-Bank
-// 2. https://github.com/Mr-Mohammed-Hesham/SAT-Math-Bank
-// Automatically detects and displays newly added exams in real time!
+// 🌐 External Live Banks Service: IG-Exam-Bank & SAT-Math-Bank
+// Real-time synchronization with:
+// 1. https://github.com/Mr-Mohammed-Hesham/SAT-Math-Bank
+// 2. https://github.com/Mr-Mohammed-Hesham/IG-Exam-Bank
+//
+// Anti-Theft Protection:
+// - All exams load as sanitized, protected srcDoc HTML.
+// - Zero repository URLs or GitHub links are ever exposed to the end user.
+// - Right-click, Ctrl+U (view source), and Ctrl+S are strictly blocked.
+// - Real-time sync ensures any updates made in the sub-platforms appear immediately.
 // =========================================================================
 
 export interface IGExamItem {
   id: string;
-  repoName: string;
+  repoName?: string;
   subject: 'physics' | 'math';
   code: string;
   paperCode: string;
@@ -50,17 +55,43 @@ export interface InteractiveMockExam {
   tags: string[];
 }
 
+// Runtime origin builders
+const OWNER_ACCOUNT = ['Mr', 'Mohammed', 'Hesham'].join('-');
+const RAW_HOST = ['https://raw', 'githubusercontent', 'com'].join('.');
+const API_HOST = ['https://api', 'github', 'com'].join('.');
+
 const isBackendServerHost = (): boolean => {
   if (typeof window === 'undefined') return false;
   const hostname = window.location.hostname;
-  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.run.app') || hostname.includes('3000');
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.endsWith('.run.app') ||
+    hostname.includes('3000')
+  );
 };
+
+// Safe LocalStorage helpers
+function safeGetStorage(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetStorage(key: string, value: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {}
+}
 
 // Built-in initial snapshot for IG-Exam-Bank (ensures zero load time even before first network sync)
 export const INITIAL_IG_EXAMS_SNAPSHOT: IGExamItem[] = [
   {
     id: 'ig-phy-jun-26-1h',
-    repoName: 'Ig-Edexcel-Phy-Jun-26-1H',
     subject: 'math',
     code: '4MA1 / 1H (Rev 26)',
     paperCode: '1H',
@@ -85,7 +116,6 @@ export const INITIAL_IG_EXAMS_SNAPSHOT: IGExamItem[] = [
   },
   {
     id: 'ig-phy-jun-18-2p',
-    repoName: 'Ig-Edexcel-Phy-Jun-18-2P',
     subject: 'physics',
     code: '4PH1 / 2P',
     paperCode: '2P',
@@ -110,7 +140,6 @@ export const INITIAL_IG_EXAMS_SNAPSHOT: IGExamItem[] = [
   },
   {
     id: 'ig-math-jun19-1h',
-    repoName: 'Ig-Edexcel-math-Jun19-1H',
     subject: 'math',
     code: '4MA1 / 1H',
     paperCode: '1H',
@@ -135,7 +164,6 @@ export const INITIAL_IG_EXAMS_SNAPSHOT: IGExamItem[] = [
   },
   {
     id: 'ig-math-jan21-all',
-    repoName: 'Ig-Edexcel-math-Jan21',
     subject: 'math',
     code: '4MA1 / Jan 21 Suite',
     paperCode: 'ALL',
@@ -407,121 +435,210 @@ let cachedIgExams: IGExamItem[] | null = null;
 let cachedSatMocks: InteractiveMockExam[] | null = null;
 let lastIgFetchTime = 0;
 let lastSatFetchTime = 0;
+const examHtmlCache = new Map<string, { html: string; timestamp: number }>();
 
-// Client-side parser for IG exams TypeScript array
+// Extract repository slug from URL or bare name
+export function extractRepoSlug(urlOrSlug: string): string {
+  if (!urlOrSlug) return '';
+  return urlOrSlug
+    .replace(/^https?:\/\/[^/]+\//i, '')
+    .replace(/\/+$/, '')
+    .replace(/[?#].*$/, '')
+    .trim();
+}
+
+export function extractOwnerFromUrl(urlOrSlug: string): string {
+  if (!urlOrSlug) return OWNER_ACCOUNT;
+  const match = urlOrSlug.match(/^https?:\/\/([^.]+)\.github\.io/i);
+  if (match && match[1]) {
+    return match[1];
+  }
+  return OWNER_ACCOUNT;
+}
+
+// Anti-theft HTML sanitizer & protection injector
+export function prepareSafeExamHtml(rawHtml: string): string {
+  let html = rawHtml
+    .replace(/<link[^>]+rel=["']canonical["'][^>]*>/gi, '')
+    .replace(/<meta[^>]+property=["']og:url["'][^>]*>/gi, '')
+    .replace(/<meta[^>]+name=["']twitter:url["'][^>]*>/gi, '');
+
+  const protectionScript = `<script>
+(function(){
+  try {
+    window.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'u' || e.key.toLowerCase() === 's' || e.key.toLowerCase() === 'p')) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    });
+    window.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+      var links = document.querySelectorAll('a[href*="github.com"], a[href*="github.io"]');
+      links.forEach(function(l){ l.style.display = 'none'; l.removeAttribute('href'); });
+    });
+  } catch(e) {}
+})();
+</script>`;
+
+  if (html.includes('</head>')) {
+    html = html.replace('</head>', `${protectionScript}</head>`);
+  } else {
+    html = `${protectionScript}${html}`;
+  }
+  return html;
+}
+
+// Fetch safe HTML for any exam using backend proxy or direct raw GitHub (zero CORS issues)
+export async function fetchSafeExamHtml(
+  urlOrSlug: string,
+  forceRefresh = false
+): Promise<string | null> {
+  const slug = extractRepoSlug(urlOrSlug);
+  if (!slug) return null;
+  const owner = extractOwnerFromUrl(urlOrSlug);
+
+  const now = Date.now();
+  if (!forceRefresh) {
+    const cached = examHtmlCache.get(slug);
+    if (cached && now - cached.timestamp < 120000) {
+      return cached.html;
+    }
+  }
+
+  // 1. Backend Proxy (Handles CORS, caching, and anti-theft)
+  if (isBackendServerHost()) {
+    try {
+      const apiUrl = `/api/external-banks/exam-html?slug=${encodeURIComponent(slug)}&owner=${encodeURIComponent(owner)}&url=${encodeURIComponent(urlOrSlug)}${forceRefresh ? '&refresh=true' : ''}`;
+      const res = await fetch(apiUrl, { cache: forceRefresh ? 'reload' : 'no-cache' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && data.html) {
+          examHtmlCache.set(slug, { html: data.html, timestamp: now });
+          return data.html;
+        }
+      }
+    } catch {}
+  }
+
+  // 2. Direct Cross-Origin Fetch from GitHub Raw and Pages
+  const candidateUrls = [
+    `${RAW_HOST}/${owner}/${slug}/main/index.html${forceRefresh ? `?_t=${now}` : ''}`,
+    `${RAW_HOST}/${owner}/${slug}/master/index.html${forceRefresh ? `?_t=${now}` : ''}`,
+    `https://${owner.toLowerCase()}.github.io/${slug}/${forceRefresh ? `?_t=${now}` : ''}`,
+    `${RAW_HOST}/${OWNER_ACCOUNT}/${slug}/main/index.html${forceRefresh ? `?_t=${now}` : ''}`,
+    `${RAW_HOST}/${OWNER_ACCOUNT}/${slug}/master/index.html${forceRefresh ? `?_t=${now}` : ''}`,
+    `${RAW_HOST}/hesham-afandi/${slug}/master/index.html${forceRefresh ? `?_t=${now}` : ''}`,
+    `${RAW_HOST}/hesham-afandi/${slug}/main/index.html${forceRefresh ? `?_t=${now}` : ''}`,
+  ];
+
+  for (const targetUrl of candidateUrls) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 6500);
+      const res = await fetch(targetUrl, {
+        signal: ctrl.signal,
+        cache: forceRefresh ? 'reload' : 'no-cache',
+      });
+      clearTimeout(timer);
+
+      if (res.ok) {
+        const text = await res.text();
+        if (
+          text &&
+          text.length > 200 &&
+          !text.includes('<title>Page not found') &&
+          !text.includes("There isn't a GitHub Pages site here")
+        ) {
+          const safeHtml = prepareSafeExamHtml(text);
+          examHtmlCache.set(slug, { html: safeHtml, timestamp: now });
+          return safeHtml;
+        }
+      }
+    } catch {}
+  }
+
+  return null;
+}
+
+// Client-side parser for TS arrays
+function parseTsArrayGeneric<T>(code: string, variableName: string): T[] {
+  try {
+    const startIdx = code.indexOf(variableName);
+    if (startIdx === -1) return [];
+    const eqIdx = code.indexOf('=', startIdx);
+    const arrStart = code.indexOf('[', eqIdx);
+    if (arrStart === -1) return [];
+
+    let depth = 0;
+    let arrEnd = -1;
+    let inString = false;
+    let stringChar = '';
+
+    for (let i = arrStart; i < code.length; i++) {
+      const ch = code[i];
+      const prev = code[i - 1];
+      if (inString) {
+        if (ch === stringChar && prev !== '\\') inString = false;
+      } else {
+        if (ch === '"' || ch === "'" || ch === '`') {
+          inString = true;
+          stringChar = ch;
+        } else if (ch === '[') depth++;
+        else if (ch === ']') {
+          depth--;
+          if (depth === 0) {
+            arrEnd = i + 1;
+            break;
+          }
+        }
+      }
+    }
+
+    if (arrEnd !== -1) {
+      const arrCode = code.substring(arrStart, arrEnd);
+      const parsed = new Function('return ' + arrCode)();
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed as T[];
+      }
+    }
+  } catch (err) {
+    console.warn(`[ExternalBanks] Client parsing of ${variableName} failed:`, err);
+  }
+  return [];
+}
+
 export function parseIgExamsFromTsCode(code: string): IGExamItem[] {
-  try {
-    const startIdx = code.indexOf("allIGExams");
-    if (startIdx === -1) return [];
-    const eqIdx = code.indexOf("=", startIdx);
-    const arrStart = code.indexOf("[", eqIdx);
-    if (arrStart === -1) return [];
-
-    let depth = 0;
-    let arrEnd = -1;
-    let inString = false;
-    let stringChar = "";
-
-    for (let i = arrStart; i < code.length; i++) {
-      const ch = code[i];
-      const prev = code[i - 1];
-      if (inString) {
-        if (ch === stringChar && prev !== "\\") inString = false;
-      } else {
-        if (ch === '"' || ch === "'" || ch === '`') {
-          inString = true;
-          stringChar = ch;
-        } else if (ch === "[") depth++;
-        else if (ch === "]") {
-          depth--;
-          if (depth === 0) {
-            arrEnd = i + 1;
-            break;
-          }
-        }
-      }
-    }
-
-    if (arrEnd !== -1) {
-      const arrCode = code.substring(arrStart, arrEnd);
-      const parsed = new Function("return " + arrCode)();
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed as IGExamItem[];
-      }
-    }
-  } catch (err) {
-    console.warn("[ExternalBanks] Client parsing of IG exams failed:", err);
-  }
-  return [];
+  return parseTsArrayGeneric<IGExamItem>(code, 'allIGExams');
 }
 
-// Client-side parser for SAT mocks TypeScript array
 export function parseSatMocksFromTsCode(code: string): InteractiveMockExam[] {
-  try {
-    const startIdx = code.indexOf("interactiveRevisionExams");
-    if (startIdx === -1) return [];
-    const eqIdx = code.indexOf("=", startIdx);
-    const arrStart = code.indexOf("[", eqIdx);
-    if (arrStart === -1) return [];
-
-    let depth = 0;
-    let arrEnd = -1;
-    let inString = false;
-    let stringChar = "";
-
-    for (let i = arrStart; i < code.length; i++) {
-      const ch = code[i];
-      const prev = code[i - 1];
-      if (inString) {
-        if (ch === stringChar && prev !== "\\") inString = false;
-      } else {
-        if (ch === '"' || ch === "'" || ch === '`') {
-          inString = true;
-          stringChar = ch;
-        } else if (ch === "[") depth++;
-        else if (ch === "]") {
-          depth--;
-          if (depth === 0) {
-            arrEnd = i + 1;
-            break;
-          }
-        }
-      }
-    }
-
-    if (arrEnd !== -1) {
-      const arrCode = code.substring(arrStart, arrEnd);
-      const parsed = new Function("return " + arrCode)();
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed as InteractiveMockExam[];
-      }
-    }
-  } catch (err) {
-    console.warn("[ExternalBanks] Client parsing of SAT mocks failed:", err);
-  }
-  return [];
+  return parseTsArrayGeneric<InteractiveMockExam>(code, 'interactiveRevisionExams');
 }
 
-// Helper: load stored exams from localStorage
+// Helpers: load stored exams from localStorage
 export function getSavedIgExams(): IGExamItem[] {
-  try {
-    const saved = localStorage.getItem('4u_ig_exams_bank_cache');
-    if (saved) {
+  const saved = safeGetStorage('4u_ig_exams_bank_cache');
+  if (saved) {
+    try {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch {}
+    } catch {}
+  }
   return INITIAL_IG_EXAMS_SNAPSHOT;
 }
 
 export function getSavedSatMocks(): InteractiveMockExam[] {
-  try {
-    const saved = localStorage.getItem('4u_sat_exams_bank_cache');
-    if (saved) {
+  const saved = safeGetStorage('4u_sat_exams_bank_cache');
+  if (saved) {
+    try {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch {}
+    } catch {}
+  }
   return INITIAL_SAT_MOCKS_SNAPSHOT;
 }
 
@@ -532,48 +649,48 @@ export async function fetchLiveIgExamBank(forceRefresh = false): Promise<{
   count: number;
 }> {
   const now = Date.now();
-  // 60-second in-memory throttle unless forceRefresh
-  if (!forceRefresh && cachedIgExams && (now - lastIgFetchTime < 60000)) {
+  if (!forceRefresh && cachedIgExams && now - lastIgFetchTime < 60000) {
     return { exams: cachedIgExams, fromLive: true, count: cachedIgExams.length };
   }
 
-  // 1. Try Platform Backend API (only on backend hosts, avoiding cross-origin errors on GitHub Pages)
+  // 1. Try Platform Backend API (only on backend hosts)
   if (isBackendServerHost()) {
     try {
       const apiUrl = `/api/external-banks/ig${forceRefresh ? '?refresh=true' : ''}`;
-      const res = await fetch(apiUrl, { cache: 'no-cache' });
+      const res = await fetch(apiUrl, { cache: forceRefresh ? 'reload' : 'no-cache' });
       if (res.ok) {
         const data = await res.json();
         if (data && Array.isArray(data.exams) && data.exams.length > 0) {
           cachedIgExams = data.exams;
           lastIgFetchTime = now;
-          localStorage.setItem('4u_ig_exams_bank_cache', JSON.stringify(data.exams));
-          localStorage.setItem('4u_ig_exams_bank_synced_at', new Date().toISOString());
+          safeSetStorage('4u_ig_exams_bank_cache', JSON.stringify(data.exams));
+          safeSetStorage('4u_ig_exams_bank_synced_at', new Date().toISOString());
           return { exams: data.exams, fromLive: true, count: data.exams.length };
         }
       }
-    } catch (err) {
-      console.warn("[ExternalBanks] Backend API fetch for IG failed, trying direct GitHub raw:", err);
-    }
+    } catch {}
   }
 
-  // 2. Direct GitHub Raw Fallback (for static deployments or client standalone)
+  // 2. Direct GitHub Raw Sync (from upstream Mr-Mohammed-Hesham/IG-Exam-Bank)
   try {
-    const rawUrl = `https://raw.githubusercontent.com/Mr-Mohammed-Hesham/IG-Exam-Bank/main/src/data/igExamsData.ts?_t=${now}`;
-    const rawRes = await fetch(rawUrl, { cache: 'no-cache' });
+    const rawUrl = `${RAW_HOST}/${OWNER_ACCOUNT}/IG-Exam-Bank/main/src/data/igExamsData.ts?_t=${now}`;
+    const rawRes = await fetch(rawUrl, {
+      cache: forceRefresh ? 'reload' : 'no-cache',
+      headers: { Accept: 'text/plain' },
+    });
     if (rawRes.ok) {
       const rawText = await rawRes.text();
       const parsed = parseIgExamsFromTsCode(rawText);
       if (parsed.length > 0) {
         cachedIgExams = parsed;
         lastIgFetchTime = now;
-        localStorage.setItem('4u_ig_exams_bank_cache', JSON.stringify(parsed));
-        localStorage.setItem('4u_ig_exams_bank_synced_at', new Date().toISOString());
+        safeSetStorage('4u_ig_exams_bank_cache', JSON.stringify(parsed));
+        safeSetStorage('4u_ig_exams_bank_synced_at', new Date().toISOString());
         return { exams: parsed, fromLive: true, count: parsed.length };
       }
     }
   } catch (err) {
-    console.warn("[ExternalBanks] Direct GitHub raw fetch for IG failed:", err);
+    console.warn('[ExternalBanks] Direct GitHub raw fetch for IG failed:', err);
   }
 
   // 3. Fallback to localStorage or built-in snapshot
@@ -589,48 +706,48 @@ export async function fetchLiveSatExamBank(forceRefresh = false): Promise<{
   count: number;
 }> {
   const now = Date.now();
-  // 60-second in-memory throttle unless forceRefresh
-  if (!forceRefresh && cachedSatMocks && (now - lastSatFetchTime < 60000)) {
+  if (!forceRefresh && cachedSatMocks && now - lastSatFetchTime < 60000) {
     return { revisionExams: cachedSatMocks, fromLive: true, count: cachedSatMocks.length };
   }
 
-  // 1. Try Platform Backend API (only on backend hosts, avoiding cross-origin errors on GitHub Pages)
+  // 1. Try Platform Backend API (only on backend hosts)
   if (isBackendServerHost()) {
     try {
       const apiUrl = `/api/external-banks/sat${forceRefresh ? '?refresh=true' : ''}`;
-      const res = await fetch(apiUrl, { cache: 'no-cache' });
+      const res = await fetch(apiUrl, { cache: forceRefresh ? 'reload' : 'no-cache' });
       if (res.ok) {
         const data = await res.json();
         if (data && Array.isArray(data.revisionExams) && data.revisionExams.length > 0) {
           cachedSatMocks = data.revisionExams;
           lastSatFetchTime = now;
-          localStorage.setItem('4u_sat_exams_bank_cache', JSON.stringify(data.revisionExams));
-          localStorage.setItem('4u_sat_exams_bank_synced_at', new Date().toISOString());
+          safeSetStorage('4u_sat_exams_bank_cache', JSON.stringify(data.revisionExams));
+          safeSetStorage('4u_sat_exams_bank_synced_at', new Date().toISOString());
           return { revisionExams: data.revisionExams, fromLive: true, count: data.revisionExams.length };
         }
       }
-    } catch (err) {
-      console.warn("[ExternalBanks] Backend API fetch for SAT failed, trying direct GitHub raw:", err);
-    }
+    } catch {}
   }
 
-  // 2. Direct GitHub Raw Fallback (for static deployments or client standalone)
+  // 2. Direct GitHub Raw Sync (from upstream Mr-Mohammed-Hesham/SAT-Math-Bank)
   try {
-    const rawUrl = `https://raw.githubusercontent.com/Mr-Mohammed-Hesham/SAT-Math-Bank/main/src/data/fullExamsData.ts?_t=${now}`;
-    const rawRes = await fetch(rawUrl, { cache: 'no-cache' });
+    const rawUrl = `${RAW_HOST}/${OWNER_ACCOUNT}/SAT-Math-Bank/main/src/data/fullExamsData.ts?_t=${now}`;
+    const rawRes = await fetch(rawUrl, {
+      cache: forceRefresh ? 'reload' : 'no-cache',
+      headers: { Accept: 'text/plain' },
+    });
     if (rawRes.ok) {
       const rawText = await rawRes.text();
       const parsed = parseSatMocksFromTsCode(rawText);
       if (parsed.length > 0) {
         cachedSatMocks = parsed;
         lastSatFetchTime = now;
-        localStorage.setItem('4u_sat_exams_bank_cache', JSON.stringify(parsed));
-        localStorage.setItem('4u_sat_exams_bank_synced_at', new Date().toISOString());
+        safeSetStorage('4u_sat_exams_bank_cache', JSON.stringify(parsed));
+        safeSetStorage('4u_sat_exams_bank_synced_at', new Date().toISOString());
         return { revisionExams: parsed, fromLive: true, count: parsed.length };
       }
     }
   } catch (err) {
-    console.warn("[ExternalBanks] Direct GitHub raw fetch for SAT failed:", err);
+    console.warn('[ExternalBanks] Direct GitHub raw fetch for SAT failed:', err);
   }
 
   // 3. Fallback to localStorage or built-in snapshot

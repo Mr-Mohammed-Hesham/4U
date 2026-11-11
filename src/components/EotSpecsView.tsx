@@ -20,6 +20,7 @@ import { QuizMode } from '../eot/components/QuizMode';
 import { AiTutorModal } from '../eot/components/AiTutorModal';
 import { Eot2026Portal, Eot2026ExternalSyncFilters } from '../eot2026/components/Eot2026Portal';
 import { Eot2026TermId } from '../eot2026/types';
+import { FooterSocialLinks } from './FooterSocialLinks';
 import {
   GraduationCap,
   Mail,
@@ -840,8 +841,9 @@ export const EotSpecsView: React.FC<EotSpecsViewProps> = ({
 
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 py-8 border-t border-slate-800 text-center text-xs mt-auto rounded-b-3xl">
-        <div className="max-w-7xl mx-auto px-4 space-y-3">
-          <div className="flex flex-wrap items-center justify-center gap-2 text-slate-300 font-bold dir-ltr">
+        <div className="max-w-7xl mx-auto px-4 space-y-4">
+          <FooterSocialLinks />
+          <div className="flex flex-wrap items-center justify-center gap-2 text-slate-300 font-bold dir-ltr pt-2 border-t border-slate-800/80">
             <span className="text-amber-400">Mr. Mohammed Hesham</span>
             <span>|</span>
             <a href="mailto:mohammedhesham872@gmail.com" className="hover:text-amber-300 transition-colors">

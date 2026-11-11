@@ -46,6 +46,7 @@ import { SatView } from './components/SatView';
 import { IgView } from './components/IgView';
 import { MsExamsView } from './components/MsExamsView';
 import { useChatUnread } from './hooks/useChatUnread';
+import { FooterSocialLinks } from './components/FooterSocialLinks';
 
 const DAYS_OF_WEEK = [
   { key: 'Saturday', name: 'السبت' },
@@ -5725,7 +5726,7 @@ export default function App() {
 
       {/* 4. FOOTER */}
       <footer className="bg-slate-900 text-white py-10 mt-auto border-t border-slate-800 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 text-center space-y-4">
+        <div className="max-w-7xl mx-auto px-6 text-center space-y-5">
           <div className="flex items-center justify-center gap-3 select-none">
             <img 
               src={platformLogo} 
@@ -5738,8 +5739,12 @@ export default function App() {
           <p className="text-xs text-slate-400 max-w-xl mx-auto leading-relaxed">
             مكتبة تفاعلية رقمية مبسطة تم تطويرها باحترافية لتغطية المقررات الأساسية .
           </p>
-          <div className="text-xs text-slate-500 space-y-1">
-            <p>Mr. Mohammed Hesham | mohammedhesham872@gmail.com</p>
+
+          {/* Social Contact Icons (Facebook, WhatsApp, Telegram, Email) */}
+          <FooterSocialLinks />
+
+          <div className="text-xs text-slate-500 space-y-1 pt-3 border-t border-slate-800/80">
+            <p className="dir-ltr font-medium text-slate-400">Mr. Mohammed Hesham | mohammedhesham872@gmail.com</p>
             <p>© 2026 جميع الحقوق محفوظة لمنصة 4U التعليمية</p>
           </div>
         </div>
